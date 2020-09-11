@@ -1,0 +1,3 @@
+#! /bin/bash
+
+g++ -o test.o Test.cpp ProcessData.cpp UtilityFunctions.cpp Waveforms.cpp CircularBuffer.cpp MidiSwitch.cpp Transients.cpp -g
