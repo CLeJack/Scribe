@@ -1,3 +1,3 @@
 #! /bin/bash
 
-g++ -o test.o Test.cpp ProcessData.cpp UtilityFunctions.cpp Waveforms.cpp CircularBuffer.cpp MidiSwitch.cpp Transients.cpp -g
+g++ -o test.o Test.cpp Debug.cpp ../process/ProcessData.cpp ../midi/MidiSwitch.cpp ../util/CircularBuffer.cpp ../util/DCT.cpp ../util/Stats.cpp ../util/Tuning.cpp ../util/Waveforms.cpp -ggdb

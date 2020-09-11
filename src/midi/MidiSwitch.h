@@ -1,4 +1,4 @@
-#include "Head.h"
+#include "../util/Head.h"
 
 
 enum class MidiState {off, init, on, retrigger};
@@ -83,21 +83,15 @@ inline int getMidiNumber(float freq, float refFreq)
     return int(0.5f + 69 + 12 * std::log2(freq/refFreq));
 }
 
-inline void setMidiNumbers(fvec& midi, const fvec& freqs, float refFreq)
-{
-    for(int i = 0; i < freqs.size(); i++)
-    {
-        midi[i] = getMidiNumber(freqs[i], refFreq);
-    }
-}
 
-inline float midiShift(int f0ind, const fvec& midiNumbers, int octShift, int semitoneShift)
+inline float midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift, int semitoneShift)
 {
     if(f0ind == 0)
     {
         return 0;
     }
-    int midi = midiNumbers[f0ind];
+    
+    int midi = getMidiNumber(freqs[f0ind], refFreq);
     int oct = octShift + midi/12;
     int pitch = (midi%12) + semitoneShift;
 

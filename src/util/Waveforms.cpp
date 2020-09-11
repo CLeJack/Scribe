@@ -1,4 +1,3 @@
-#pragma once
 #include "Waveforms.h"
 
 
@@ -31,6 +30,15 @@ fvec getTimeVector(int samples, float srate)
     //timeVector(float, int) causes segfaults due to +1 rounding
     //do not pass time and srate to it to create outputs for this function
     return output;
+}
+
+void setTimeVector(fvec& timeVector, float srate)
+{
+    for(int i = 0; i < timeVector.size(); i++)
+    {
+        // 1 / srate = time increment
+        timeVector[i] = (i * (1.0 / srate) );
+    }
 }
 
 fvec sinusoid(const fvec& t, float frequency, float phaseDeg, float amplitude)

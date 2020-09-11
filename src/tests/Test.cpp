@@ -1,35 +1,28 @@
 #pragma once
-#include "ProcessData.h"
+#include "../process/ProcessData.h"
+#include "Debug.h"
 
-#define PRINT 0
+#define PRINT 1
 
 
 int main()
 {
     
-    auto props = ProcessProperties(44100, 128);
+    auto props = Properties(44100, 128);
 
-    auto data = ProcessData(props);
+    auto data = Storage(props);
     
-    PropertyHistory propHist;
-    saveProperties (props, propHist);
-    
-    fvec signal0 = importCsv("_test_a3.csv", 2.5*44100);
+    fvec signal0 = importCsv("input/_test_amfull.csv", 2.5*44100);
 
     #if PRINT == 1
-    printRows(*data.frequencies.get(), "_0_freqs.csv");
-    printRows(*data.exFrequencies.get(), "_0_exfreqs.csv");
-    printRows(*data.midiNumbers.get(), "_0_midi.csv");
-    printColumn(*data.timeVector.get(), "_0_timeVector.csv");
+    printRows(*data.frequencies.get(), "output/_0_freqs.csv");
+    printRows(*data.exFrequencies.get(), "output/_0_exfreqs.csv");
+    printColumn(*data.timeVector.get(), "output/_0_timeVector.csv");
 
-    printMatrixReal(*data.matrix.get(), "_0_cmatrix.csv",0);
-    printMatrix(*data.exMatrix.get(), "_0_excmatrix.csv",0);
-    
-    printMatrix(*data.kernels.get(), "_0_kernels.csv",0);
-    printMatrix(*data.kernelWeights.get(), "_0_kernelWeights.csv",0);
-    printRows(*data.noteLimits.get(), "_0_limits.csv");
+    printMatrixReal(*data.matrix.get(), "output/_0_cmatrix.csv",0);
+    printMatrix(*data.exMatrix.get(), "output/_0_excmatrix.csv",0);
 
-    printColumn(signal0, "_1_signal.csv");
+    printColumn(signal0, "output/_1_signal.csv");
 
     #endif
 
@@ -110,7 +103,7 @@ int main()
         MidiSwitch& midiSwitch = *data.midiSwitch.get();
         SwitchMessage message{};
         
-        midiNum = midiShift(f0ind, *data.midiNumbers.get(), octShift, semitoneShift);
+        midiNum = midiShift(f0ind, *data.frequencies,props.refFreq, octShift, semitoneShift);
         MidiParams p{midiNum, amp, noiseP, releaseP, 
         metricRetrigger, retrigStartP, retrigStopP, 
         velDbMinP, velDbMaxP, velMinP, velMaxP,
@@ -140,10 +133,10 @@ int main()
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( signalDS, "_2_historyDS.csv");
-        printRows( weights, "_2_weights.csv");
-        printRows( ratios, "_2_ratios.csv");
-        printRows(output, "_2_value_output.csv");
+        printRows( signalDS, "output/_2_historyDS.csv");
+        printRows( weights, "output/_2_weights.csv");
+        printRows( ratios, "output/_2_ratios.csv");
+        printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2
 

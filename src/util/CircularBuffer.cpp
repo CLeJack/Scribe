@@ -43,66 +43,6 @@ fvec FloatBuffer::toOrderedVec()
     return output;
 }
 
-fvec FloatBuffer::toSquareWave()
-{
-    fvec output = toOrderedVec();
-    for(int i = 0; i < size; i++)
-    {
-        output[i] = output[i] > 0 ? 1 : -1;
-    }
-    return output;
-}
-
-fvec FloatBuffer::toPulseVec(float threshold)
-{
-    fvec output = toOrderedVec();
-    float posThresh = maxValue(output) * threshold;
-    float negThresh = minValue(output, 0) * threshold;
-
-    for(int i = 0; i < size; i++)
-    {
-        if(output [i] > posThresh)
-        {
-            output[i] = 1;
-        }
-        else if(output[i] < negThresh)
-        {
-            output[i] = -1;
-        }
-        else
-        {
-            output[i] = 0;
-        }
-    }
-
-    bool posPolarity = false;
-    for(int i = 0; i < size; i++)
-    {
-        while(output[i] == 0 && i < size)
-        {
-            i++;
-        }
-        if(output[i] >0 && i < size)
-        {
-            while(output[i] >= 0 && i < size)
-            {
-                output[i] ==1;
-                i++;
-
-            }
-        }
-        else if(output[i] <0 && i <size)
-        {
-            while(output[i] <= 0 && i < size)
-            {
-                output[i] == -1;
-                i++;
-            }
-        }
-    }
-    return output;
-}
-
 void FloatBuffer::push(float val)
 {
     vec.get()->at(head) = val;
@@ -117,33 +57,11 @@ float FloatBuffer::mean(int lastXelements)
     float total = 0;
     for(int i = window.size() - lastXelements; i < window.size(); i++)
     {
-        total += window[i] *1/lastXelements;
+        total += window[i];
     }
 
-    return total;
+    return total/lastXelements;
 }
-
-float FloatBuffer::noZerosMean(int lastXelements)
-{
-    fvec window = toOrderedVec();
-    float total = 0;
-    float nonZeros = 0;
-    for(int i = window.size() - lastXelements; i < window.size(); i++)
-    {
-        if(window[i] != 0)
-        {
-            total += window[i];
-            nonZeros += 1;
-        }
-        
-    }
-
-    if(nonZeros < 1){ nonZeros = 1; }
-
-    return total/nonZeros;
-}
-
-//float FloatBuffer::median(int lastXelements);
 
 
 float FloatBuffer::lastValue()

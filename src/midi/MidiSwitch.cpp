@@ -1,4 +1,3 @@
-#pragma once
 #include "MidiSwitch.h"
 
 
@@ -62,7 +61,7 @@ int MidiSwitch::getVelocity(const MidiParams& params)
     vel = vel > params.velMax ? params.velMax : vel;
     vel = vel < params.velMin ? params.velMin : vel;
 
-    std::cout<<params.amp<< ", "<<diff<< ", "<<pct<< ", "<<vel<<"\n";
+    //std::cout<<params.amp<< ", "<<diff<< ", "<<pct<< ", "<<vel<<"\n";
 
     return vel;
 }
