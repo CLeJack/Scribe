@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../util/Head.h"
-#include "../util/Waveforms.h"
-#include "../util/Tuning.h"
-#include "../util/CircularBuffer.h"
-#include "../util/Stats.h"
-#include "../util/DCT.h"
-#include "../midi/MidiSwitch.h"
+#include "Head.h"
+#include "Waveforms.h"
+#include "Tuning.h"
+#include "CircularBuffer.h"
+#include "Stats.h"
+#include "DCT.h"
+#include "MidiSwitch.h"
 
 struct Properties
 {

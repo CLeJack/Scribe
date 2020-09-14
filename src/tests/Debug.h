@@ -1,5 +1,5 @@
 #pragma once
-#include "../util/Head.h"
+#include "Head.h"
 
 //debugging
 void printColumn(fvec& arr, std::string title);
