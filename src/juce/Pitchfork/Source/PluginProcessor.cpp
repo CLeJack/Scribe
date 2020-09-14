@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 PitchforkAudioProcessor::PitchforkAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -22,6 +23,8 @@ PitchforkAudioProcessor::PitchforkAudioProcessor()
                        )
 #endif
 {
+    
+    addParameter (channelInP = new juce::AudioParameterInt ("channel", "Active Channel",0,1,1));
 }
 
 PitchforkAudioProcessor::~PitchforkAudioProcessor()
@@ -93,6 +96,7 @@ void PitchforkAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void PitchforkAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
@@ -129,9 +133,11 @@ bool PitchforkAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void PitchforkAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+
+    
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    auto iChanCount  = getTotalNumInputChannels();
+    auto oChanCount = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -139,8 +145,7 @@ void PitchforkAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -148,12 +153,31 @@ void PitchforkAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    
+    //for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    //buffer.clear (i, 0, buffer.getNumSamples());
+    
+    std::cout<<getSampleRate()<< ", "<< oChanCount<< ", "<< iChanCount<< ", "<< getBlockSize()<<"\n";
+    
+    
+    switch(state)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+        case PluginState::waiting :
+            std::cout<<"waiting\n";
+            waiting (buffer, midiMessages);
+            break;
+        case PluginState::ready :
+            std::cout<<"ready\n";    
+            ready (buffer, midiMessages);
+            break;
+        case PluginState::updating :
+            std::cout<<"updating\n";
+            updating (buffer, midiMessages);
+            break;
     }
+    
+    buffer.clear();
+    
 }
 
 //==============================================================================
@@ -186,4 +210,64 @@ void PitchforkAudioProcessor::setStateInformation (const void* data, int sizeInB
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new PitchforkAudioProcessor();
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// custom functions
+
+void PitchforkAudioProcessor::initialize()
+{
+    propsPtr.reset (new Properties (getSampleRate(), getBlockSize() ));
+    storagePtr.reset ( new Storage (*propsPtr.get() ));
+}
+
+void PitchforkAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    if(getSampleRate() > 0)
+    {
+        initialize();
+        state = PluginState::ready;
+    }
+    buffer.clear();
+}
+
+void PitchforkAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+
+    Storage& S = *storagePtr.get();
+    Properties& P = *propsPtr.get();
+
+    auto* channelData = buffer.getReadPointer (*channelInP);
+    
+    for(int i = 0; i < buffer.getNumSamples(); i++)
+    {
+        S.history.get()->push (normToInt16Range(channelData[i]));
+    }
+    
+    fvec trueSignal = S.history.get()->toOrderedVec();
+    fvec signalDS ( P.dsHistSamples,0);
+    
+    for(int i = 0; i < signalDS.size(); i++)
+    {
+        signalDS[i] = trueSignal[i*P.dsFactor];
+    }
+    
+    int windowStart = signalDS.size() - signalDS.size()/2 ;
+    
+    fvec weights = dct (*S.matrix.get(), signalDS, 0, P.freqSize, windowStart, signalDS.size());
+    
+    weights = sumNormalize(weights);
+    
+    fvec comy2 = CoMY2(signalDS);
+}
+
+void PitchforkAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+{
+    Storage& storage = *storagePtr.get();
+    Properties& props = *propsPtr.get();
+    
+    initialize();
+    state = PluginState::ready;
+    
+    buffer.clear();
 }

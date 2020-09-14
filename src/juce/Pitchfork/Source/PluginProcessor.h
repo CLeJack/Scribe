@@ -9,6 +9,9 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ProcessData.h"
+
+enum class PluginState {waiting, ready, updating};
 
 //==============================================================================
 /**
@@ -55,5 +58,24 @@ public:
 
 private:
     //==============================================================================
+    //custom functions+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    std::unique_ptr<Properties> propsPtr;
+    std::unique_ptr<Storage> storagePtr;
+    
+    juce::AudioParameterInt* channelInP;
+    juce::AudioParameterInt* loNoteP;
+    juce::AudioParameterInt* hiNoteP;
+    
+    void initialize();
+    
+    void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    
+    
+    
+    PluginState state = PluginState::waiting;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchforkAudioProcessor)
 };
