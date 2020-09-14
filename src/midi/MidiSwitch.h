@@ -1,4 +1,4 @@
-#include "../util/Head.h"
+#include "Head.h"
 
 
 enum class MidiState {off, init, on, retrigger};
