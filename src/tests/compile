@@ -1,3 +1,0 @@
-#! /bin/bash
-
-g++ -o test.o Test.cpp Debug.cpp ProcessData.cpp MidiSwitch.cpp CircularBuffer.cpp DCT.cpp Stats.cpp Tuning.cpp Waveforms.cpp -ggdb -I /mnt/e/Projects/Scribe/src
