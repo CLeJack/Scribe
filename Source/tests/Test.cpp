@@ -40,7 +40,7 @@ int main()
     int octShift = 0;
     int semitoneShift = 0;
     int lowestNoteP = 28;
-    int highestNoteP = 72;
+    int highestNoteP = 84;
 
     float velDbMinP = -40;
     float velDbMaxP = -20;

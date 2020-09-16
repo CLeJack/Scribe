@@ -37,7 +37,7 @@ void setTimeVector(fvec& timeVector, float srate)
     for(int i = 0; i < timeVector.size(); i++)
     {
         // 1 / srate = time increment
-        timeVector[i] = (i * (1.0 / srate) );
+        timeVector[i] = (i * (1.0f / srate) );
     }
 }
 
@@ -46,8 +46,8 @@ fvec sinusoid(const fvec& t, float frequency, float phaseDeg, float amplitude)
     //t = time vector
     fvec output(t.size(),0);
 
-    float omega = 2 * M_PI * frequency;
-    float theta = phaseDeg * M_PI/180;
+    float omega = 2 * MY_PI * frequency;
+    float theta = phaseDeg * MY_PI/180;
 
     for(int i = 0; i < output.size(); i++)
     {
@@ -73,7 +73,7 @@ cvec complex_sinusoid(const fvec& t, float frequency, float phaseDeg, float ampl
 {
     cvec output(t.size(), std::complex<float>(0,0));
 
-    float omega = 2 * M_PI * frequency;
+    float omega = 2 * MY_PI * frequency;
     float theta = phaseDeg * M_PI/180;
     std::complex<float> iunit(0,1);
 

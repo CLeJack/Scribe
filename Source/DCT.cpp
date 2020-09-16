@@ -48,7 +48,7 @@ void setComplexMatrix(cmatrix& matrix, const fvec& freqs, const fvec& timeVector
     std::complex<float> iunit(0,1);
     for(int  row = 0; row < freqs.size(); row++)
     {
-        float omega = 2 * M_PI * freqs.at(row);
+        float omega = 2 * MY_PI * freqs.at(row);
         
 
         for(int col = 0; col < timeVector.size(); col++)

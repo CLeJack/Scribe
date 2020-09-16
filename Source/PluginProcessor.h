@@ -9,19 +9,19 @@
 #pragma once
 
 #include <JuceHeader.h>
+
 #include "ProcessData.h"
 
 enum class PluginState {waiting, ready, updating};
-
 //==============================================================================
 /**
 */
-class PitchforkAudioProcessor  : public juce::AudioProcessor
+class ScribeAudioProcessor  : public juce::AudioProcessor
 {
 public:
     //==============================================================================
-    PitchforkAudioProcessor();
-    ~PitchforkAudioProcessor() override;
+    ScribeAudioProcessor();
+    ~ScribeAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -58,15 +58,37 @@ public:
 
 private:
     //==============================================================================
-    //custom functions+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
+
     std::unique_ptr<Properties> propsPtr;
     std::unique_ptr<Storage> storagePtr;
+
+    juce::AudioParameterFloat* weightP;
+    
+    juce::AudioParameterFloat* noiseP;
+    juce::AudioParameterFloat* releaseP;
+    
+    juce::AudioParameterFloat* retrigStartP;
+    juce::AudioParameterFloat* retrigStopP;
+    
+    juce::AudioParameterInt* smoothP;
+    
+    juce::AudioParameterInt* octaveP;
+    juce::AudioParameterInt* semitoneP;
+    
+    juce::AudioParameterFloat* velDbMinP;
+    juce::AudioParameterFloat* velDbMaxP;
+    juce::AudioParameterInt* velMinP;
+    juce::AudioParameterInt* velMaxP;
     
     juce::AudioParameterInt* channelInP;
+    
     juce::AudioParameterInt* loNoteP;
     juce::AudioParameterInt* hiNoteP;
     
+    std::vector<juce::MidiMessage> notes;
+    bool hostInitialized = false;
+
+
     void initialize();
     
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
@@ -76,6 +98,6 @@ private:
     
     
     PluginState state = PluginState::waiting;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchforkAudioProcessor)
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

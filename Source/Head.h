@@ -20,6 +20,7 @@ typedef std::vector<std::string> strvec;
 const int SINT16 = -1 + std::pow(2,16)/2 ;
 const float DBFLOOR = 20 * log10(1/SINT16);
 const float DBCEIL = 0;
+const double MY_PI=3.14159265358979323846264338327950288;
 
 inline float normToInt16Range(float val)
 {
