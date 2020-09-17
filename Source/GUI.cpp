@@ -14,21 +14,26 @@ ctrl + f #. ClassName
 */
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+inline void initText(juce::DrawableText component, const char* text, int justification)
+{
+    component.setText(text);
+    component.setJustification(jce::Justification(justification))
+}
+
 ParamInfo::ParamInfo()
 {
-    addAndMakVisible(status);
-    status.setText("Status");
-    status.setJustification(juce::Justication(36))
+    addAndMakeVisible(status);
+    initText(status, "Status", 36);
 
 }
 
 void ParamInfo::resized() override
 {
+    auto area =  getLocalBounds();
+
     //center the status bar by removing padding
     float wpad = getWidth()*0.5f - status.getWidth()*0.5f;
     float hpad = getHeight()*0.5f - status.getHeight()*0.5f;
-
-    auto area =  getLocalBounds();
 
     area.removeFromLeft(wpad);
     area.removeFromRight(wpad);
@@ -38,17 +43,71 @@ void ParamInfo::resized() override
     status.setBounds(area);
 }
 
-ParamSelection::ParamSelection()
+ParamNoteID::ParamNoteID()
 {
-    
+    addAndMakeVisible(desc);
+    addAndMakeVisible(loOct);
+    addAndMakeVisible(octStr);
+    addAndMakeVisible(weight);
+    addAndMakeVisible(retrigger);
+
+    initText(desc, "Node Idenification", 36);
+
+    loOct.setName("Lowest Octave: ");
+    octStr.setName("Octave Strength Threshold: ");
+    weight.setName("Note Activation Threshold: ");
+    retrigger.setName("Note Retrigger: ");
+}
+
+ParamNoteID::resized()
+{
+    auto area = getLocalBounds();
+    float padh = getHeight() * 0.05f;
+
+    area.removeFromTop(padh);
+    area.removeFromBottom(padh);
+
+    float descWidth = getWidth() * 0.2f;
+    float sliderWidth = getWidth()*0.1f;
+
+    desc.setBounds(area.removeFromLeft(descWidth));
+
+    loOct.setBounds(area.removeFromLeft(sliderWidth));
+    octStr.setBounds(area.removeFromLeft(sliderWidth));
+    weight.setBounds(area.removeFromLeft(sliderWidth));
+    retrigger.setBounds(area.removeFromLeft(sliderWidth));
 
 }
 
-ParamAmplitude::ParamAmplitude(){}
-ParamShift::ParamShift(){}
-ParamVelocity::ParamVelocity(){}
+ParamAmplitude::ParamAmplitude()
+{
+    addAndMakeVisible(desc);
+    addAndMakeVisible(noise);
+    addAndMakeVisible(release);
+}
 
-GuiParams::GuiParams(){}
+ParamShift::ParamShift()
+{
+    addAndMakeVisible(desc);
+    addAndMakeVisible(octave);
+    addAndMakeVisible(semitone);
+}
+
+ParamVelocity::ParamVelocity()
+{
+    addAndMakeVisible(desc);
+    addAndMakeVisible(decibel);
+    addAndMakeVisible(velocity);
+}
+
+GuiParams::GuiParams()
+{
+    addAndMakeVisible(info);
+    addAndMakeVisible(selection);
+    addAndMakeVisible(amplitude);
+    addAndMakeVisible(shift);
+    addAndMakeVisible(velocity);
+}
 
 
 
