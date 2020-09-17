@@ -14,6 +14,13 @@ ctrl + f #. ClassName
 5. GuiTabs - holds everything together
 */
 
+//GLOBALS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//default x and y values for the project which other screen sizes are based around
+//16:9 res
+const int REFX 800; 
+const int REFY 450;
+
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class ParamInfo : public juce::Component

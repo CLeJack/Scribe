@@ -17,9 +17,33 @@ ctrl + f #. ClassName
 ParamInfo::ParamInfo()
 {
     addAndMakVisible(status);
+    status.setText("Status");
+    status.setJustification(juce::Justication(36))
+
 }
 
-ParamSelection::ParamSelection(){}
+void ParamInfo::resized() override
+{
+    //center the status bar by removing padding
+    float wpad = getWidth()*0.5f - status.getWidth()*0.5f;
+    float hpad = getHeight()*0.5f - status.getHeight()*0.5f;
+
+    auto area =  getLocalBounds();
+
+    area.removeFromLeft(wpad);
+    area.removeFromRight(wpad);
+    area.removeFromTop(hpad);
+    area.removeFromBottom(hpad);
+
+    status.setBounds(area);
+}
+
+ParamSelection::ParamSelection()
+{
+    
+
+}
+
 ParamAmplitude::ParamAmplitude(){}
 ParamShift::ParamShift(){}
 ParamVelocity::ParamVelocity(){}
