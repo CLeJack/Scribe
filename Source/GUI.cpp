@@ -14,11 +14,8 @@ ctrl + f #. ClassName
 */
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-inline void initText(juce::DrawableText component, const char* text, int justification)
-{
-    component.setText(text);
-    component.setJustification(jce::Justification(justification))
-}
+
+//temporary expansion to test this out
 
 ParamInfo::ParamInfo()
 {
@@ -59,23 +56,20 @@ ParamNoteID::ParamNoteID()
     retrigger.setName("Note Retrigger: ");
 }
 
-ParamNoteID::resized()
+ParamNoteID::resized() override
 {
     auto area = getLocalBounds();
-    float padh = getHeight() * 0.05f;
-
-    area.removeFromTop(padh);
-    area.removeFromBottom(padh);
+    resizeH(area, 0.05f);
 
     float descWidth = getWidth() * 0.2f;
-    float sliderWidth = getWidth()*0.1f;
+    float sliderWidth = getWidth() * 0.1f;
 
     desc.setBounds(area.removeFromLeft(descWidth));
 
-    loOct.setBounds(area.removeFromLeft(sliderWidth));
-    octStr.setBounds(area.removeFromLeft(sliderWidth));
-    weight.setBounds(area.removeFromLeft(sliderWidth));
-    retrigger.setBounds(area.removeFromLeft(sliderWidth));
+    for(auto s = sliders.begin(); s != sliders.end(); s++)
+    {
+        *s.setBounds(area.removeFromLeft(sliderWidth));
+    }
 
 }
 
@@ -84,6 +78,29 @@ ParamAmplitude::ParamAmplitude()
     addAndMakeVisible(desc);
     addAndMakeVisible(noise);
     addAndMakeVisible(release);
+
+    initText(desc, "Amplitude Thresholds", 36);
+    
+    noise.setName("Note Trigger Threshold: ");
+    release.setName("Note Release Threshold: ");
+
+}
+
+ParamAmplitude::resized() override
+{
+    auto area = getLocalBounds();
+    resizeH(area, 0.05f);
+
+    float descWidth = getWidth() * 0.2f;
+    float sliderWidth = getWidth() * 0.1f;
+
+    desc.setBounds(area.removeFromLeft(descWidth));
+
+    for(auto s = sliders.begin(); s != sliders.end(); s++)
+    {
+        *s.setBounds(area.removeFromLeft(sliderWidth));
+    }
+
 }
 
 ParamShift::ParamShift()
@@ -91,6 +108,27 @@ ParamShift::ParamShift()
     addAndMakeVisible(desc);
     addAndMakeVisible(octave);
     addAndMakeVisible(semitone);
+
+    initText(desc, "Midi Note Shift", 36);
+    octave.setName("Octave Shift: ");
+    semitone.setName("Semitone Shift: ");
+}
+
+ParamShift::resized()
+{
+    auto area = getLocalBounds();
+    resizeH(area, 0.05f);
+
+    float descWidth = getWidth() * 0.2f;
+    float sliderWidth = getWidth() * 0.1f;
+
+    desc.setBounds(area.removeFromLeft(descWidth));
+
+    for(auto s = sliders.begin(); s != sliders.end(); s++)
+    {
+        *s.setBounds(area.removeFromLeft(sliderWidth));
+    }
+
 }
 
 ParamVelocity::ParamVelocity()
@@ -100,6 +138,22 @@ ParamVelocity::ParamVelocity()
     addAndMakeVisible(velocity);
 }
 
+ParamVelocity::resized()
+{
+    auto area = getLocalBounds();
+    resizeH(area, 0.05f);
+
+    float descWidth = getWidth() * 0.2f;
+    float sliderWidth = getWidth() * 0.1f;
+
+    desc.setBounds(area.removeFromLeft(descWidth));
+
+    for(auto s = sliders.begin(); s != sliders.end(); s++)
+    {
+        *s.setBounds(area.removeFromLeft(sliderWidth));
+    }
+}
+
 GuiParams::GuiParams()
 {
     addAndMakeVisible(info);
@@ -107,6 +161,21 @@ GuiParams::GuiParams()
     addAndMakeVisible(amplitude);
     addAndMakeVisible(shift);
     addAndMakeVisible(velocity);
+}
+
+GuiParams::resized()
+{
+    auto area = getLocalBounds();
+    float infoH = getHeight() * 0.8f;
+    float sectionH = getHeight() * 0.23f;
+
+    info.setBounds(area.removeFromTop(infoH));
+
+    for(auto s = mainSections.begin(); s != mainSections.end(); s++)
+    {
+        *s.setBounds(area.removeFromTop(sectionH));
+    }
+    
 }
 
 

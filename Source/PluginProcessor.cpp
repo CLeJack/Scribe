@@ -159,13 +159,13 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     switch(state)
     {
         case PluginState::waiting :
-            waiting (buffer, midiMessages);
+            //waiting (buffer, midiMessages);
             break;
         case PluginState::ready :   
-            ready (buffer, midiMessages);
+            //ready (buffer, midiMessages);
             break;
         case PluginState::updating :
-            updating (buffer, midiMessages);
+            //updating (buffer, midiMessages);
             break;
     }
     
@@ -174,13 +174,13 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 //==============================================================================
 bool ScribeAudioProcessor::hasEditor() const
 {
-    return false; // (change this to false if you choose to not supply an editor)
+    return true; // (change this to false if you choose to not supply an editor)
 }
 
 juce::AudioProcessorEditor* ScribeAudioProcessor::createEditor()
 {
-    //return new ScribeAudioProcessorEditor (*this);
-    return nullptr;
+    return new ScribeAudioProcessorEditor (*this);
+    //return nullptr;
 }
 
 //==============================================================================

@@ -15,7 +15,17 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (800, 600);
+    setSize (REFX, REFY);
+
+    addAndMakeVisible(guiTabs);
+    auto colour = findColour (juce::ResiableWindow::backgroundColourId);
+
+    guiTabs.addTab("Params",   colour, guiParams.get(),   false);
+    guiTabs.addTab("Spectrum", colour, guiSpectrum.get(), false);
+    guiTabs.addTab("Window",   colour, guiWindow.get(),   false);
+    guiTabs.addTab("Log",      colour, guiLog.get(),      false);
+    guiTabs.addTab("Settings", colour, guiSettings.get(), false);
+    
 }
 
 ScribeAudioProcessorEditor::~ScribeAudioProcessorEditor()
@@ -25,15 +35,12 @@ ScribeAudioProcessorEditor::~ScribeAudioProcessorEditor()
 //==============================================================================
 void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    if(audioProcessor.getSampleRate()>0)
-    {
-        // (Our component is opaque, so we must completely fill the background with a solid colour)
-        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    // (Our component is opaque, so we must completely fill the background with a solid colour)
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
-        g.setColour (juce::Colours::white);
-        g.setFont (15.0f);
-        g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
-    }
+    //g.setColour (juce::Colours::white);
+    //g.setFont (15.0f);
+    //g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
     
 }
 
