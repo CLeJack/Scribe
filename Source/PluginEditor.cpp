@@ -20,12 +20,12 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
     addAndMakeVisible(guiTabs);
     auto colour = findColour (juce::ResiableWindow::backgroundColourId);
 
-    guiTabs.addTab("Params",   colour, guiParams.get(),   false);
-    guiTabs.addTab("Spectrum", colour, guiSpectrum.get(), false);
-    guiTabs.addTab("Window",   colour, guiWindow.get(),   false);
-    guiTabs.addTab("Log",      colour, guiLog.get(),      false);
-    guiTabs.addTab("Settings", colour, guiSettings.get(), false);
-    
+    guiTabs.addTab("Params",   colour, &guiParam,   false);
+    guiTabs.addTab("Spectrum", colour, &guiSpectrum, false);
+    guiTabs.addTab("Window",   colour, &guiWindow,   false);
+    guiTabs.addTab("Log",      colour, &guiLog,      false);
+    guiTabs.addTab("Settings", colour, &guiSettings, false);
+
 }
 
 ScribeAudioProcessorEditor::~ScribeAudioProcessorEditor()
@@ -46,6 +46,5 @@ void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
 
 void ScribeAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    guiTabs.setBounds (getLocalBounds());
 }

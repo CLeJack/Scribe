@@ -24,7 +24,7 @@ ParamInfo::ParamInfo()
 
 }
 
-void ParamInfo::resized() override
+void ParamInfo::resized()
 {
     auto area =  getLocalBounds();
 
@@ -56,10 +56,10 @@ ParamNoteID::ParamNoteID()
     retrigger.setName("Note Retrigger: ");
 }
 
-ParamNoteID::resized() override
+ParamNoteID::resized()
 {
     auto area = getLocalBounds();
-    resizeH(area, 0.05f);
+    resizeH(area, (int)getHeight() * 0.05f);
 
     float descWidth = getWidth() * 0.2f;
     float sliderWidth = getWidth() * 0.1f;
@@ -86,10 +86,10 @@ ParamAmplitude::ParamAmplitude()
 
 }
 
-ParamAmplitude::resized() override
+ParamAmplitude::resized()
 {
     auto area = getLocalBounds();
-    resizeH(area, 0.05f);
+    resizeH(area, (int)getHeight() * 0.05f);
 
     float descWidth = getWidth() * 0.2f;
     float sliderWidth = getWidth() * 0.1f;
@@ -117,7 +117,7 @@ ParamShift::ParamShift()
 ParamShift::resized()
 {
     auto area = getLocalBounds();
-    resizeH(area, 0.05f);
+    resizeH(area, (int)getHeight() * 0.05f);
 
     float descWidth = getWidth() * 0.2f;
     float sliderWidth = getWidth() * 0.1f;
@@ -141,7 +141,7 @@ ParamVelocity::ParamVelocity()
 ParamVelocity::resized()
 {
     auto area = getLocalBounds();
-    resizeH(area, 0.05f);
+    resizeH(area, (int)getHeight() * 0.05f);
 
     float descWidth = getWidth() * 0.2f;
     float sliderWidth = getWidth() * 0.1f;
@@ -157,7 +157,7 @@ ParamVelocity::resized()
 GuiParams::GuiParams()
 {
     addAndMakeVisible(info);
-    addAndMakeVisible(selection);
+    addAndMakeVisible(noteID);
     addAndMakeVisible(amplitude);
     addAndMakeVisible(shift);
     addAndMakeVisible(velocity);

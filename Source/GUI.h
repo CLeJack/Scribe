@@ -1,4 +1,4 @@
-#pragam once
+#pragma once
 #include <JuceHeader.h>
 
 /*
@@ -19,33 +19,31 @@ ctrl + f #. ClassName
 
 //default x and y values for the project which other screen sizes are based around
 //16:9 res
-const int REFX 800; 
-const int REFY 450;
+const int REFX = 800; 
+const int REFY = 450;
 
-inline void initText(juce::DrawableText component, const char* text, int justification)
+inline void initText(juce::DrawableText& component, const char* text, int justification)
 {
     component.setText(text);
-    component.setJustification(jce::Justification(justification))
+    component.setJustification(juce::Justification(justification));
 }
 
-inline void resizeH(juce::Rectangle<int>& area, float h) 
+inline void resizeH(juce::Rectangle<int>& area, int pixels) 
 {
-    float padh = getHeight() * h;
-    area.removeFromTop(padh);
-    area.removeFromBottom(padh);
+    area.removeFromTop(pixels);
+    area.removeFromBottom(pixels);
 }
 
-inline void resizeW(juce::Rectangle<int>& area, float w) 
+inline void resizeW(juce::Rectangle<int>& area, float pixels) 
 {
-    float padw = getWidth() * w;
-    area.removeFromLeft(padh);
-    area.removeFromRight(padh);
+    area.removeFromLeft(pixels);
+    area.removeFromRight(pixels);
 }
 
-inline void resizeHW(juce::Rectangle<int>& area, float h, float w)
+inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
 {
-    resizeH(area, h);
-    resizeW(area, w);
+    resizeH(area, pixh);
+    resizeW(area, pixw);
 }
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,6 +52,8 @@ class ParamInfo : public juce::Component
 {
 public:
     ParamInfo();
+    void resized() override;
+
     juce::DrawableText status;
     
 };
@@ -62,11 +62,13 @@ class ParamNoteID : public juce::Component
 {
 public:
     ParamNoteID();
+    void resized() override;
+
     juce::DrawableText desc;
-    juce::Slider loOct(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider octStr(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider weight(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider retrigger(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider loOct(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider octStr(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider weight(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider retrigger(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
 
     std::vector<juce::Slider*> sliders = {&loOct, &octStr, &weight, &retrigger};
 };
@@ -75,9 +77,11 @@ class ParamAmplitude : public juce::Component
 {
 public:
     ParamAmplitude();
+    void resized() override;
+
     juce::DrawableText desc;
-    juce::Slider noise(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider release(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider noise(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider release(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
     
     std::vector<juce::Slider*> sliders = {&noise, &release};
 };
@@ -86,9 +90,11 @@ class ParamShift : public juce::Component
 {
 public:
     ParamShift();
+    void resized() override;
+
     juce::DrawableText desc;
-    juce::Slider octave(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider semitone(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider octave(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider semitone(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
     
     std::vector<juce::Slider*> sliders = {&octave, &semitone};
 };
@@ -96,9 +102,11 @@ class ParamVelocity : public juce::Component
 {
 public:
     ParamVelocity();
+    void resized() override;
+
     juce::DrawableText desc;
-    juce::Slider decibel(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
-    juce::Slider velocity(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider decibel(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Slider velocity(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
     
     std::vector<juce::Slider*> sliders = {&decibel, &velocity};
 };
@@ -145,40 +153,38 @@ public:
 //1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiSpectrum : public juce::Component
 {
-
+    void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
 };
 
 //1. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiWindow : public juce::Component
 {
-
+    void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiWindow);
 };
 
 //1. GuiLog ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiLog : public juce::Component
 {
-
+    void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiLog);
 };
 
 //1. GuiSettings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiSettings: public juce::Component
 {
-
+    void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSettings);
 };
 
 //1. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class GuiTabs : public juce::TabbedComponent( juce::TabbedButtonBar::Orientation TabsAtTop)
+class GuiTabs : public juce::TabbedComponent
 {
 public:
-    //GuiParams guiParams;
-    //GuiSpectrum guiSpectrum;
-    //GuiWindow guiWindow;
-    //GuiLog guiLog;
-    //GuiSettings guiSettings;
+
+    GuiTabs() : juce::TabbedComponent (juce::TabbedButtonBar::TabsAtTop){};
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiTabs);
 };
 
