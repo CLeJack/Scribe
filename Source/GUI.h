@@ -15,6 +15,48 @@ ctrl + f #. ClassName
 */
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ParamInfo : public juce::Component
+{
+public:
+    ParamInfo();
+    juce::DrawableText status;
+    
+};
+
+class ParamSelection : public juce::Component
+{
+public:
+    ParamSelection();
+    juce::Slider loOct(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider octStr(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider weight(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider retrigger(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
+};
+
+class ParamAmplitude : public juce::Component
+{
+public:
+    ParamAmplitude();
+    juce::Slider noise(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider release(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+};
+
+class ParamShift : public juce::Component
+{
+public:
+    ParamShift();
+    juce::Slider octave(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider semitone(juce::SliderStyle LinearBarVertical, juce::TextBoxPosition TextBoxBelow);
+};
+class ParamVelocity : public juce::Component
+{
+public:
+    ParamVelocity();
+    juce::Slider decibel(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
+    juce::Slider velocity(juce::SliderStyle TwoValueVertical, juce::TextBoxPosition TextBoxBelow);
+};
+
 class GuiParams : public juce::Component
 {
 /*juce::AudioParameterFloat* weightP;
@@ -40,7 +82,14 @@ class GuiParams : public juce::Component
     juce::AudioParameterInt* loOctP;
     juce::AudioParameterInt* octStrP;*/
 
-    GuiParams
+
+public:
+    GuiParams();
+    ParamInfo info;
+    ParamSelection selection;
+    ParamAmplitude amplitude;
+    ParamShift shift;
+    ParamVelocity velocity;
 };
 
 //1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
