@@ -30,8 +30,8 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter (releaseP  = new juce::AudioParameterFloat ("release", "Release Floor (dB)", -90, 0, -60));
     addParameter (weightP  = new juce::AudioParameterFloat ("weight", "Weight ", 0.045f, 0.1f, 0.045f));
     
-    addParameter (retrigStartP  = new juce::AudioParameterFloat ("retrigStart", "Retrigger Start (%)", 0.80, 1.0f, 0.9f));
-    addParameter (retrigStopP  = new juce::AudioParameterFloat ("retrigStop", "Retrigger Stop (%)", 0.80, 1.2f, 0.99f));
+    addParameter (retrigStartP  = new juce::AudioParameterFloat ("retrigStart", "Retrigger Start (%)", 0.80f, 1.0f, 0.9f));
+    addParameter (retrigStopP  = new juce::AudioParameterFloat ("retrigStop", "Retrigger Stop (%)", 0.80f, 1.2f, 0.99f));
     addParameter (smoothP  = new juce::AudioParameterInt ("smooth", "Detection smoothing", 1, 10, 4));
     
     addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
@@ -244,8 +244,12 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     {
         signalDS[i] = trueSignal[i*P.dsFactor];
     }
+
+    int loNote = *loOctP * 12;
+    int hiNote = loNote + 48; //4 octaves
+    int sigStart = 1 + signalDS.size() / 2;
     
-    fvec weights = dct (*S.matrix.get(), signalDS, *loNoteP, *hiNoteP, 0, signalDS.size());
+    fvec weights = dct (*S.matrix.get(), signalDS, loNote, hiNote, sigStart, signalDS.size());
     
     weights = sumNormalize(weights);
     fvec ratios = weightRatio(weights, 12);

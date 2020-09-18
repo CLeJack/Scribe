@@ -18,13 +18,19 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
     setSize (REFX, REFY);
 
     addAndMakeVisible(guiTabs);
-    auto colour = findColour (juce::ResiableWindow::backgroundColourId);
+    auto colour = findColour (juce::ResizableWindow::backgroundColourId);
 
-    guiTabs.addTab("Params",   colour, &guiParam,   false);
+    guiTabs.addTab("Params",   colour, &guiParams,   false);
     guiTabs.addTab("Spectrum", colour, &guiSpectrum, false);
     guiTabs.addTab("Window",   colour, &guiWindow,   false);
     guiTabs.addTab("Log",      colour, &guiLog,      false);
     guiTabs.addTab("Settings", colour, &guiSettings, false);
+
+    guiParams.resized();
+    guiSpectrum.resized();
+    guiWindow.resized();
+    guiLog.resized();
+    guiSettings.resized();
 
 }
 

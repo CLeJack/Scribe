@@ -17,8 +17,8 @@ typedef std::vector<fvec> fmatrix;
 typedef std::vector<std::string> strvec;
 
 //Scribe int 16
-const int SINT16 = -1 + std::pow(2,16)/2 ;
-const float DBFLOOR = 20 * log10(1/SINT16);
+const int SINT16 = int(-1 + std::pow(2,16)/2) ;
+const float DBFLOOR = float(20 * log10(1/SINT16));
 const float DBCEIL = 0;
 const double MY_PI=3.14159265358979323846264338327950288;
 
@@ -34,5 +34,5 @@ inline float int16ToDb(float amp)
 
 inline float dbToInt16(float db)
 {
-    return std::pow(10, db/20.0f)* SINT16;
+    return float(std::pow(10, db/20.0f)* SINT16);
 }

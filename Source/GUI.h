@@ -10,6 +10,7 @@ ctrl + f #. ClassName
 0. Globals
 1. GuiParams - parameters that power the note selection algorithm
 2. GuiSpectrum - customized frequency spectrum using logic in DCT.cpp
+3. GuiWindow - View into the window used to generate GuiSpectrum and amplitude data
 3. GuiLog - print out of all useful info generated within the audioProcessBlock
 4. GuiSettings - user settings/saving/loading etc.
 5. GuiTabs - holds everything together
@@ -22,10 +23,10 @@ ctrl + f #. ClassName
 const int REFX = 800; 
 const int REFY = 450;
 
-inline void initText(juce::DrawableText& component, const char* text, int justification)
+inline void initText(juce::Label& component, const char* text, int justification)
 {
-    component.setText(text);
-    component.setJustification(juce::Justification(justification));
+    component.setText(text, juce::NotificationType::dontSendNotification);
+    component.setJustificationType(juce::Justification(justification));
 }
 
 inline void resizeH(juce::Rectangle<int>& area, int pixels) 
@@ -48,29 +49,32 @@ inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ParamInfo : public juce::Component
-{
-public:
-    ParamInfo();
-    void resized() override;
-
-    juce::DrawableText status;
-    
-};
-
 class ParamNoteID : public juce::Component
 {
 public:
     ParamNoteID();
     void resized() override;
 
-    juce::DrawableText desc;
-    juce::Slider loOct(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider octStr(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider weight(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider retrigger(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Label desc;
 
-    std::vector<juce::Slider*> sliders = {&loOct, &octStr, &weight, &retrigger};
+    std::vector<juce::Slider> sliders{ 4 };
+
+    std::vector<juce::Range<double>> ranges = {
+        juce::Range<double>(0,3),
+        juce::Range<double>(0,5),
+        juce::Range<double>(0,100),
+        juce::Range<double>(80,120) };
+
+    std::vector<double> intervals = {1, 0.5, 0.5, 1};
+
+    std::vector<juce::Label> labels{ 4 };
+    std::vector<const char*> labelText = { "Low Oct", "Oct Str", "Wght", "Retrig" };
+    
+    std::vector<const char*> hoverTips = { 
+        "Lowest Octave: ", 
+        "Octave Strength: ", 
+        "Note Selection Weight: ", 
+        "Retrigger Pct: " };
 };
 
 class ParamAmplitude : public juce::Component
@@ -79,11 +83,23 @@ public:
     ParamAmplitude();
     void resized() override;
 
-    juce::DrawableText desc;
-    juce::Slider noise(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider release(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Label desc;
     
-    std::vector<juce::Slider*> sliders = {&noise, &release};
+    std::vector<juce::Slider> sliders{ 2 };
+
+    std::vector<juce::Range<double>> ranges = {
+        juce::Range<double>(-90,0),
+        juce::Range<double>(-90,0) };
+
+    std::vector<double> intervals = { 1, 1 };
+
+
+    std::vector<juce::Label> labels{ 2 };
+    std::vector<const char*> labelText = { "Noise", "Rel"};
+
+    std::vector<const char*> hoverTips = {
+        "Noise Threshold: ",
+        "Release Threshold: "};
 };
 
 class ParamShift : public juce::Component
@@ -92,11 +108,23 @@ public:
     ParamShift();
     void resized() override;
 
-    juce::DrawableText desc;
-    juce::Slider octave(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider semitone(juce::Slider::SliderStyle::LinearBarVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Label desc;
     
-    std::vector<juce::Slider*> sliders = {&octave, &semitone};
+    std::vector<juce::Slider> sliders{ 2 };
+
+    std::vector<juce::Range<double>> ranges = {
+        juce::Range<double>(-8,8),
+        juce::Range<double>(-11,11) };
+
+    std::vector<double> intervals = { 1, 1 };
+
+
+    std::vector<juce::Label> labels{ 2 };
+    std::vector<const char*> labelText = { "Oct", "Semi" };
+
+    std::vector<const char*> hoverTips = {
+        "Octave Shift: ",
+        "Semitone Shift: " };
 };
 class ParamVelocity : public juce::Component
 {
@@ -104,14 +132,26 @@ public:
     ParamVelocity();
     void resized() override;
 
-    juce::DrawableText desc;
-    juce::Slider decibel(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
-    juce::Slider velocity(juce::Slider::SliderStyle::TwoValueVertical, juce::Slider::TextBoxPosition::TextBoxBelow);
+    juce::Label desc;
     
-    std::vector<juce::Slider*> sliders = {&decibel, &velocity};
+    std::vector<juce::Slider> sliders{ 2 };
+
+    std::vector<juce::Range<double>> ranges = {
+        juce::Range<double>(-90,0),
+        juce::Range<double>(0, 127) };
+
+    std::vector<double> intervals = { 1, 1 };
+
+
+    std::vector<juce::Label> labels{ 2 };
+    std::vector<const char*> labelText = { "dB", "Vel" };
+
+    std::vector<const char*> hoverTips = {
+        "Decibel Range: ",
+        "Velocity Range: " };
 };
 
-class GuiParams : public juce::Component
+class GuiParams : public juce::Component, public juce::MouseListener
 {
 /*juce::AudioParameterFloat* weightP;
     
@@ -139,7 +179,14 @@ class GuiParams : public juce::Component
 
 public:
     GuiParams();
-    ParamInfo info;
+    void resized() override;
+    void addSliderListeners(std::vector<juce::Slider>& sliders);
+    void mouseEnter(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+
+    char* defaultStatus = "Status";
+
+    juce::Label status;
     ParamNoteID noteID;
     ParamAmplitude amplitude;
     ParamShift shift;
@@ -153,32 +200,40 @@ public:
 //1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiSpectrum : public juce::Component
 {
+public:
+    GuiSpectrum();
     void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
 };
 
-//1. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//2. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiWindow : public juce::Component
 {
+public:
+    GuiWindow();
     void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiWindow);
 };
 
-//1. GuiLog ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//3. GuiLog ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiLog : public juce::Component
 {
+public:
+    GuiLog();
     void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiLog);
 };
 
-//1. GuiSettings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//4. GuiSettings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiSettings: public juce::Component
 {
+public:
+    GuiSettings();
     void resized() override;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSettings);
 };
 
-//1. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//5. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiTabs : public juce::TabbedComponent
 {
 public:

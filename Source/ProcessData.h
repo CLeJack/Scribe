@@ -15,10 +15,10 @@ struct Properties
 
     float blockSize = 128;
     float srate = 44100;
-    const float histTime = .05;
+    const float histTime = .05f;
 
     const float refFreq = 440; //concert tuning
-    const float semitone = std::pow(2, 1.0/12.0); //12 Tone equal temperament
+    const float semitone = float(std::pow(2, 1.0/12.0)); //12 Tone equal temperament
     const int octaveSize = 12;
     
     

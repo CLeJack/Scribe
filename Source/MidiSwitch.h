@@ -102,5 +102,5 @@ inline float midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift
         return 0;
     }
     
-    return out;
+    return (float)out;
 }
