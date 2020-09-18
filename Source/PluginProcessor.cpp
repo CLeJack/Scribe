@@ -254,11 +254,12 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     weights = sumNormalize(weights);
     fvec ratios = weightRatio(weights, 12);
     int f0ind = maxArg(weights);
+    int noteInd = f0ind;
 
     int octaveThresh = 3;
     if(ratios[f0ind] < octaveThresh)
     {
-        f0ind = f0ind-12 < 0 ? 0 : f0ind - 12;
+        noteInd = f0ind-12 < 0 ? 0 : f0ind - 12;
     }
 
     fvec comy2 = CoMY2(signalDS);

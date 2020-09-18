@@ -7,7 +7,7 @@ The below list is major components only
 
 ctrl + f #. ClassName
 
-0. Globals
+0. General GUI
 1. GuiParams - parameters that power the note selection algorithm
 2. GuiSpectrum - customized frequency spectrum using logic in DCT.cpp
 3. GuiWindow - View into the window used to generate GuiSpectrum and amplitude data
@@ -16,12 +16,26 @@ ctrl + f #. ClassName
 5. GuiTabs - holds everything together
 */
 
-//0. GLOBALS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//0. General GUI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //default x and y values for the project which other screen sizes are based around
 //16:9 res
 const int REFX = 800; 
 const int REFY = 450;
+
+#define CALL_EACH_ELEM_FUNC(vec, func) {\
+for(int i = 0; i < vec.size(); i++)\
+    {\
+        vec[i].func;\
+    }\
+}
+
+#define APPLY_FUNC_TO_ELEM(func, vec) {\
+for(int i = 0; i < vec.size(); i++)\
+    {\
+        func(vec[i]);\
+    }\
+}
 
 inline void initText(juce::Label& component, const char* text, int justification)
 {
@@ -47,152 +61,46 @@ inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
     resizeW(area, pixw);
 }
 
+class SliderPanel : public juce::Component
+{
+public:
+    SliderPanel(const char* panelName, int sliderCount, bool showPanelDesc = true);
+    //add and make visible all components except desc when necessary
+    void setLabelNames(std::vector<const char*> names);
+    void setSliderDescriptions(std::vector<const char*> names);
+    void setRanges(std::vector<juce::Range<double>> ranges, std::vector<double> intervals);
+    void setSliderStyles(std::vector < juce::Slider::SliderStyle> styles);
+    void setSliderTextBoxes(std::vector<juce::Slider::TextEntryBoxPosition> positions);
+    void resized() override;
+
+    bool showPanelDesc;
+    juce::Label desc;
+    std::vector<juce::Slider> sliders;
+    std::vector<juce::Label> labels;
+
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SliderPanel);
+
+
+};
+
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class ParamNoteID : public juce::Component
-{
-public:
-    ParamNoteID();
-    void resized() override;
-
-    juce::Label desc;
-
-    std::vector<juce::Slider> sliders{ 4 };
-
-    std::vector<juce::Range<double>> ranges = {
-        juce::Range<double>(0,3),
-        juce::Range<double>(0,5),
-        juce::Range<double>(0,100),
-        juce::Range<double>(80,120) };
-
-    std::vector<double> intervals = {1, 0.5, 0.5, 1};
-
-    std::vector<juce::Label> labels{ 4 };
-    std::vector<const char*> labelText = { "Low Oct", "Oct Str", "Wght", "Retrig" };
-    
-    std::vector<const char*> hoverTips = { 
-        "Lowest Octave: ", 
-        "Octave Strength: ", 
-        "Note Selection Weight: ", 
-        "Retrigger Pct: " };
-};
-
-class ParamAmplitude : public juce::Component
-{
-public:
-    ParamAmplitude();
-    void resized() override;
-
-    juce::Label desc;
-    
-    std::vector<juce::Slider> sliders{ 2 };
-
-    std::vector<juce::Range<double>> ranges = {
-        juce::Range<double>(-90,0),
-        juce::Range<double>(-90,0) };
-
-    std::vector<double> intervals = { 1, 1 };
-
-
-    std::vector<juce::Label> labels{ 2 };
-    std::vector<const char*> labelText = { "Noise", "Rel"};
-
-    std::vector<const char*> hoverTips = {
-        "Noise Threshold: ",
-        "Release Threshold: "};
-};
-
-class ParamShift : public juce::Component
-{
-public:
-    ParamShift();
-    void resized() override;
-
-    juce::Label desc;
-    
-    std::vector<juce::Slider> sliders{ 2 };
-
-    std::vector<juce::Range<double>> ranges = {
-        juce::Range<double>(-8,8),
-        juce::Range<double>(-11,11) };
-
-    std::vector<double> intervals = { 1, 1 };
-
-
-    std::vector<juce::Label> labels{ 2 };
-    std::vector<const char*> labelText = { "Oct", "Semi" };
-
-    std::vector<const char*> hoverTips = {
-        "Octave Shift: ",
-        "Semitone Shift: " };
-};
-class ParamVelocity : public juce::Component
-{
-public:
-    ParamVelocity();
-    void resized() override;
-
-    juce::Label desc;
-    
-    std::vector<juce::Slider> sliders{ 2 };
-
-    std::vector<juce::Range<double>> ranges = {
-        juce::Range<double>(-90,0),
-        juce::Range<double>(0, 127) };
-
-    std::vector<double> intervals = { 1, 1 };
-
-
-    std::vector<juce::Label> labels{ 2 };
-    std::vector<const char*> labelText = { "dB", "Vel" };
-
-    std::vector<const char*> hoverTips = {
-        "Decibel Range: ",
-        "Velocity Range: " };
-};
 
 class GuiParams : public juce::Component, public juce::MouseListener
 {
-/*juce::AudioParameterFloat* weightP;
-    
-    juce::AudioParameterFloat* noiseP;
-    juce::AudioParameterFloat* releaseP;
-    
-    juce::AudioParameterFloat* retrigStartP;
-    juce::AudioParameterFloat* retrigStopP;
-    
-    juce::AudioParameterInt* smoothP;
-    
-    juce::AudioParameterInt* octaveP;
-    juce::AudioParameterInt* semitoneP;
-    
-    juce::AudioParameterFloat* velDbMinP;
-    juce::AudioParameterFloat* velDbMaxP;
-    juce::AudioParameterInt* velMinP;
-    juce::AudioParameterInt* velMaxP;
-    
-    juce::AudioParameterInt* channelInP;
-    
-    juce::AudioParameterInt* loOctP;
-    juce::AudioParameterInt* octStrP;*/
-
 
 public:
     GuiParams();
     void resized() override;
-    void addSliderListeners(std::vector<juce::Slider>& sliders);
-    void mouseEnter(const juce::MouseEvent& event) override;
-    void mouseExit(const juce::MouseEvent& event) override;
 
     char* defaultStatus = "Status";
 
     juce::Label status;
-    ParamNoteID noteID;
-    ParamAmplitude amplitude;
-    ParamShift shift;
-    ParamVelocity velocity;
+    SliderPanel noteID{"Note Identification", 5, true};
+    SliderPanel amplitude{"Amplitude Thresholds", 2, true};
+    SliderPanel midi{"Midi Modifications", 6, true};
 
-    std::vector<juce::Component*> mainSections = {&noteID, &amplitude, &shift, &velocity};
+    std::vector<SliderPanel*> panels = {&noteID, &amplitude, &midi};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiParams);
 };
@@ -221,6 +129,17 @@ class GuiLog : public juce::Component
 public:
     GuiLog();
     void resized() override;
+    void setValueLabels(int f0ind, float f0octStr, int note, float noteOctStr,
+        float amp, float dB, float trigger, float retrigger,
+        int midiOn, int midiOff, int velOn, int velOff);
+
+    std::vector<juce::Label> nameLabels{ 16 };
+    std::vector<juce::Label> valueLabels{ 16 };
+
+    juce::Label freqTitle;
+    juce::Label ampTitle;
+    juce::Label midiTitle;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiLog);
 };
 
