@@ -5,7 +5,7 @@
 
   ==============================================================================
 */
-
+#pragma once
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -44,6 +44,8 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 32));
     
     addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
+
+    pluginState = PluginState::waiting;
     
 }
 
@@ -157,16 +159,16 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
 
-    switch(plugState)
+    switch(pluginState)
     {
-        case PluginState::waiting :
-            waiting (buffer, midiMessages);
-            break;
         case PluginState::ready :   
             ready (buffer, midiMessages);
             break;
         case PluginState::updating :
             updating (buffer, midiMessages);
+            break;
+        default :
+            waiting(buffer, midiMessages);
             break;
     }
     
@@ -223,7 +225,7 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
     if(getSampleRate() > 0)
     {
         initialize();
-        plugState = PluginState::ready;
+        pluginState = PluginState::ready;
     }
     buffer.clear();
 }
@@ -272,7 +274,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     message = midiSwitch.update(midiParams);
 
-    buffer.clear();
+    
 
     if (message.send)
     {
@@ -283,33 +285,37 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         midiMessages.addEvent(note, 1);
     }
 
-    frame = (frame + 1) % 30;
+    frameCounter = (frameCounter + 1) % 30;
 
-    switch (guiState)
+    auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
+    if (frameCounter == 0 && editor != nullptr) 
     {
-        case GUIState::parameters:
-            break;
+        switch (editor->getTabState())
+        {
         case GUIState::spectrum:
-            spectrumProcess (weights, calcs);
+            spectrumProcess(weights, calcs);
             break;
         case GUIState::window:
-            windowProcess (signalDS, calcs);
+            windowProcess(signalDS, calcs);
             break;
         case GUIState::log:
-            logProcess(calcs, message);
+            logProcess(editor, calcs, message, frameCounter);
             break;
         case GUIState::settings:
             settingsProcess();
             break;
+        }
     }
+    
 
+    buffer.clear();
 }
 
 void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     
     initialize();
-    plugState = PluginState::ready;
+    pluginState = PluginState::ready;
     
     buffer.clear();
 }
@@ -322,15 +328,11 @@ void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculatio
 void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs)
 {
 }
-void ScribeAudioProcessor::logProcess(const Calculations& calcs, const SwitchMessage& message, int frame)
+void ScribeAudioProcessor::logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame)
 {
-    auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
-    if (frame == 0 && editor != nullptr) 
-    {
         editor->calcs = calcs;
         editor->message = message;
         editor->repaint();
-    }
 }
 void ScribeAudioProcessor::settingsProcess() 
 {

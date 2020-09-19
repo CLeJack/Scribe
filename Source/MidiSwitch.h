@@ -8,18 +8,18 @@ struct ConstrainMidi : public MidiMode {};
 
 struct MidiParams
 {
-    float note;
-    float ampdB;
-    float noisedB;
-    float releasedB;
-    float retrig;
-    float retrigStart;
-    float retrigStop;
-    float velDbMin;
-    float velDbMax;
-    int velMin;
-    int velMax;
-    int smoothFactor;
+    float note = 0;
+    float ampdB = 0;
+    float noisedB = 0;
+    float releasedB = 0;
+    float retrig = 0;
+    float retrigStart = 0;
+    float retrigStop = 0;
+    float velDbMin = 0;
+    float velDbMax = 0;
+    int velMin = 0;
+    int velMax = 0;
+    int smoothFactor = 0;
     bool constrain = false;
     int constrainStep = 2;
 };

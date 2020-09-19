@@ -24,6 +24,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    GUIState getTabState();
 
     Calculations calcs;
     SwitchMessage message;

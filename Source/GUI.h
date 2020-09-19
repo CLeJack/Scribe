@@ -26,7 +26,6 @@ const int REFY = 450;
 //implement this as a pluginProcessor field later
 //pass the plugin processor to the guitab;
 enum class GUIState { parameters, spectrum, window, log, settings };
-GUIState guiState = GUIState::parameters;
 
 #define CALL_EACH_ELEM_FUNC(vec, func) {\
 for(int i = 0; i < vec.size(); i++)\
@@ -165,6 +164,7 @@ public:
 
     GuiTabs() : juce::TabbedComponent (juce::TabbedButtonBar::TabsAtTop){};
     void currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
+    GUIState guiState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiTabs);
 };

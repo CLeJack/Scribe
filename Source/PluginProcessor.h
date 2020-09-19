@@ -13,11 +13,9 @@
 #include "ProcessData.h"
 #include "GUI.h"
 
+
 enum class PluginState {waiting, ready, updating};
-
-
-PluginState plugState = PluginState::waiting;
-
+class ScribeAudioProcessorEditor;
 //==============================================================================
 /**
 */
@@ -61,6 +59,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    PluginState pluginState;
     
 
 private:
@@ -72,7 +71,7 @@ private:
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void spectrumProcess(const fvec& weights, const Calculations& calcs);
     void windowProcess(const fvec& signal, const Calculations& calcs);
-    void logProcess(const Calculations& calcs, const SwitchMessage& message, int frame);
+    void logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame);
     void settingsProcess();
 
     std::unique_ptr<Properties> propsPtr;
@@ -81,7 +80,7 @@ private:
     std::vector<juce::MidiMessage> notes;
     bool hostInitialized = false;
 
-    int frame = 0;
+    int frameCounter = 0;
 
 
     

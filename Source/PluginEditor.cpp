@@ -5,7 +5,7 @@
 
   ==============================================================================
 */
-
+#pragma once
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -47,7 +47,7 @@ void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
     //g.setColour (juce::Colours::white);
     //g.setFont (15.0f);
     //g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
-    switch (guiState) 
+    switch (guiTabs.guiState) 
     {
         case GUIState::log:
             paintLog();
@@ -77,3 +77,8 @@ void ScribeAudioProcessorEditor::paintLog()
 }
 void ScribeAudioProcessorEditor::paintSpectrum() {}
 void ScribeAudioProcessorEditor::paintWindow() {}
+
+GUIState ScribeAudioProcessorEditor::getTabState() 
+{
+    return guiTabs.guiState;
+}
