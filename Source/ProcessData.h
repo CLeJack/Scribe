@@ -68,28 +68,28 @@ struct AudioParams
 {
     //holds data provided by the plugin and used as reference for
     //frequency or midi calculations
-    int loOct;
-    int octStr;
+    int loOct = 0;
+    int octStr = 0;
 
-    int noise;
-    int release;
+    int noise = 0;
+    int release = 0;
 
-    float weight;
+    float weight = 0;
 
-    float retrigStart;
-    float retrigStop;
+    float retrigStart = 0;
+    float retrigStop = 0;
 
-    int smooth;
+    int smooth = 0;
 
-    int octave;
-    int semitone;
+    int octave = 0;
+    int semitone = 0;
 
-    int velDbMin;
-    int velDbMax;
-    int velMin;
-    int velMax;
+    int velDbMin = 0;
+    int velDbMax = 0;
+    int velMin = 0;
+    int velMax = 0;
 
-    int channelIn;
+    int channelIn = 0;
 };
 
 struct Calculations 
@@ -103,27 +103,27 @@ struct Calculations
     void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
     void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params);
     
-    int loNote;
-    int hiNote;
-    int signalStart;
+    int loNote = 0;
+    int hiNote = 0;
+    int signalStart = 0;
 
-    int f0ind;
-    int f0oct;
-    int f0pitch;
-    float f0ratio;
+    int f0ind = 0;
+    int f0oct = 0;
+    int f0pitch = 0;
+    float f0ratio = 0;
     
-    int noteInd;
-    int noteOct;
-    int notePitch;
-    float noteRatio;
+    int noteInd = 0;
+    int noteOct = 0;
+    int notePitch = 0;
+    float noteRatio = 0;
 
-    float ampFull;
-    float ampHalf;
-    float trigger;
-    float retrigger;
-    float ampdB;
+    float ampFull = 0;
+    float ampHalf = 0;
+    float trigger = 0;
+    float retrigger = 0;
+    float ampdB = 0;
 
-    int midiNum;
+    int midiNum = 0;
 };
 
 

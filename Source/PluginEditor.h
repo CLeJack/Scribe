@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "GUI.h"
+
 
 //==============================================================================
 /**
@@ -25,6 +25,14 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    Calculations calcs;
+    SwitchMessage message;
+
+private:
+    // This reference is provided as a quick way for your editor to
+    // access the processor object that created it.
+    ScribeAudioProcessor& audioProcessor;
+
     GuiParams guiParams;
     GuiSpectrum guiSpectrum;
     GuiWindow guiWindow;
@@ -32,12 +40,11 @@ public:
     GuiSettings guiSettings;
     GuiTabs guiTabs;
 
+    void paintLog();
+    void paintSpectrum();
+    void paintWindow();
 
-
-private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    ScribeAudioProcessor& audioProcessor;
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessorEditor)
 };

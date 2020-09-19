@@ -157,16 +157,16 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
 
-    switch(state)
+    switch(plugState)
     {
         case PluginState::waiting :
-            //waiting (buffer, midiMessages);
+            waiting (buffer, midiMessages);
             break;
         case PluginState::ready :   
-            //ready (buffer, midiMessages);
+            ready (buffer, midiMessages);
             break;
         case PluginState::updating :
-            //updating (buffer, midiMessages);
+            updating (buffer, midiMessages);
             break;
     }
     
@@ -209,6 +209,9 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // custom functions
 
+
+//plugin state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 void ScribeAudioProcessor::initialize()
 {
     propsPtr.reset (new Properties (getSampleRate(), getBlockSize() ));
@@ -220,46 +223,45 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
     if(getSampleRate() > 0)
     {
         initialize();
-        state = PluginState::ready;
+        plugState = PluginState::ready;
     }
     buffer.clear();
 }
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-
     Storage& store = *storagePtr.get();
     Properties& props = *propsPtr.get();
     juce::MidiMessage note;
 
     AudioParams audioParams = getAudioParams();
     Calculations calcs;
-    
-    
+
+
     //add the block to history
-    auto* channelData = buffer.getReadPointer (*channelInP);
-    for(int i = 0; i < buffer.getNumSamples(); i++)
+    auto* channelData = buffer.getReadPointer(*channelInP);
+    for (int i = 0; i < buffer.getNumSamples(); i++)
     {
-        store.history.get()->push (normToInt16Range(channelData[i]));
+        store.history.get()->push(normToInt16Range(channelData[i]));
     }
-    
+
     //down sample the signal; currently without filtering
     fvec trueSignal = store.history.get()->toOrderedVec();
-    fvec signalDS (props.dsHistSamples,0);
-    for(int i = 0; i < signalDS.size(); i++)
+    fvec signalDS(props.dsHistSamples, 0);
+    for (int i = 0; i < signalDS.size(); i++)
     {
-        signalDS[i] = trueSignal[ i * props.dsFactor];
+        signalDS[i] = trueSignal[i * props.dsFactor];
     }
 
 
     calcs.updateRangeInfo(audioParams, signalDS.size());
-    
-    fvec weights = dct (*store.matrix.get(), signalDS,
+
+    fvec weights = dct(*store.matrix.get(), signalDS,
         calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
-    
+
     weights = sumNormalize(weights);
     fvec ratios = weightRatio(weights, 12);
-    
+
     calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
     calcs.updateMidiNum(store, props, audioParams);
 
@@ -269,17 +271,37 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     MidiParams midiParams = getMidiParams(calcs, audioParams);
 
     message = midiSwitch.update(midiParams);
-    
-    if(message.send)
-    {
-        note = juce::MidiMessage::noteOff( 1, message.off, (juce::uint8) message.offVel);
-        midiMessages.addEvent(note,0);
-
-        note = juce::MidiMessage::noteOn( 1, message.on, (juce::uint8)message.onVel);
-        midiMessages.addEvent(note,1);
-    }
 
     buffer.clear();
+
+    if (message.send)
+    {
+        note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
+        midiMessages.addEvent(note, 0);
+
+        note = juce::MidiMessage::noteOn(1, message.on, (juce::uint8)message.onVel);
+        midiMessages.addEvent(note, 1);
+    }
+
+    frame = (frame + 1) % 30;
+
+    switch (guiState)
+    {
+        case GUIState::parameters:
+            break;
+        case GUIState::spectrum:
+            spectrumProcess (weights, calcs);
+            break;
+        case GUIState::window:
+            windowProcess (signalDS, calcs);
+            break;
+        case GUIState::log:
+            logProcess(calcs, message);
+            break;
+        case GUIState::settings:
+            settingsProcess();
+            break;
+    }
 
 }
 
@@ -287,9 +309,31 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 {
     
     initialize();
-    state = PluginState::ready;
+    plugState = PluginState::ready;
     
     buffer.clear();
+}
+
+//Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs)
+{
+}
+void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs)
+{
+}
+void ScribeAudioProcessor::logProcess(const Calculations& calcs, const SwitchMessage& message, int frame)
+{
+    auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
+    if (frame == 0 && editor != nullptr) 
+    {
+        editor->calcs = calcs;
+        editor->message = message;
+        editor->repaint();
+    }
+}
+void ScribeAudioProcessor::settingsProcess() 
+{
 }
 
 AudioParams ScribeAudioProcessor::getAudioParams() 

@@ -206,11 +206,27 @@ GuiLog::GuiLog()
 
 }
 
-void GuiLog::setValueLabels(int f0ind, float f0octStr, int note, float noteOctStr,
-    float amp, float dB, float trigger, float retrigger,
-    int midiOn, int midiOff, int velOn, int velOff) 
+void GuiLog::setValueLabels(int f0ind, float f0ratio, int f0oct, int f0pitch,
+    int noteInd, float noteRatio, int noteOct, int notePitch,
+    float amp, float ampdB, float trigger, float retrigger,
+    int midiOn, int velOn, int midiOff, int velOff)
 {
-    //place holder
+    valueLabels[0].setText(std::to_string(f0ind), juce::NotificationType::dontSendNotification);
+    valueLabels[1].setText(std::to_string(f0ratio), juce::NotificationType::dontSendNotification);
+    valueLabels[2].setText(std::to_string(f0oct), juce::NotificationType::dontSendNotification);
+    valueLabels[3].setText(std::to_string(f0pitch), juce::NotificationType::dontSendNotification);
+    valueLabels[4].setText(std::to_string(noteInd), juce::NotificationType::dontSendNotification);
+    valueLabels[5].setText(std::to_string(noteRatio), juce::NotificationType::dontSendNotification);
+    valueLabels[6].setText(std::to_string(noteOct), juce::NotificationType::dontSendNotification);
+    valueLabels[7].setText(std::to_string(notePitch), juce::NotificationType::dontSendNotification);
+    valueLabels[8].setText(std::to_string(amp), juce::NotificationType::dontSendNotification);
+    valueLabels[9].setText(std::to_string(ampdB), juce::NotificationType::dontSendNotification);
+    valueLabels[10].setText(std::to_string(trigger), juce::NotificationType::dontSendNotification);
+    valueLabels[11].setText(std::to_string(retrigger), juce::NotificationType::dontSendNotification);
+    valueLabels[12].setText(std::to_string(midiOn), juce::NotificationType::dontSendNotification);
+    valueLabels[13].setText(std::to_string(velOn), juce::NotificationType::dontSendNotification);
+    valueLabels[14].setText(std::to_string(midiOff), juce::NotificationType::dontSendNotification);
+    valueLabels[15].setText(std::to_string(velOff), juce::NotificationType::dontSendNotification);
 }
 
 #define RESIZE_LOG_LABELS(panel, start, stop, size) {\
@@ -257,3 +273,25 @@ GuiSettings::GuiSettings() {}
 void GuiSettings::resized() {}
 
 //6. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void GuiTabs::currentTabChanged(int ind, const juce::String& name) 
+{
+    switch (ind) 
+    {
+        case 0 :
+            guiState = (GUIState)0;
+            break;
+        case 1 :
+            guiState = (GUIState)1;
+            break;
+        case 2 :
+            guiState = (GUIState)2;
+            break;
+        case 3:
+            guiState = (GUIState)3;
+            break;
+        case 4:
+            guiState = (GUIState)4;
+            break;
+    }
+}

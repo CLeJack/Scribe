@@ -47,6 +47,18 @@ void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
     //g.setColour (juce::Colours::white);
     //g.setFont (15.0f);
     //g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
+    switch (guiState) 
+    {
+        case GUIState::log:
+            paintLog();
+            break;
+        case GUIState::spectrum:
+            paintSpectrum();
+            break;
+        case GUIState::window:
+            paintWindow();
+            break;
+    }
     
 }
 
@@ -54,3 +66,14 @@ void ScribeAudioProcessorEditor::resized()
 {
     guiTabs.setBounds (getLocalBounds());
 }
+
+
+void ScribeAudioProcessorEditor::paintLog() 
+{
+    guiLog.setValueLabels(calcs.f0ind, calcs.f0ratio, calcs.f0oct, calcs.f0pitch,
+        calcs.noteInd, calcs.noteRatio, calcs.noteOct, calcs.notePitch,
+        calcs.ampFull, calcs.ampdB, calcs.trigger, calcs.retrigger,
+        message.on, message.onVel, message.off, message.offVel);
+}
+void ScribeAudioProcessorEditor::paintSpectrum() {}
+void ScribeAudioProcessorEditor::paintWindow() {}

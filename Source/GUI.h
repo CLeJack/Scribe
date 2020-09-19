@@ -23,6 +23,11 @@ ctrl + f #. ClassName
 const int REFX = 800; 
 const int REFY = 450;
 
+//implement this as a pluginProcessor field later
+//pass the plugin processor to the guitab;
+enum class GUIState { parameters, spectrum, window, log, settings };
+GUIState guiState = GUIState::parameters;
+
 #define CALL_EACH_ELEM_FUNC(vec, func) {\
 for(int i = 0; i < vec.size(); i++)\
     {\
@@ -129,9 +134,10 @@ class GuiLog : public juce::Component
 public:
     GuiLog();
     void resized() override;
-    void setValueLabels(int f0ind, float f0octStr, int note, float noteOctStr,
+    void setValueLabels(int f0ind, float f0ratio, int f0oct, int f0pitch,
+        int noteInd, float noteRatio, int noteOct, int notePitch,
         float amp, float dB, float trigger, float retrigger,
-        int midiOn, int midiOff, int velOn, int velOff);
+        int midiOn, int velOn, int midiOff, int velOff);
 
     std::vector<juce::Label> nameLabels{ 16 };
     std::vector<juce::Label> valueLabels{ 16 };
@@ -158,6 +164,7 @@ class GuiTabs : public juce::TabbedComponent
 public:
 
     GuiTabs() : juce::TabbedComponent (juce::TabbedButtonBar::TabsAtTop){};
+    void currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiTabs);
 };
