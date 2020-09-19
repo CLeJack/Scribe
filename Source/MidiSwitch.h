@@ -9,9 +9,9 @@ struct ConstrainMidi : public MidiMode {};
 struct MidiParams
 {
     float note;
-    float amp;
-    float ampThresh;
-    float releaseThresh;
+    float ampdB;
+    float noisedB;
+    float releasedB;
     float retrig;
     float retrigStart;
     float retrigStop;

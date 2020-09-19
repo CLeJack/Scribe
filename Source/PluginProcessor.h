@@ -12,7 +12,7 @@
 
 #include "ProcessData.h"
 
-enum class PluginState {waiting, ready, updating};
+enum class PluginState {waiting, ready, updating, visualizing};
 //==============================================================================
 /**
 */
@@ -56,48 +56,74 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    PluginState state = PluginState::waiting;
+
 private:
     //==============================================================================
+    void initialize();
+
+    void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
 
     std::unique_ptr<Properties> propsPtr;
     std::unique_ptr<Storage> storagePtr;
 
-    juce::AudioParameterFloat* weightP;
+    std::vector<juce::MidiMessage> notes;
+    bool hostInitialized = false;
+
+
     
-    juce::AudioParameterFloat* noiseP;
-    juce::AudioParameterFloat* releaseP;
+
+    //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    juce::AudioParameterInt* loOctP;
+    juce::AudioParameterInt* octStrP;
+
     
-    juce::AudioParameterFloat* retrigStartP;
-    juce::AudioParameterFloat* retrigStopP;
+    juce::AudioParameterInt* noiseP;
+    juce::AudioParameterInt* releaseP;
+
+    juce::AudioParameterInt* weightP;
+    
+    juce::AudioParameterInt* retrigStartP;
+    juce::AudioParameterInt* retrigStopP;
     
     juce::AudioParameterInt* smoothP;
     
     juce::AudioParameterInt* octaveP;
     juce::AudioParameterInt* semitoneP;
     
-    juce::AudioParameterFloat* velDbMinP;
-    juce::AudioParameterFloat* velDbMaxP;
+    juce::AudioParameterInt* velDbMinP;
+    juce::AudioParameterInt* velDbMaxP;
     juce::AudioParameterInt* velMinP;
     juce::AudioParameterInt* velMaxP;
     
     juce::AudioParameterInt* channelInP;
-    
-    juce::AudioParameterInt* loOctP;
-    juce::AudioParameterInt* octStrP;
-    
-    std::vector<juce::MidiMessage> notes;
-    bool hostInitialized = false;
 
+    inline int getLoOctP() { return *loOctP; }
+    inline int getOctStrP() { return *octStrP; }
 
-    void initialize();
-    
-    void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    
-    
-    
-    PluginState state = PluginState::waiting;
+    inline float getNoiseP() { return (float)*noiseP; }
+    inline float getReleaseP() { return (float)*releaseP; }
+
+    inline float getWeightP() { return (float)*weightP / 1000.0f; }
+    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
+    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
+    inline int getSmoothP() { return *smoothP; }
+
+    inline int getOctaveP() { return *octaveP; }
+    inline int getSemitoneP() { return *semitoneP; }
+
+    inline float getVelDbMinP() { return (float)*velDbMinP; }
+    inline float getVelDbMaxP() { return (float)*velDbMaxP; }
+    inline int getVelMinP() { return *velMinP; }
+    inline int getVelMaxP() { return *velMaxP; }
+    inline int getChannelInP() { return *channelInP; }
+
+    AudioParams getAudioParams();
+
+    MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

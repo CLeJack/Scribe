@@ -55,7 +55,7 @@ int MidiSwitch::getVelocity(const MidiParams& params)
     }
     
     float diff = std::abs(params.velDbMax - params.velDbMin);
-    float pct = std::abs(params.amp - params.velDbMin)/diff;
+    float pct = std::abs(params.ampdB - params.velDbMin)/diff;
     
     int vel = pct*(params.velMax - params.velMin) + params.velMin;
     vel = vel > params.velMax ? params.velMax : vel;
@@ -97,7 +97,7 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     SwitchMessage output = SwitchMessage();
     float smooth;
     smooth = smoothValue(params); //should be called before on, retrigger, & portamento
-    if(params.amp < params.releaseThresh)
+    if(params.ampdB < params.releasedB )
     {
         state = MidiState::off;
     }
@@ -136,7 +136,7 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.amp > params.ampThresh && params.note != 0)
+    else if(params.ampdB > params.noisedB && params.note != 0)
     {
         notes.push(params.note);
         onSequence(params, output);
@@ -161,7 +161,7 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.retrig >= params.retrigStop || params.amp < params.releaseThresh)
+    else if(params.retrig >= params.retrigStop || params.ampdB < params.releasedB )
     {
         state = MidiState::off;
     }

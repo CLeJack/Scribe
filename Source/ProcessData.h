@@ -64,6 +64,68 @@ struct Storage
     
 };
 
+struct AudioParams 
+{
+    //holds data provided by the plugin and used as reference for
+    //frequency or midi calculations
+    int loOct;
+    int octStr;
+
+    int noise;
+    int release;
+
+    float weight;
+
+    float retrigStart;
+    float retrigStop;
+
+    int smooth;
+
+    int octave;
+    int semitone;
+
+    int velDbMin;
+    int velDbMax;
+    int velMin;
+    int velMax;
+
+    int channelIn;
+};
+
+struct Calculations 
+{
+    //holds data calculated within the audio block or a simulation of an audio block
+
+
+    //combining all of this data in structs adds a lot of abstraction
+    //I'm keep function calls explicit so the process is more transparent within the audioblock
+    void updateRangeInfo(const AudioParams& params, int signalSize);
+    void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
+    void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params);
+    
+    int loNote;
+    int hiNote;
+    int signalStart;
+
+    int f0ind;
+    int f0oct;
+    int f0pitch;
+    float f0ratio;
+    
+    int noteInd;
+    int noteOct;
+    int notePitch;
+    float noteRatio;
+
+    float ampFull;
+    float ampHalf;
+    float trigger;
+    float retrigger;
+    float ampdB;
+
+    int midiNum;
+};
+
 
 fvec getPeaks(const fvec& signal);
 void alignWithPeaks(fvec& arr, const fvec& peaks);
@@ -72,5 +134,6 @@ void clearBelowInd(fvec& arr, int ind);
 void clearAboveInd(fvec& arr, int ind);
 
 fvec weightRatio(const fvec& arr, int octSize);
+
 
 

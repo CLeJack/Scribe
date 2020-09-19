@@ -23,22 +23,23 @@ ScribeAudioProcessor::ScribeAudioProcessor()
 #endif
 {
 
-    addParameter (loOctP = new juce:: AudioParameterInt ("loNote", "Lowest Note", 12, 84, 24));
+    addParameter (loOctP = new juce:: AudioParameterInt ("loNote", "Lowest Note", 0, 3, 2));
     addParameter (octStrP = new juce:: AudioParameterInt ("octStr", "Octave Strength", 0, 5, 3));
 
-    addParameter (noiseP  = new juce::AudioParameterFloat ("noise", "Noise Floor (dB)", -90, 0, -30));
-    addParameter (releaseP  = new juce::AudioParameterFloat ("release", "Release Floor (dB)", -90, 0, -60));
-    addParameter (weightP  = new juce::AudioParameterFloat ("weight", "Weight ", 0.045f, 0.1f, 0.045f));
+    addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
+    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -60));
     
-    addParameter (retrigStartP  = new juce::AudioParameterFloat ("retrigStart", "Retrigger Start (%)", 0.80f, 1.0f, 0.9f));
-    addParameter (retrigStopP  = new juce::AudioParameterFloat ("retrigStop", "Retrigger Stop (%)", 0.80f, 1.2f, 0.99f));
+    addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 45));
+    addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start (%)", 80, 120, 90));
+    addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop (%)", 80, 120, 90));
+    
     addParameter (smoothP  = new juce::AudioParameterInt ("smooth", "Detection smoothing", 1, 10, 4));
     
     addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
     addParameter (semitoneP  = new juce::AudioParameterInt ("semitone", "Semitone Shift", -12, 12, 0));
     
-    addParameter (velDbMaxP  = new juce::AudioParameterFloat ("velDbMax", "Vel dB Max (dB)", -90, 0, -20));
-    addParameter (velDbMinP  = new juce::AudioParameterFloat ("velDbMin", "Vel dB Min (dB)", -90, 0, -30));
+    addParameter (velDbMaxP  = new juce::AudioParameterInt("velDbMax", "Vel dB Max (dB)", -90, 0, -20));
+    addParameter (velDbMinP  = new juce::AudioParameterInt("velDbMin", "Vel dB Min (dB)", -90, 0, -30));
     addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 96));
     addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 32));
     
@@ -227,65 +228,47 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 
-    Storage& S = *storagePtr.get();
-    Properties& P = *propsPtr.get();
+    Storage& store = *storagePtr.get();
+    Properties& props = *propsPtr.get();
     juce::MidiMessage note;
 
+    AudioParams audioParams = getAudioParams();
+    Calculations calcs;
+    
+    
+    //add the block to history
     auto* channelData = buffer.getReadPointer (*channelInP);
     for(int i = 0; i < buffer.getNumSamples(); i++)
     {
-        S.history.get()->push (normToInt16Range(channelData[i]));
+        store.history.get()->push (normToInt16Range(channelData[i]));
     }
     
-    fvec trueSignal = S.history.get()->toOrderedVec();
-    fvec signalDS ( P.dsHistSamples,0);
-
+    //down sample the signal; currently without filtering
+    fvec trueSignal = store.history.get()->toOrderedVec();
+    fvec signalDS (props.dsHistSamples,0);
     for(int i = 0; i < signalDS.size(); i++)
     {
-        signalDS[i] = trueSignal[i*P.dsFactor];
+        signalDS[i] = trueSignal[ i * props.dsFactor];
     }
 
-    int loNote = *loOctP * 12;
-    int hiNote = loNote + 48; //4 octaves
-    int sigStart = 1 + signalDS.size() / 2;
+
+    calcs.updateRangeInfo(audioParams, signalDS.size());
     
-    fvec weights = dct (*S.matrix.get(), signalDS, loNote, hiNote, sigStart, signalDS.size());
+    fvec weights = dct (*store.matrix.get(), signalDS,
+        calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
     
     weights = sumNormalize(weights);
     fvec ratios = weightRatio(weights, 12);
-    int f0ind = maxArg(weights);
-    int noteInd = f0ind;
-
-    int octaveThresh = 3;
-    if(ratios[f0ind] < octaveThresh)
-    {
-        noteInd = f0ind-12 < 0 ? 0 : f0ind - 12;
-    }
-
-    fvec comy2 = CoMY2(signalDS);
-
-    float avgPeakAmp = 0.5*(maxValue(signalDS) - minValue(signalDS));
-
-    float metricTrigger= weights[f0ind];
-    float metricRetrigger = comy2[1]/comy2[0];
-    float amp = int16ToDb(avgPeakAmp);
-
-
-    f0ind = metricTrigger < *weightP ? 0 : f0ind;
-    f0ind = f0ind < 24 ? 0 : f0ind;
-    f0ind = amp < *noiseP ? 0 : f0ind;
     
+    calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
+    calcs.updateMidiNum(store, props, audioParams);
 
-    float midiNum = 0;
-    MidiSwitch& midiSwitch = *S.midiSwitch.get();
+    MidiSwitch& midiSwitch = *store.midiSwitch.get();
     SwitchMessage message{};
 
-    midiNum = midiShift(f0ind, *S.frequencies.get(), P.refFreq, *octaveP, *semitoneP);
-    MidiParams p{midiNum, amp, *noiseP, *releaseP, 
-    metricRetrigger, *retrigStartP, *retrigStopP, 
-    *velDbMinP, *velDbMaxP, *velMinP, *velMaxP,
-    *smoothP};
-    message = midiSwitch.update(p);
+    MidiParams midiParams = getMidiParams(calcs, audioParams);
+
+    message = midiSwitch.update(midiParams);
     
     if(message.send)
     {
@@ -307,4 +290,51 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
     state = PluginState::ready;
     
     buffer.clear();
+}
+
+AudioParams ScribeAudioProcessor::getAudioParams() 
+{
+    auto output = AudioParams();
+    output.loOct = getLoOctP();
+    output.octStr = getOctStrP();
+
+    output.noise = getNoiseP();
+    output.release = getReleaseP();
+    output.weight = getWeightP();
+    output.retrigStart = getRetrigStartP();
+    output.retrigStop = getRetrigStopP();
+
+    output.smooth = getSmoothP();
+
+    output.octave = getOctaveP();
+    output.semitone = getSemitoneP();
+
+    output.velDbMax = getVelDbMaxP();
+    output.velDbMin = getVelDbMinP();
+
+    output.velMax = getVelMaxP();
+    output.velMin = getVelMinP();
+
+    output.channelIn = getChannelInP();
+
+    return output;
+}
+
+MidiParams ScribeAudioProcessor::getMidiParams(const Calculations& calcs, const AudioParams& params)
+{
+    auto output = MidiParams();
+    output.note = calcs.midiNum;
+    output.ampdB = calcs.ampdB;
+    output.noisedB = params.noise;
+    output.releasedB = params.release;
+    output.retrig = calcs.retrigger;
+    output.retrigStart = params.retrigStart;
+    output.retrigStop = params.retrigStop;
+    output.velDbMin = params.velDbMin;
+    output.velDbMax = params.velDbMax;
+    output.velMin = params.velMin;
+    output.velMax = params.velMax;
+    output.smoothFactor = params.smooth;
+
+    return output;
 }

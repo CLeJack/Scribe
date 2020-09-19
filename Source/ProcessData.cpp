@@ -63,10 +63,65 @@ Storage::Storage(Properties& props)
 
 }
 
-// fill process data vectors ~~~~~~~~~~~~~~~~~~~~~`
 
 
+void Calculations::updateRangeInfo(const AudioParams& params, int signalSize)
+{
+    loNote = params.loOct * 12;
+    hiNote = loNote + 48; //4 octaves
 
+    //full signal start calculates octave 0 which isn't needed
+    //half signal starts calculations on octave 1 which should be bass guitar range
+    signalStart = 1 + signalSize / 2; 
+}
+
+void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params)
+{
+    //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
+    fvec comy2 = CoMY2(signal);
+
+    //amplitude measured using the full signal window and half signal window
+    ampFull = comy2[0];
+    ampHalf = comy2[1];
+
+    //fundamental index naively chosen by the greatest peak in frequency spectrum
+    f0ind = maxArg(weights);
+    f0ratio = ratios[f0ind];
+
+    //max value associated with f0ind
+    trigger = weights[f0ind];
+
+    //a reasonable dip below 100% shows a change in the most recent portion of the signal
+    //relative to the entire signal
+    retrigger = ampHalf / ampFull;
+
+    ampdB = int16ToDb(ampFull);
+
+    //note validation --sending to 0 will cue midi to ignore this note
+    f0ind = trigger < params.weight ? 0 : f0ind;
+    f0ind = f0ind < loNote ? 0 : f0ind;
+    f0ind = ampdB < params.noise ? 0 : f0ind;
+
+    //note Ind undergoes an octave correction;
+    noteInd = f0ind;
+    noteRatio = f0ratio;
+    if (f0ratio < params.octStr)
+    {
+        noteInd = f0ind - 12 < 0 ? 0 : f0ind - 12;
+        noteRatio = ratios[noteInd];
+    }
+
+    f0oct = f0ind / 12;
+    f0pitch = f0ind % 12;
+
+    noteOct = noteInd / 12;
+    notePitch = noteInd % 12;
+}
+
+void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params) 
+{
+    midiNum = midiShift(f0ind, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
+}
 
 fvec getPeaks(const fvec& signal)
 {
