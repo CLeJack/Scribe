@@ -23,7 +23,7 @@ ScribeAudioProcessor::ScribeAudioProcessor()
 #endif
 {
 
-    addParameter (loOctP = new juce:: AudioParameterInt ("loNote", "Lowest Note", 0, 3, 2));
+    addParameter (loOctP = new juce:: AudioParameterInt ("loOct", "Lowest Octave", 0, 3, 2));
     addParameter (octStrP = new juce:: AudioParameterInt ("octStr", "Octave Strength", 0, 5, 3));
 
     addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
@@ -43,7 +43,7 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 96));
     addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 32));
     
-    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
+    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  0, 1) );
 
     pluginState = PluginState::waiting;
     
@@ -258,6 +258,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateRangeInfo(audioParams, signalDS.size());
 
+    //discrete customized transform (dft) using a portion of frequency and signal
     fvec weights = dct(*store.matrix.get(), signalDS,
         calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
 
@@ -362,25 +363,6 @@ AudioParams ScribeAudioProcessor::getAudioParams()
     output.velMin = getVelMinP();
 
     output.channelIn = getChannelInP();
-
-    return output;
-}
-
-MidiParams ScribeAudioProcessor::getMidiParams(const Calculations& calcs, const AudioParams& params)
-{
-    auto output = MidiParams();
-    output.note = calcs.midiNum;
-    output.ampdB = calcs.ampdB;
-    output.noisedB = params.noise;
-    output.releasedB = params.release;
-    output.retrig = calcs.retrigger;
-    output.retrigStart = params.retrigStart;
-    output.retrigStop = params.retrigStop;
-    output.velDbMin = params.velDbMin;
-    output.velDbMax = params.velDbMax;
-    output.velMin = params.velMin;
-    output.velMax = params.velMax;
-    output.smoothFactor = params.smooth;
 
     return output;
 }

@@ -133,7 +133,5 @@ private:
 
     AudioParams getAudioParams();
 
-    MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

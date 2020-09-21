@@ -10,17 +10,17 @@ int main()
     
     auto props = Properties(44100, 128);
 
-    auto data = Storage(props);
+    auto store = Storage(props);
     
     fvec signal0 = importCsv("input/_test_amfull.csv", 2.5*44100);
 
     #if PRINT == 1
-    printRows(*data.frequencies.get(), "output/_0_freqs.csv");
-    printRows(*data.exFrequencies.get(), "output/_0_exfreqs.csv");
-    printColumn(*data.timeVector.get(), "output/_0_timeVector.csv");
+    printRows(*store.frequencies.get(), "output/_0_freqs.csv");
+    printRows(*store.exFrequencies.get(), "output/_0_exfreqs.csv");
+    printColumn(*store.timeVector.get(), "output/_0_timeVector.csv");
 
-    printMatrixReal(*data.matrix.get(), "output/_0_cmatrix.csv",0);
-    printMatrix(*data.exMatrix.get(), "output/_0_excmatrix.csv",0);
+    printMatrixReal(*store.matrix.get(), "output/_0_cmatrix.csv",0);
+    printMatrix(*store.exMatrix.get(), "output/_0_excmatrix.csv",0);
 
     printColumn(signal0, "output/_1_signal.csv");
 
@@ -30,22 +30,22 @@ int main()
     int start = 0;
     int end = 0;
 
-    float noiseP = -40;
-    float releaseP = -60;
-    float weightP = .05;
-    float octaveThresh = 2;
-    float retrigStartP = .9;
-    float retrigStopP = .99;
-    int smoothP = 4;
-    int octShift = 0;
-    int semitoneShift = 0;
-    int lowestNoteP = 28;
-    int highestNoteP = 84;
+    AudioParams audioParams;
 
-    float velDbMinP = -40;
-    float velDbMaxP = -20;
-    int velMinP = 32;
-    int velMaxP = 96;
+    audioParams.noise = -30;
+    audioParams.release = -60;
+    audioParams.weight = .05f;
+    audioParams.octStr = 3;
+    audioParams.retrigStart = .9f;
+    audioParams.retrigStop = 1.0f;
+    audioParams.smooth = 4;
+    audioParams.octave = 0;
+    audioParams.semitone = 0;
+    audioParams.loOct = 2;
+    audioParams.velDbMax = -20;
+    audioParams.velDbMin = -30;
+    audioParams.velMax = 127;
+    audioParams.velMin = 0;
 
     MidiSwitch midiSwitch = MidiSwitch();
 
@@ -58,10 +58,10 @@ int main()
         {
             //continually pushing to the down sample history gives a really bad signal
             //even with filtering, so use the full history and down sample from there always
-            data.history.get()->push( signal0[i + offset] );
+            store.history.get()->push( signal0[i + offset] );
         }
         
-        fvec trueSignal = data.history.get()->toOrderedVec();
+        fvec trueSignal = store.history.get()->toOrderedVec();
         
         fvec signalDS(props.dsHistSamples,0);
 
@@ -70,58 +70,39 @@ int main()
             signalDS[i] = trueSignal[i*props.dsFactor];
         }
 
-        
+        Calculations calcs;
+
+        calcs.updateRangeInfo(audioParams, signalDS.size());
+
         int windowStart = signalDS.size() - signalDS.size()/2;
-        fvec weights = dct(*data.matrix.get(), signalDS, lowestNoteP, highestNoteP, 
-                           0, signalDS.size());
+        fvec weights = dct(*store.matrix.get(), signalDS,
+            calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
 
         weights = sumNormalize(weights);
         fvec ratios = weightRatio(weights, 12);
-        int f0ind = maxArg(weights);
-
-        if(ratios[f0ind] < octaveThresh)
-        {
-            f0ind = f0ind-12 < 0 ? 0 : f0ind - 12;
-        }
-
-        fvec comy2 = CoMY2(signalDS);
-        float avgPeakAmp = 0.5*(maxValue(signalDS) - minValue(signalDS));
-
         
+        calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
+        calcs.updateMidiNum(store, props, audioParams);
 
-        float metricTrigger= weights[f0ind];
-        float metricRetrigger = comy2[1]/comy2[0];
-        float amp = int16ToDb(avgPeakAmp);
-        
-
-        f0ind = metricTrigger < weightP ? 0 : f0ind;
-        f0ind = f0ind < 24 ? 0 : f0ind;
-        f0ind = amp < noiseP ? 0 : f0ind;
-        
-
-        float midiNum = 0;
-        MidiSwitch& midiSwitch = *data.midiSwitch.get();
+        MidiSwitch& midiSwitch = *store.midiSwitch.get();
         SwitchMessage message{};
         
-        midiNum = midiShift(f0ind, *data.frequencies,props.refFreq, octShift, semitoneShift);
-        MidiParams p{midiNum, amp, noiseP, releaseP, 
-        metricRetrigger, retrigStartP, retrigStopP, 
-        velDbMinP, velDbMaxP, velMinP, velMaxP,
-        smoothP};
-        message = midiSwitch.update(p);
+        MidiParams midiParams = getMidiParams(calcs, audioParams);
+
+        message = midiSwitch.update(midiParams);
         
 
         
 #if PRINT == 1
         fvec output = {
-            (float)f0ind,
-            comy2[0],
-            avgPeakAmp,
-            int16ToDb(comy2[0]),
-            int16ToDb(avgPeakAmp),
-            metricRetrigger,
-            metricTrigger,
-            ratios[f0ind],
+            (float)calcs.f0ind,
+            calcs.ampFull,
+            calcs.ampHalf,
+            calcs.ampdB,
+            calcs.trigger,
+            calcs.retrigger,
+            calcs.f0ratio,
+            calcs.noteRatio,
             (float)message.on,
             (float)message.onVel,
             (float)message.off,

@@ -5,7 +5,7 @@ A variation on the idea of the discrete fourier transform
 
 """
 import numpy as np
-import __python.waveforms as W
+import waveforms as W
 
 def cmatrix(samples, srate, freqs, phase =0 ):
 

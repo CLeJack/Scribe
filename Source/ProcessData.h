@@ -117,8 +117,11 @@ struct Calculations
     int notePitch = 0;
     float noteRatio = 0;
 
+    float noteStr = 0;
+
     float ampFull = 0;
-    float ampHalf = 0;
+    float ampHalf1 = 0;
+    float ampHalf2 = 0;
     float trigger = 0;
     float retrigger = 0;
     float ampdB = 0;
@@ -135,5 +138,4 @@ void clearAboveInd(fvec& arr, int ind);
 
 fvec weightRatio(const fvec& arr, int octSize);
 
-
-
+MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);

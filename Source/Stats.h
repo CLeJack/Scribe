@@ -45,6 +45,7 @@ fvec line(const fvec& regOutput, int len);
 
 float CoMY(const fvec& arr);
 fvec CoMY2(const fvec& arr);
+fvec CoMY3(const fvec& arr);
 
 float CoMX(const fvec& arr);
 fvec CoMX2(const fvec& arr);

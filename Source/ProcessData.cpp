@@ -78,27 +78,27 @@ void Calculations::updateRangeInfo(const AudioParams& params, int signalSize)
 void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params)
 {
     //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
-    fvec comy2 = CoMY2(signal);
+    fvec comy3 = CoMY3(signal);
 
     //amplitude measured using the full signal window and half signal window
-    ampFull = comy2[0];
-    ampHalf = comy2[1];
+    ampFull = comy3[0];
+    ampHalf1 = comy3[1];
+    ampHalf2 = comy3[2];
 
     //fundamental index naively chosen by the greatest peak in frequency spectrum
     f0ind = maxArg(weights);
     f0ratio = ratios[f0ind];
 
     //max value associated with f0ind
-    trigger = weights[f0ind];
+    noteStr = weights[f0ind];
 
-    //a reasonable dip below 100% shows a change in the most recent portion of the signal
-    //relative to the entire signal
-    retrigger = ampHalf / ampFull;
+    trigger = ampHalf1/ampFull;
+    retrigger = ampHalf2 / ampFull;
 
     ampdB = int16ToDb(ampFull);
 
     //note validation --sending to 0 will cue midi to ignore this note
-    f0ind = trigger < params.weight ? 0 : f0ind;
+    f0ind = noteStr < params.weight ? 0 : f0ind;
     f0ind = f0ind < loNote ? 0 : f0ind;
     f0ind = ampdB < params.noise ? 0 : f0ind;
 
@@ -177,3 +177,21 @@ fvec weightRatio(const fvec& arr, int octSize)
 }
 
 
+MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params)
+{
+    auto output = MidiParams();
+    output.note = calcs.midiNum;
+    output.ampdB = calcs.ampdB;
+    output.noisedB = params.noise;
+    output.releasedB = params.release;
+    output.retrig = calcs.retrigger;
+    output.retrigStart = params.retrigStart;
+    output.retrigStop = params.retrigStop;
+    output.velDbMin = params.velDbMin;
+    output.velDbMax = params.velDbMax;
+    output.velMin = params.velMin;
+    output.velMax = params.velMax;
+    output.smoothFactor = params.smooth;
+
+    return output;
+}

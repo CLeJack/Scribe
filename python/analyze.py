@@ -6,9 +6,9 @@ import scipy.io.wavfile as wavfile
 import os
 from functools import reduce
 
-import __python.matrices as M
-import __python.waveforms as W
-import __python.tuning as T
+import matrices as M
+import waveforms as W
+import tuning as T
 
 
 def get_signal(path):
@@ -44,6 +44,24 @@ def get_comy2(arr):
     out2 = numerator2/denominator2
 
     return [out1,out2]
+
+def get_comy3(arr):
+    indices = np.arange(arr.shape[0])
+
+    imid = int(arr.shape[0]/2)
+    iend = arr.shape[0]
+    numerator1 = np.sum(np.abs(arr[:imid]) * indices[:imid])
+    denominator1 = np.sum(indices[:imid])
+
+    numerator2 = np.sum(np.abs(arr[imid:iend]) * indices[imid:iend])
+    denominator2 = np.sum(indices[imid:iend])
+
+    out0 = (numerator1 + numerator2)/(denominator1 + denominator2)
+    out1 = numerator1/denominator1;
+    out2 = numerator2/denominator2
+
+    return [out0,out1,out2]
+    
 
 
 def get_comx(arr):
@@ -169,17 +187,17 @@ def process(signal, opath="__results/" ):
     indi = ds_window - ds_window//2
     indf = ds_window
 
-    header = ['comy', 'f0ind', 'note', 'trigger', 'retrigger', 'octmetric', 'comw']
+    header = ['comy0', 'comy1', 'comy2', 'f0ind', 'note', 'notestr','trigger', 'retrigger', 'f0ratio','noteratio', 'comw']
     valuedata = []
     weightdata = []
-    octthresh = 4
+    octthresh = 3
 
     for i in range(windows):
         start = i*ds_block
         end = start + ds_window
         signal = ds_signal[start:end]
 
-        weights = M.dct(matrix, signal, indi=indi, indf=indf)
+        weights = M.dct(matrix, signal,rowi = 24, rowf = 72, indi=indi, indf=indf)
         weights = sum_norm(weights)
         ratios = weightRatio(weights)
 
@@ -188,13 +206,14 @@ def process(signal, opath="__results/" ):
         if ratios[f0ind] < octthresh:
                 note = f0ind - 12
 
-        comy2 = get_comy2(signal)
-        trigger = np.max(weights)
-        retrigger = comy2[1]/comy2[0]
-        comy = comy2[0]
+        comy3 = get_comy3(signal)
+        notestr = np.max(weights)
+        trigger = comy3[1]/comy3[2]
+        retrigger = comy3[2]/comy3[1]
+        comy = comy3[0]
         comw = get_comx(weights)
 
-        valuedata.append([comy, f0ind, note, trigger, retrigger, ratios[f0ind], comw])
+        valuedata.append([comy, comy3[1], comy3[2], f0ind, note, notestr, trigger, retrigger, ratios[f0ind], ratios[note], comw])
 
         weightdata.append(weights.flatten())
 
@@ -202,7 +221,7 @@ def process(signal, opath="__results/" ):
     weightdata = np.array(weightdata)
 
     vdf = pd.DataFrame(valuedata, columns=header)
-    wdf = pd.DataFrame(weightdata, columns=freqs.astype(int))
+    wdf = pd.DataFrame(weightdata, columns=freqs.astype(int)[24:72])
 
     p1 = opath + name + "-values.csv"
     p2 = opath + name + "-weights.csv"
@@ -211,7 +230,7 @@ def process(signal, opath="__results/" ):
     wdf.to_csv(p2, index=False)
 
 
-def save_results(indir="__wavcsv/", outdir="__results/"):
+def save_results(indir="__wavcsv\\", outdir="__wavresults\\"):
     dfs = load_csvs(indir)
 
     for df in dfs:

@@ -311,6 +311,34 @@ fvec CoMY2(const fvec& arr)
     return output;
 }
 
+fvec CoMY3(const fvec& arr)
+{
+    float numerator1 = 0;
+    float denominator1 = 0;
+    float numerator2 = 0;
+    float denominator2 = 0;
+    int half = arr.size()/2;
+
+    fvec output(3,0);
+
+    for(int i = 0; i < half; i++)
+    {
+        numerator1 += std::abs(arr[i] * i);
+        denominator1 += i;
+    }
+
+    for(int i = half; i < arr.size(); i++)
+    {
+        numerator2 += std::abs(arr[i] * i);
+        denominator2 += i;
+    }
+
+    output[0] = (numerator1 + numerator2)/(denominator1 + denominator2);
+    output[1] = numerator1/denominator1; //oldest history w.r.t. time
+    output[2] = numerator2/denominator2; //newest history w.r.t. time
+    return output;
+}
+
 float CoMX(const fvec& arr)
 {
     float numerator = 0;
