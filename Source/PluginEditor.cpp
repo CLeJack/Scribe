@@ -72,7 +72,7 @@ void ScribeAudioProcessorEditor::paintLog()
 {
     guiLog.setValueLabels(calcs.f0ind, calcs.f0ratio, calcs.f0oct, calcs.f0pitch,
         calcs.noteInd, calcs.noteRatio, calcs.noteOct, calcs.notePitch,
-        calcs.ampFull, calcs.ampdB, calcs.trigger, calcs.retrigger,
+        calcs.ampFull, calcs.ampdB, calcs.retrigger, calcs.retrigger,
         message.on, message.onVel, message.off, message.offVel);
 }
 void ScribeAudioProcessorEditor::paintSpectrum() {}

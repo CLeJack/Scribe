@@ -96,6 +96,7 @@ private:
 
     juce::AudioParameterInt* weightP;
     
+    juce::AudioParameterInt* trigStartP;
     juce::AudioParameterInt* retrigStartP;
     juce::AudioParameterInt* retrigStopP;
     
@@ -117,7 +118,8 @@ private:
     inline float getNoiseP() { return (float)*noiseP; }
     inline float getReleaseP() { return (float)*releaseP; }
 
-    inline float getWeightP() { return (float)*weightP / 1000.0f; }
+    inline float getWeightP() { return (float)*weightP / 100.0f; }
+
     inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
     inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
     inline int getSmoothP() { return *smoothP; }

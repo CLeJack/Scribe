@@ -90,25 +90,25 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     f0ratio = ratios[f0ind];
 
     //max value associated with f0ind
-    noteStr = weights[f0ind];
-
-    trigger = ampHalf1/ampFull;
+    weight = weights[f0ind];
     retrigger = ampHalf2 / ampFull;
 
     ampdB = int16ToDb(ampFull);
 
-    //note validation --sending to 0 will cue midi to ignore this note
-    f0ind = noteStr < params.weight ? 0 : f0ind;
+    //note validation --sending to 0 will cue MidiSwitch to ignore this note
+    f0ind = weight < params.weightThreshold ? 0 : f0ind;
     f0ind = f0ind < loNote ? 0 : f0ind;
     f0ind = ampdB < params.noise ? 0 : f0ind;
 
-    //note Ind undergoes an octave correction;
+    //note Ind undergoes an octave correction if necessary;
+    //weight data can be distributed between 1st, 2nd and 3rd harmonics in some instances
     noteInd = f0ind;
     noteRatio = f0ratio;
     if (f0ratio < params.octStr)
     {
         noteInd = f0ind - 12 < 0 ? 0 : f0ind - 12;
         noteRatio = ratios[noteInd];
+        weight = weights[noteInd] + weights[f0ind];
     }
 
     f0oct = f0ind / 12;
@@ -120,7 +120,7 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
 
 void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params) 
 {
-    midiNum = midiShift(f0ind, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
+    midiNum = midiShift(noteInd, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
 }
 
 fvec getPeaks(const fvec& signal)
@@ -180,17 +180,24 @@ fvec weightRatio(const fvec& arr, int octSize)
 MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params)
 {
     auto output = MidiParams();
-    output.note = calcs.midiNum;
+
+    output.weight = calcs.weight;
+    output.weightThreshold = params.weightThreshold;
+
+    output.midiNum = calcs.midiNum;
     output.ampdB = calcs.ampdB;
     output.noisedB = params.noise;
     output.releasedB = params.release;
+
     output.retrig = calcs.retrigger;
     output.retrigStart = params.retrigStart;
     output.retrigStop = params.retrigStop;
+    
     output.velDbMin = params.velDbMin;
     output.velDbMax = params.velDbMax;
     output.velMin = params.velMin;
     output.velMax = params.velMax;
+    
     output.smoothFactor = params.smooth;
 
     return output;

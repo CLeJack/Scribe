@@ -12,7 +12,7 @@ int main()
 
     auto store = Storage(props);
     
-    fvec signal0 = importCsv("input/_test_amfull.csv", 2.5*44100);
+    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*44100);
 
     #if PRINT == 1
     printRows(*store.frequencies.get(), "output/_0_freqs.csv");
@@ -32,12 +32,13 @@ int main()
 
     AudioParams audioParams;
 
-    audioParams.noise = -30;
-    audioParams.release = -60;
-    audioParams.weight = .05f;
+    audioParams.noise = -50;
+    audioParams.release = -50;
+    audioParams.weightThreshold = .09f;
     audioParams.octStr = 3;
+    audioParams.trigStart = 1;
     audioParams.retrigStart = .9f;
-    audioParams.retrigStop = 1.0f;
+    audioParams.retrigStop = 1.1f;
     audioParams.smooth = 4;
     audioParams.octave = 0;
     audioParams.semitone = 0;
@@ -96,8 +97,9 @@ int main()
 #if PRINT == 1
         fvec output = {
             (float)calcs.f0ind,
+            (float)calcs.noteInd,
+            (float)calcs.weight,
             calcs.ampFull,
-            calcs.ampHalf,
             calcs.ampdB,
             calcs.trigger,
             calcs.retrigger,

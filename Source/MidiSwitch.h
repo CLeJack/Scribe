@@ -1,24 +1,31 @@
 #include "Head.h"
 
 
-enum class MidiState {off, init, on, retrigger};
+enum class MidiState {off, on, retrigger};
 
 struct MidiMode{};
 struct ConstrainMidi : public MidiMode {};
 
 struct MidiParams
 {
-    float note = 0;
+    float weight = 0;
+    float weightThreshold = 0;
+
+    float midiNum = 0;
     float ampdB = 0;
     float noisedB = 0;
     float releasedB = 0;
+
     float retrig = 0;
+    float trigStart = 0;
     float retrigStart = 0;
     float retrigStop = 0;
+    
     float velDbMin = 0;
     float velDbMax = 0;
     int velMin = 0;
     int velMax = 0;
+    
     int smoothFactor = 0;
     bool constrain = false;
     int constrainStep = 2;
@@ -38,7 +45,7 @@ struct Notes
     void push(float val);
     void clear();
     bool areEqual();
-    bool equal(float note);
+    bool equal(float midiNum);
     bool areZero();
     float current = 0;
     float prev = 0;
@@ -52,26 +59,33 @@ struct MidiSwitch
     SwitchMessage update(const MidiParams& params);
     
     //received values from the above update functions;
-    SwitchMessage init  (const MidiParams& params);
+    /*
+    * To remain consistent, the following rules should apply to midi state
+    * init state and on state have arbitrary complexity and may have multiple user selectable algorithms internally
+    * -off state and retrigger state watches amplitude and trigger metrics only
+    * 
+    */
     SwitchMessage on  (const MidiParams& params);
     SwitchMessage off (const MidiParams& params);
     SwitchMessage retrigger (const MidiParams& params);
 
     void onSequence(const MidiParams& p, SwitchMessage& m);
     void offSequence(const MidiParams& p, SwitchMessage& m);
-    bool validAmp(const MidiParams& p);
-    bool validWeight(const MidiParams& P);
-    bool validRetrigger(const MidiParams& p);
 
-    SwitchMessage changePitch();
     int getVelocity(const MidiParams& params);
 
-    float smoothValue(const MidiParams& params);
+    float smoothNote(const MidiParams& params);
+
+    //simple moving average without storage
+    float SMA(float prev_avg, float current_val, int size);
 
     MidiState state = MidiState::off;
+    int initCounter = 0;
     
     Notes notes = Notes();
 };
+
+
 
 inline int midiRound(float val)
 {
@@ -86,7 +100,7 @@ inline int getMidiNumber(float freq, float refFreq)
 
 inline float midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift, int semitoneShift)
 {
-    if(f0ind == 0)
+    if(f0ind <= 0)
     {
         return 0;
     }

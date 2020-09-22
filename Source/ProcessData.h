@@ -21,7 +21,6 @@ struct Properties
     const float semitone = float(std::pow(2, 1.0/12.0)); //12 Tone equal temperament
     const int octaveSize = 12;
     
-    
 
     //float lowExp = -57 + 12; // -57 = C0
     int lowExp = -57; // -57 = C0
@@ -32,7 +31,6 @@ struct Properties
     int transBlocks = 1;
 
     
-
     float dsRate = 4000;
     int dsFactor = 0;
     int dsHistSamples = 0;
@@ -74,8 +72,9 @@ struct AudioParams
     int noise = 0;
     int release = 0;
 
-    float weight = 0;
+    float weightThreshold = 0;
 
+    float trigStart = 0;
     float retrigStart = 0;
     float retrigStop = 0;
 
@@ -103,10 +102,12 @@ struct Calculations
     void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
     void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params);
     
+    //range info
     int loNote = 0;
     int hiNote = 0;
     int signalStart = 0;
 
+    // signal indo
     int f0ind = 0;
     int f0oct = 0;
     int f0pitch = 0;
@@ -117,15 +118,17 @@ struct Calculations
     int notePitch = 0;
     float noteRatio = 0;
 
-    float noteStr = 0;
+    float weight = 0;
 
     float ampFull = 0;
     float ampHalf1 = 0;
     float ampHalf2 = 0;
+    
     float trigger = 0;
     float retrigger = 0;
     float ampdB = 0;
 
+    // midinum
     int midiNum = 0;
 };
 

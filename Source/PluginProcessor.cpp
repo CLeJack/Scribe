@@ -26,12 +26,13 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter (loOctP = new juce:: AudioParameterInt ("loOct", "Lowest Octave", 0, 3, 2));
     addParameter (octStrP = new juce:: AudioParameterInt ("octStr", "Octave Strength", 0, 5, 3));
 
-    addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
-    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -60));
+    addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -50));
+    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -50));
     
-    addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 45));
-    addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start (%)", 80, 120, 90));
-    addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop (%)", 80, 120, 90));
+    addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 5));
+
+    addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start", 50, 120, 90));
+    addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop", 50, 120, 100));
     
     addParameter (smoothP  = new juce::AudioParameterInt ("smooth", "Detection smoothing", 1, 10, 4));
     
@@ -40,8 +41,8 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     
     addParameter (velDbMaxP  = new juce::AudioParameterInt("velDbMax", "Vel dB Max (dB)", -90, 0, -20));
     addParameter (velDbMinP  = new juce::AudioParameterInt("velDbMin", "Vel dB Min (dB)", -90, 0, -30));
-    addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 96));
-    addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 32));
+    addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
+    addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 40));
     
     addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  0, 1) );
 
@@ -286,7 +287,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         midiMessages.addEvent(note, 1);
     }
 
-    frameCounter = (frameCounter + 1) % 30;
+    frameCounter = (frameCounter + 1) % 11;
 
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
     if (frameCounter == 0 && editor != nullptr) 
@@ -347,7 +348,9 @@ AudioParams ScribeAudioProcessor::getAudioParams()
 
     output.noise = getNoiseP();
     output.release = getReleaseP();
-    output.weight = getWeightP();
+    
+    output.weightThreshold = getWeightP();
+
     output.retrigStart = getRetrigStartP();
     output.retrigStop = getRetrigStopP();
 

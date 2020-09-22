@@ -5,9 +5,9 @@ ProcSrc=("ProcessData.cpp")
 TestSrc=("Debug.cpp")
 
 Path="/mnt/e/Projects/Scribe/src/"
-UtilPath="util/"
-MidiPath="midi/"
-ProcPath="process/"
+UtilPath=""
+MidiPath=""
+ProcPath=""
 
 Src=""
 Headers=""
@@ -25,4 +25,4 @@ for s in ${ProcSrc[@]}; do
 done
 
 
-g++  -I ${Path}${UtilPath} -I ${Path}${MidiPath} -I ${Path}${ProcPath} -o test.o Test.cpp Debug.cpp -ggdb ${Src}
+g++  -I "../" -o test.o Test.cpp Debug.cpp -ggdb ${Src}

@@ -18,9 +18,9 @@ bool Notes::areEqual()
     return midiRound(prev) == midiRound(current);
 }
 
-bool Notes::equal(float note)
+bool Notes::equal(float midiNum)
 {
-    return midiRound(note) == midiRound(current);
+    return midiRound(midiNum) == midiRound(current);
 }
 
 bool Notes::areZero()
@@ -68,7 +68,7 @@ int MidiSwitch::getVelocity(const MidiParams& params)
 
 void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
 {
-    // if a note switches too rapidly without a retrigger--don't count it.
+    // if a midiNum switches too rapidly without a retrigger--don't count it.
     // legato and slides happen over a time period that should be detectable by retrigger
     // or portamento logic
     m.on = midiRound(notes.current);
@@ -87,16 +87,11 @@ void MidiSwitch::offSequence(const MidiParams& p, SwitchMessage& m)
     m.send = true;
 }
 
-SwitchMessage MidiSwitch::init (const MidiParams& params)
-{
-    return SwitchMessage();
-}
-
 SwitchMessage MidiSwitch::on (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
     float smooth;
-    smooth = smoothValue(params); //should be called before on, retrigger, & portamento
+    smooth = smoothNote(params); //should be called before on, retrigger
     if(params.ampdB < params.releasedB )
     {
         state = MidiState::off;
@@ -128,17 +123,17 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
     //if(!notes.areZero() && !validAmp(params))
     if(!notes.areZero())
     {   
-        //clear note buffer if it hasn't been cleared out;
+        //clear midiNum buffer if it hasn't been cleared out;
 
         offSequence(params, output);
         //order matters here.
-        //don't want to push a new note before setting off note to prev
+        //don't want to push a new midiNum before setting off midiNum to prev
         notes.push(0);
         
     }
-    else if(params.ampdB > params.noisedB && params.note != 0)
+    else if(params.ampdB > params.noisedB && params.midiNum != 0)
     {
-        notes.push(params.note);
+        notes.push(params.midiNum);
         onSequence(params, output);
         state = MidiState::on;
 
@@ -153,33 +148,50 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
     SwitchMessage output = SwitchMessage();
     if(!notes.areZero() && params.retrig < params.retrigStop)
     {   
-        //clear note buffer if it hasn't been cleared out;
+        //clear midiNum buffer if it hasn't been cleared out;
 
         offSequence(params, output);
         //order matters here.
-        //don't want to push a new note before setting off note to prev
+        //don't want to push a new midiNum before setting off midiNum to prev
         notes.push(0);
         
     }
-    else if(params.retrig >= params.retrigStop || params.ampdB < params.releasedB )
+    else if(params.retrig >= params.retrigStop  || params.ampdB < params.releasedB)
     {
         state = MidiState::off;
     }
-
     return output;
 }
 
 
 
-float MidiSwitch::smoothValue(const MidiParams& params)
+float MidiSwitch::SMA(float prev_avg, float current_val, int size)
+{
+    /*
+    it seems this method has two vunerabilities
+
+    1. it holds on to data introduced into the history much longer than if an actual window was used
+       e.g. if a million was introduced with a prev_avg of 1, many updates would be needed to flush a million
+       if a window of size N with history was used, only N+1 updates would be needed.
+
+    2. rounding error is introduced with each division.
+
+    neither should be an issue here
+    */
+    float avg = prev_avg - prev_avg / size;
+    avg += current_val / size;
+    return avg;
+}
+
+float MidiSwitch::smoothNote(const MidiParams& params)
 {
     //acting like a rolling average where the window size = smoothFactor
-    if(params.note == 0)
+    if(params.midiNum == 0)
     {
         return notes.current;
     }
     float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
-    ref += params.note * 1.0f/params.smoothFactor;
+    ref += params.midiNum * 1.0f/params.smoothFactor;
     ref = std::abs(notes.current - ref) < params.constrainStep ? ref : notes.current;
     return ref;
 }
