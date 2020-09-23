@@ -170,8 +170,82 @@ void GuiParams::resized()
 
 
 //2. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GuiSpectrum::GuiSpectrum() {}
-void GuiSpectrum::resized() {}
+GuiSpectrum::GuiSpectrum() : data(84, 1)
+{
+
+    GuiSpectrum::bgColor = { (juce::uint8)44, (juce::uint8)52, (juce::uint8)78 };
+    GuiSpectrum::displayColor = { (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
+
+    GuiSpectrum::peakBarColor = { (juce::uint8)0, (juce::uint8)86, (juce::uint8)255 };
+    GuiSpectrum::barColor = { (juce::uint8)10, (juce::uint8)36, (juce::uint8)112 };
+
+    GuiSpectrum::lineColor = { (juce::uint8)100, (juce::uint8)152, (juce::uint8)250 };
+    GuiSpectrum::textColor = { (juce::uint8)164, (juce::uint8)194, (juce::uint8)250 };
+}
+
+
+void GuiSpectrum::paint(juce::Graphics& g)
+{
+    //bg
+    g.fillAll(bgColor);
+    int W = getWidth();
+    int H = getHeight();
+    float outerPad = H * 0.1f;
+    
+    //display section
+    juce::Rectangle<float> display(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
+    juce::Rectangle<float> bar;
+    g.setColour(displayColor);
+    g.fillRect(display);
+
+    g.setColour(lineColor);
+    //g.drawRect(display, 4.0f);
+    display.removeFromTop(display.getHeight() * 0.05f);
+
+    //reference lines
+    float quarter = display.getHeight() * 0.25;
+    float l100 = display.getY();
+    float l75 = l100 + quarter;
+    float l50 = l75 + quarter;
+    float l25 = l50 + quarter;
+
+    g.drawLine(display.getX(), l100, display.getRight(), l100, 2.0f);
+    g.drawLine(display.getX(), l75, display.getRight(), l75, 2.0f);
+    g.drawLine(display.getX(), l50, display.getRight(), l50, 2.0f);
+    g.drawLine(display.getX(), l25, display.getRight(), l25, 2.0f);
+
+    //data bars
+    g.setColour(barColor);
+    float barW = (display.getRight()-display.getX()) / data.size();
+    float barH = 0;
+    float barX = display.getX();
+    float max = maxValue(data);
+    
+    if (max > 0) 
+    {
+        for (int i = 0; i < data.size(); i++)
+        {
+            barH = display.getHeight() * data[i]/max;
+            bar.setBounds(barX, display.getBottom() - barH, barW, barH);
+
+            bar.removeFromLeft(barW * 0.05f);
+            bar.removeFromRight(barW * 0.05f);
+            g.fillRect(bar);
+
+            barX += barW;
+
+        }
+    }
+    
+
+    
+    
+
+}
+
+void GuiSpectrum::resized()
+{
+}
 
 //3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiWindow::GuiWindow() {}
@@ -270,7 +344,9 @@ void GuiLog::resized()
 
 //5. GuiSettings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiSettings::GuiSettings() {}
-void GuiSettings::resized() {}
+void GuiSettings::resized()
+{
+}
 
 //6. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

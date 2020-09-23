@@ -25,6 +25,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     GUIState getTabState();
+    void updateSpectrum(const std::vector<float>& weights);
 
     Calculations calcs;
     SwitchMessage message;
@@ -44,6 +45,7 @@ private:
     void paintLog();
     void paintSpectrum();
     void paintWindow();
+    
 
     
 

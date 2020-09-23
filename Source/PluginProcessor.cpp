@@ -295,7 +295,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         switch (editor->getTabState())
         {
         case GUIState::spectrum:
-            spectrumProcess(weights, calcs);
+            spectrumProcess(weights, calcs, editor);
             break;
         case GUIState::window:
             windowProcess(signalDS, calcs);
@@ -324,8 +324,11 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs)
+void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
 {
+    editor->updateSpectrum(weights);
+    editor->calcs = calcs;
+    editor->repaint();
 }
 void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs)
 {

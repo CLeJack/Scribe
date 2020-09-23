@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "Stats.h"
 
 /*
 All major sections may have some sub components used for organization
@@ -115,6 +116,23 @@ class GuiSpectrum : public juce::Component
 public:
     GuiSpectrum();
     void resized() override;
+    void paint(juce::Graphics& g) override;
+
+    std::vector<float> data;
+
+    
+    juce::Colour bgColor;
+    juce::Colour displayColor;
+
+    juce::Colour peakBarColor;
+    juce::Colour barColor;
+
+    juce::Colour lineColor;
+    juce::Colour textColor;
+
+
+
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
 };
 

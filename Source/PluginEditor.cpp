@@ -75,10 +75,20 @@ void ScribeAudioProcessorEditor::paintLog()
         calcs.ampFull, calcs.ampdB, calcs.retrigger, calcs.retrigger,
         message.on, message.onVel, message.off, message.offVel);
 }
-void ScribeAudioProcessorEditor::paintSpectrum() {}
+void ScribeAudioProcessorEditor::paintSpectrum()
+{
+}
 void ScribeAudioProcessorEditor::paintWindow() {}
 
 GUIState ScribeAudioProcessorEditor::getTabState() 
 {
     return guiTabs.guiState;
+}
+
+void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weights) 
+{
+    for (int i = 0; i < guiSpectrum.data.size(); i++) 
+    {
+        guiSpectrum.data[i] = weights[i];
+    }
 }
