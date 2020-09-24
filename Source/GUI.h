@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Stats.h"
+#include "CircularBuffer.h"
 
 /*
 All major sections may have some sub components used for organization
@@ -23,6 +24,22 @@ ctrl + f #. ClassName
 //16:9 res
 const int REFX = 800; 
 const int REFY = 450;
+
+//paper color theme
+const juce::Colour PAPER{ (juce::uint8)205, (juce::uint8)198, (juce::uint8)177 };
+
+const juce::Colour BOLD_RED_INK{ (juce::uint8)103, (juce::uint8)15, (juce::uint8)9 };
+const juce::Colour FADE_RED_INK{ (juce::uint8)98, (juce::uint8)53, (juce::uint8)50 };
+
+const juce::Colour BOLD_GREEN_INK{ (juce::uint8)21, (juce::uint8)73, (juce::uint8)23 };
+const juce::Colour FADE_GREEN_INK{ (juce::uint8)51, (juce::uint8)77, (juce::uint8)52 };
+
+const juce::Colour BOLD_BLUE_INK{ (juce::uint8)21, (juce::uint8)30, (juce::uint8)97 };
+const juce::Colour FADE_BLUE_INK{ (juce::uint8)53, (juce::uint8)58, (juce::uint8)95 };
+
+const juce::Colour BOLD_BLACK_INK{ (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
+const juce::Colour FADE_BLACK_INK{ (juce::uint8)36, (juce::uint8)36, (juce::uint8)36 };
+
 
 //implement this as a pluginProcessor field later
 //pass the plugin processor to the guitab;
@@ -141,7 +158,12 @@ class GuiWindow : public juce::Component
 {
 public:
     GuiWindow();
+    
+    void paint(juce::Graphics& g) override;
     void resized() override;
+
+    FloatBuffer dBBuff;
+    std::vector<float> signalVec;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiWindow);
 };
 

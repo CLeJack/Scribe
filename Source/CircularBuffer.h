@@ -5,7 +5,7 @@
 struct FloatBuffer
 {
     FloatBuffer(int size, float fill);
-    int size;
+    const int size;
     void fill(float value, float percentage);
     fvec toOrderedVec();
 
@@ -16,6 +16,6 @@ struct FloatBuffer
 
     float mean(int lastXelements);
     
-    std::unique_ptr<fvec> vec;
+    fvec vec;
     int head = 0;
 };

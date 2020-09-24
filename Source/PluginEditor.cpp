@@ -87,8 +87,17 @@ GUIState ScribeAudioProcessorEditor::getTabState()
 
 void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weights) 
 {
-    for (int i = 0; i < guiSpectrum.data.size(); i++) 
+    for (int i = 0; i < std::min(guiSpectrum.data.size(), weights.size()); i++) 
     {
         guiSpectrum.data[i] = weights[i];
     }
+}
+
+void ScribeAudioProcessorEditor::updateWindow(const std::vector<float>& signal, float ampdB) 
+{
+    for (int i = 0; i < std::min(guiWindow.signalVec.size(), signal.size()); i++) 
+    {
+        guiWindow.signalVec[i] = signal[i];
+    }
+    guiWindow.dBBuff.push(ampdB);
 }

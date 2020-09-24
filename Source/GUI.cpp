@@ -172,69 +172,72 @@ void GuiParams::resized()
 //2. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiSpectrum::GuiSpectrum() : data(84, 1)
 {
-
-    GuiSpectrum::bgColor = { (juce::uint8)44, (juce::uint8)52, (juce::uint8)78 };
-    GuiSpectrum::displayColor = { (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
-
-    GuiSpectrum::peakBarColor = { (juce::uint8)0, (juce::uint8)86, (juce::uint8)255 };
-    GuiSpectrum::barColor = { (juce::uint8)10, (juce::uint8)36, (juce::uint8)112 };
-
-    GuiSpectrum::lineColor = { (juce::uint8)100, (juce::uint8)152, (juce::uint8)250 };
-    GuiSpectrum::textColor = { (juce::uint8)164, (juce::uint8)194, (juce::uint8)250 };
 }
 
 
 void GuiSpectrum::paint(juce::Graphics& g)
 {
-    //bg
-    g.fillAll(bgColor);
-    int W = getWidth();
-    int H = getHeight();
+    //bg ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    g.fillAll(PAPER);
+    float W = getWidth();
+    float H = getHeight();
+    float X = 0;
+    float Y = 0;
     float outerPad = H * 0.1f;
     
-    //display section
+    //display section ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     juce::Rectangle<float> display(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
-    juce::Rectangle<float> bar;
-    g.setColour(displayColor);
+    
+    g.setColour(PAPER);
     g.fillRect(display);
 
-    g.setColour(lineColor);
-    //g.drawRect(display, 4.0f);
-    display.removeFromTop(display.getHeight() * 0.05f);
+    g.setColour(FADE_BLACK_INK);
 
-    //reference lines
-    float quarter = display.getHeight() * 0.25;
-    float l100 = display.getY();
-    float l75 = l100 + quarter;
-    float l50 = l75 + quarter;
-    float l25 = l50 + quarter;
 
-    g.drawLine(display.getX(), l100, display.getRight(), l100, 2.0f);
-    g.drawLine(display.getX(), l75, display.getRight(), l75, 2.0f);
-    g.drawLine(display.getX(), l50, display.getRight(), l50, 2.0f);
-    g.drawLine(display.getX(), l25, display.getRight(), l25, 2.0f);
+    //reference lines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    H = display.getHeight();
+    W = display.getRight() - display.getX();
+    X = display.getX();
+    Y = display.getY();
+    int sections = 10;
+    float pct = (float)display.getHeight() /sections;
+    float thickness = 2.0f;
 
-    //data bars
-    g.setColour(barColor);
-    float barW = (display.getRight()-display.getX()) / data.size();
-    float barH = 0;
-    float barX = display.getX();
+    for (int i = 0; i < sections; i++) 
+    {
+        g.drawLine(X, Y, W, Y, thickness);
+        Y += pct;
+    }
+
+    //data bars ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    juce::Rectangle<float> bar;
+    g.setColour(FADE_BLUE_INK);
+    W = (display.getRight()-display.getX()) / data.size();
+    H = 0;
+    X = display.getX();
+    Y = display.getBottom();
     float max = maxValue(data);
     
-    if (max > 0) 
+    for (int i = 0; i < data.size(); i++)
     {
-        for (int i = 0; i < data.size(); i++)
+        //values range from .001 to 1 giving a range of -3 to 0 for log10
+        H = data[i]; //attempt [0,1] constraint
+        H = H > 1 ? 1 : H;
+        H = H < 0 ? 0 : H; //enforce constraint
+        H *= display.getHeight();
+
+        bar.setBounds(X, Y - H, W, H);
+        //bar.removeFromLeft(W * 0.05f);
+        //bar.removeFromRight(W * 0.05f);
+        if (data[i] == max) 
         {
-            barH = display.getHeight() * data[i]/max;
-            bar.setBounds(barX, display.getBottom() - barH, barW, barH);
-
-            bar.removeFromLeft(barW * 0.05f);
-            bar.removeFromRight(barW * 0.05f);
-            g.fillRect(bar);
-
-            barX += barW;
-
+            g.setColour(BOLD_BLUE_INK);
         }
+        g.fillRect(bar);
+
+        g.setColour(FADE_BLUE_INK);
+        X += W;
+
     }
     
 
@@ -243,13 +246,108 @@ void GuiSpectrum::paint(juce::Graphics& g)
 
 }
 
-void GuiSpectrum::resized()
+void GuiSpectrum::resized(){}
+
+//3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+GuiWindow::GuiWindow() : dBBuff(60, 0), signalVec(201,0)
 {
 }
 
-//3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GuiWindow::GuiWindow() {}
 void GuiWindow::resized() {}
+
+
+#define DB_Y(Y, val, dBrange) {\
+    Y = val / dBrange;\
+    Y = Y > 0 ? 0 : Y;\
+    Y = Y < -1 ? -1 : Y;\
+    Y = floor - (H * (Y + 1));\
+}
+void GuiWindow::paint(juce::Graphics& g) 
+{
+    //const juce::MessageManagerLock mmLock;
+    g.fillAll(PAPER);
+    juce::Path dBPath;
+    juce::Path signalPath;
+    juce::PathStrokeType stroke(2.0f);
+
+    dBPath.preallocateSpace(dBBuff.size * 3);
+    signalPath.preallocateSpace(signalVec.size() * 3);
+    
+
+    float W = getWidth();
+    float H = getHeight();
+    float X = 0;
+    float Y = 0;
+    float outerPad = H * 0.1f;
+    juce::Rectangle<float> panel1(outerPad, outerPad, W - 2 * outerPad, H - 2 * outerPad);
+
+    W = panel1.getWidth();
+    H = panel1.getHeight();
+    X = panel1.getX();
+    Y = panel1.getY();
+    
+    auto panel0 = panel1.removeFromTop(H * 0.4f);
+    panel1.removeFromTop(H * 0.2f);
+
+    g.setColour(BOLD_BLACK_INK);
+
+    g.drawRect(panel0);
+    g.drawRect(panel1);
+
+    //add amplitude data to path
+
+    W = panel0.getWidth() / (float)dBBuff.size;
+    H = panel0.getHeight();
+    X = panel0.getX();
+    float floor = panel0.getBottom();
+    Y = 0;
+    DB_Y(Y, dBBuff.currentValue(), 60.0f)
+
+
+    dBPath.startNewSubPath(X, Y);
+    for (int i = dBBuff.head + 1; i < dBBuff.size; i++) 
+    {
+        X += W;
+        DB_Y(Y, dBBuff.vec[i], 60.0f)
+        dBPath.lineTo(X, Y);
+    }
+
+    for (int i = 0; i < dBBuff.head; i++) 
+    {
+        X += W;
+        DB_Y(Y, dBBuff.vec[i], 60.0f)
+        dBPath.lineTo(X, Y);
+    }
+
+    g.strokePath(dBPath, stroke);
+
+    //add signal data to path
+
+    W = panel1.getWidth() / (float)signalVec.size();
+    H = panel1.getHeight();
+    X = panel1.getX();
+    floor = panel1.getBottom();
+    float max = absMaxValue(signalVec);
+    Y = (signalVec[0] + max) / (2*max);
+    Y = Y > 1 ? 1 : Y;
+    Y = floor - H * Y;
+
+    signalPath.startNewSubPath(X, Y);
+    
+    for (int i = 1; i < signalVec.size(); i++) 
+    {
+        X += W;
+        Y = (signalVec[i] + max) / (2 * max);
+        Y = Y > 1 ? 1 : Y;
+        Y = floor - H * Y;
+        signalPath.lineTo(X, Y);
+    }
+
+    g.strokePath(signalPath, stroke);
+
+
+
+}
 
 //4. GuiLog ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiLog::GuiLog()

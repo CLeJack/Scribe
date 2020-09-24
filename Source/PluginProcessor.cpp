@@ -289,16 +289,18 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     frameCounter = (frameCounter + 1) % 11;
 
+    frameCounter = message.send ? 0 : frameCounter;
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
     if (frameCounter == 0 && editor != nullptr) 
     {
+        //const juce::MessageManagerLock mmLock;
         switch (editor->getTabState())
         {
         case GUIState::spectrum:
             spectrumProcess(weights, calcs, editor);
             break;
         case GUIState::window:
-            windowProcess(signalDS, calcs);
+            windowProcess(signalDS, calcs, editor);
             break;
         case GUIState::log:
             logProcess(editor, calcs, message, frameCounter);
@@ -330,8 +332,11 @@ void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculatio
     editor->calcs = calcs;
     editor->repaint();
 }
-void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs)
+void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
 {
+    editor->updateWindow(signal, calcs.ampdB);
+    editor->calcs = calcs;
+    editor->repaint();
 }
 void ScribeAudioProcessor::logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame)
 {

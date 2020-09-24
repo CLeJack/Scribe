@@ -70,7 +70,7 @@ private:
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor);
-    void windowProcess(const fvec& signal, const Calculations& calcs);
+    void windowProcess(const fvec& signal, const Calculations& calcs, ScribeAudioProcessorEditor* editor);
     void logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame);
     void settingsProcess();
 

@@ -26,6 +26,7 @@ public:
     void resized() override;
     GUIState getTabState();
     void updateSpectrum(const std::vector<float>& weights);
+    void updateWindow(const std::vector<float>& signal, float ampdB);
 
     Calculations calcs;
     SwitchMessage message;
