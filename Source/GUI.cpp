@@ -170,83 +170,90 @@ void GuiParams::resized()
 
 
 //2. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GuiSpectrum::GuiSpectrum() : data(84, 1)
+GuiSpectrum::GuiSpectrum() : data(48, 1)
 {
+    addAndMakeVisible(oct);
+    addAndMakeVisible(pitch);
 }
 
-
-void GuiSpectrum::paint(juce::Graphics& g)
+inline void displayBars(juce::Rectangle<float>& display, juce::Rectangle<float>& bar, std::vector<float>& data,
+    juce::Colour colour, juce::Colour hilight,
+    juce::Graphics& g) 
 {
-    //bg ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    g.fillAll(PAPER);
-    float W = getWidth();
-    float H = getHeight();
-    float X = 0;
-    float Y = 0;
-    float outerPad = H * 0.1f;
+    g.setColour(colour); 
     
-    //display section ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    juce::Rectangle<float> display(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
-    
-    g.setColour(PAPER);
-    g.fillRect(display);
-
-    g.setColour(FADE_BLACK_INK);
-
-
-    //reference lines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    H = display.getHeight();
-    W = display.getRight() - display.getX();
-    X = display.getX();
-    Y = display.getY();
-    int sections = 10;
-    float pct = (float)display.getHeight() /sections;
-    float thickness = 2.0f;
-
-    for (int i = 0; i < sections; i++) 
-    {
-        g.drawLine(X, Y, W, Y, thickness);
-        Y += pct;
-    }
-
-    //data bars ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    juce::Rectangle<float> bar;
-    g.setColour(FADE_BLUE_INK);
-    W = (display.getRight()-display.getX()) / data.size();
-    H = 0;
-    X = display.getX();
-    Y = display.getBottom();
-    float max = maxValue(data);
-    
+    float W = (display.getRight() - display.getX()) / data.size(); 
+    float H = 0; 
+    float X = display.getX(); 
+    float Y = display.getBottom(); 
+    float max = maxValue(data); 
+        
     for (int i = 0; i < data.size(); i++)
     {
         //values range from .001 to 1 giving a range of -3 to 0 for log10
-        H = data[i]; //attempt [0,1] constraint
+        H = data[i] / max; //attempt [0,1] constraint
         H = H > 1 ? 1 : H;
         H = H < 0 ? 0 : H; //enforce constraint
         H *= display.getHeight();
 
         bar.setBounds(X, Y - H, W, H);
-        //bar.removeFromLeft(W * 0.05f);
-        //bar.removeFromRight(W * 0.05f);
-        if (data[i] == max) 
+        if (data[i] == max)
         {
-            g.setColour(BOLD_BLUE_INK);
+            g.setColour(hilight);
         }
         g.fillRect(bar);
 
-        g.setColour(FADE_BLUE_INK);
+        g.setColour(colour);
         X += W;
-
     }
-    
+}
 
+void GuiSpectrum::paint(juce::Graphics& g)
+{
+    //const juce::MessageManagerLock mmLock;
+    //bg ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    g.setColour(PAPER);
+    g.fillAll(PAPER);
+    float W = getWidth();
+    float H = getHeight() ;
+    float X = 0;
+    float Y = 0;
+    float outerPad = H * 0.05f;
     
-    
+    //display section ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    juce::Rectangle<float> display(X, Y, W, H);
+    display.removeFromTop(H * 0.3f);
+    display.removeFromTop(outerPad);
+    display.removeFromBottom(outerPad);
+    display.removeFromLeft(outerPad);
+    display.removeFromRight(outerPad);
+
+    g.setColour(BOLD_BLACK_INK);
+    g.drawRect(display, 2.0f);
+
+    juce::Rectangle<float> bar;
+ 
+    displayBars(display, bar, data, FADE_BLACK_INK, BOLD_BLACK_INK, g);
 
 }
 
-void GuiSpectrum::resized(){}
+void GuiSpectrum::resized()
+{
+    auto area = getLocalBounds() * 0.25f;
+    int pad = area.getHeight() * 0.05f;
+
+    area.removeFromTop(pad);
+    area.removeFromBottom(pad);
+    area.removeFromLeft(pad);
+    area.removeFromRight(pad);
+
+    int w = area.getWidth() * 0.2f;
+
+    oct.setBounds(area.removeFromLeft(w));
+    area.removeFromLeft(pad);
+    pitch.setBounds(area.removeFromLeft(w));
+
+}
 
 //3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiWindow::GuiWindow() : dBBuff(60, 0), signalVec(201,0)
@@ -264,7 +271,7 @@ void GuiWindow::resized() {}
 }
 void GuiWindow::paint(juce::Graphics& g) 
 {
-    //const juce::MessageManagerLock mmLock;
+    const juce::MessageManagerLock mmLock;
     g.fillAll(PAPER);
     juce::Path dBPath;
     juce::Path signalPath;

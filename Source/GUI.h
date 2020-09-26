@@ -136,19 +136,8 @@ public:
     void paint(juce::Graphics& g) override;
 
     std::vector<float> data;
-
-    
-    juce::Colour bgColor;
-    juce::Colour displayColor;
-
-    juce::Colour peakBarColor;
-    juce::Colour barColor;
-
-    juce::Colour lineColor;
-    juce::Colour textColor;
-
-
-
+    juce::Label oct;
+    juce::Label pitch;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
 };

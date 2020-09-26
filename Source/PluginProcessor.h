@@ -89,6 +89,7 @@ private:
 
     juce::AudioParameterInt* loOctP;
     juce::AudioParameterInt* octStrP;
+    juce::AudioParameterInt* loNoteP;
 
     
     juce::AudioParameterInt* noiseP;
@@ -114,11 +115,12 @@ private:
 
     inline int getLoOctP() { return *loOctP; }
     inline int getOctStrP() { return *octStrP; }
+    inline int getLoNoteP() { return *loNoteP; }
 
     inline float getNoiseP() { return (float)*noiseP; }
     inline float getReleaseP() { return (float)*releaseP; }
 
-    inline float getWeightP() { return (float)*weightP / 100.0f; }
+    inline float getWeightP() { return (float)*weightP / 1000.0f; }
 
     inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
     inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }

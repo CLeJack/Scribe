@@ -118,6 +118,38 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     notePitch = noteInd % 12;
 }
 
+void Calculations::updateSignalInfo(const fvec& weights, const fvec& signal, const AudioParams& params)
+{
+    //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
+    fvec comy3 = CoMY3(signal);
+
+    //amplitude measured using the full signal window and half signal window
+    ampFull = comy3[0];
+    ampHalf1 = comy3[1];
+    ampHalf2 = comy3[2];
+
+    //fundamental index naively chosen by the greatest peak in frequency spectrum
+    f0ind = maxArg(weights);
+    f0pitch = f0ind % 12;
+    auto octaves = getRelativeOctaveWeight(weights, f0pitch, params.loNote);
+    f0oct = maxArg(octaves);
+    
+
+    //max value associated with f0ind
+    weight = weights[f0pitch];
+    retrigger = ampHalf2 / ampFull;
+
+    ampdB = int16ToDb(ampFull);
+
+    //note validation --sending to 0 will cue MidiSwitch to ignore this note
+    noteInd = correctOctave(weights, f0pitch, params.loNote);
+    noteInd = ampdB < params.noise ? 0 : noteInd;
+    noteInd = weight < params.weightThreshold ? 0 : f0ind;
+    noteOct = noteInd / 12;
+    notePitch = notePitch % 12;
+
+}
+
 void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params) 
 {
     midiNum = midiShift(noteInd, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
@@ -176,6 +208,51 @@ fvec weightRatio(const fvec& arr, int octSize)
     return output;
 }
 
+fvec getRelativeOctaveWeight(const fvec& weights, int pitchIndex, int loNote, int octSize)
+{
+    fvec output(8,0);
+    int minOctaveIndex = loNote / octSize;
+    int theoreticalNote = minOctaveIndex * octSize + pitchIndex;
+    int lowestIndex = theoreticalNote < loNote ? theoreticalNote + octSize : theoreticalNote;
+    int ind = 0;
+
+    for (int i = lowestIndex; i < weights.size(); i++)
+    {
+        ind = i / octSize;
+        ind = ind > output.size() ? output.size() : ind;
+        output[i/octSize] += weights[i];
+    }
+
+    return output;
+}
+
+int correctOctave(const fvec& weights, int pitchIndex, int loNote, int octSize) 
+{
+    int minOctaveIndex = loNote / octSize;
+    int theoreticalNote = minOctaveIndex * octSize + pitchIndex;
+    int lowestIndex = theoreticalNote < loNote ? theoreticalNote + octSize : theoreticalNote;
+    int octaveCount = (weights.size() - lowestIndex) / octSize;
+
+    ivec indices(octaveCount, lowestIndex);
+    fvec octWeights(octaveCount);
+
+    for (int i = 1; i < octaveCount; i++) 
+    {
+        indices[i] = indices[i - 1] + octSize;
+    }
+
+    for (int i = 0; i < octaveCount; i++) 
+    {
+        for (int j = indices[i]; j < std::max(indices[i] + 12, (int)weights.size()); j++) 
+        {
+            octWeights[i] += weights[j];
+        }
+    }
+
+    int bestIndex = maxArg(octWeights);
+
+    return indices[bestIndex];
+}
 
 MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params)
 {

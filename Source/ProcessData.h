@@ -68,6 +68,7 @@ struct AudioParams
     //frequency or midi calculations
     int loOct = 0;
     int octStr = 0;
+    int loNote = 0;
 
     int noise = 0;
     int release = 0;
@@ -100,6 +101,7 @@ struct Calculations
     //I'm keep function calls explicit so the process is more transparent within the audioblock
     void updateRangeInfo(const AudioParams& params, int signalSize);
     void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
+    void updateSignalInfo(const fvec& weights, const fvec& signal, const AudioParams& params);
     void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params);
     
     //range info
@@ -140,5 +142,9 @@ void clearBelowInd(fvec& arr, int ind);
 void clearAboveInd(fvec& arr, int ind);
 
 fvec weightRatio(const fvec& arr, int octSize);
+
+fvec getRelativeOctaveWeight(const fvec& weights, int pitchIndex, int loNote, int octSize = 12);
+
+int correctOctave(const fvec& weights, int pitchIndex, int loNote, int octSize = 12);
 
 MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);
