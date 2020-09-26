@@ -172,8 +172,6 @@ void GuiParams::resized()
 //2. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 GuiSpectrum::GuiSpectrum() : data(48, 1)
 {
-    addAndMakeVisible(oct);
-    addAndMakeVisible(pitch);
 }
 
 inline void displayBars(juce::Rectangle<float>& display, juce::Rectangle<float>& bar, std::vector<float>& data,
@@ -208,6 +206,37 @@ inline void displayBars(juce::Rectangle<float>& display, juce::Rectangle<float>&
     }
 }
 
+inline void displaySwitch(juce::Rectangle<float>& display, juce::Rectangle<float>& bar, std::vector<float>& data,
+    juce::Colour colour, juce::Colour hilight,
+    juce::Graphics& g) 
+{
+    g.setColour(colour);
+
+    float W = (display.getRight() - display.getX()) / data.size();
+    float H = 0;
+    float X = display.getX();
+    float Y = display.getBottom();
+
+    for (int i = 0; i < data.size(); i++)
+    {
+        //values range from .001 to 1 giving a range of -3 to 0 for log10
+        H = data[i];
+        H *= display.getHeight();
+
+        bar.setBounds(X, Y - H, W, H);
+
+        g.drawRect(bar);
+        if (data[i] == 1)
+        {
+            g.setColour(hilight);
+            g.fillRect(bar);
+        }
+
+        g.setColour(colour);
+        X += W;
+    }
+}
+
 void GuiSpectrum::paint(juce::Graphics& g)
 {
     //const juce::MessageManagerLock mmLock;
@@ -221,38 +250,41 @@ void GuiSpectrum::paint(juce::Graphics& g)
     float outerPad = H * 0.05f;
     
     //display section ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    juce::Rectangle<float> display(X, Y, W, H);
-    display.removeFromTop(H * 0.3f);
-    display.removeFromTop(outerPad);
-    display.removeFromBottom(outerPad);
-    display.removeFromLeft(outerPad);
-    display.removeFromRight(outerPad);
+    juce::Rectangle<float> displays(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
+    
+    auto octDisplay = displays.removeFromTop(displays.getHeight() * 0.5f);
+    auto pitchDisplay = octDisplay.removeFromRight(octDisplay.getWidth() * 0.6f);
+    octDisplay.removeFromRight(outerPad);
+
+    auto specDisplay = displays.removeFromBottom(displays.getHeight() - outerPad);
 
     g.setColour(BOLD_BLACK_INK);
-    g.drawRect(display, 2.0f);
+    g.drawRect(octDisplay, 2.0f);
+    g.drawRect(pitchDisplay, 2.0f);
+    g.drawRect(specDisplay, 2.0f);
 
     juce::Rectangle<float> bar;
  
-    displayBars(display, bar, data, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+    displayBars(specDisplay, bar, data, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+
+    std::vector<float> octVec(8, 0);
+    std::vector<float> pitchVec(12, 0);
+
+    oct = oct > octVec.size() ? octVec.size() : oct;
+    pitch = pitch > pitchVec.size() ? pitchVec.size() : pitch;
+
+    octVec[oct] = 1;
+    pitchVec[pitch] = 1;
+
+    displaySwitch(octDisplay, bar, octVec, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+    displaySwitch(pitchDisplay, bar, pitchVec, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+
+
 
 }
 
 void GuiSpectrum::resized()
 {
-    auto area = getLocalBounds() * 0.25f;
-    int pad = area.getHeight() * 0.05f;
-
-    area.removeFromTop(pad);
-    area.removeFromBottom(pad);
-    area.removeFromLeft(pad);
-    area.removeFromRight(pad);
-
-    int w = area.getWidth() * 0.2f;
-
-    oct.setBounds(area.removeFromLeft(w));
-    area.removeFromLeft(pad);
-    pitch.setBounds(area.removeFromLeft(w));
-
 }
 
 //3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -334,7 +334,7 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 
 void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
 {
-    editor->updateSpectrum(weights, calcs.notePitch, calcs.noteOct, getLoNoteP());
+    editor->updateSpectrum(weights, calcs.f0pitch, calcs.f0oct, getLoNoteP());
     editor->calcs = calcs;
     editor->repaint();
 }

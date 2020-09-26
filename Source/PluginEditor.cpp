@@ -92,8 +92,8 @@ void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weight
         guiSpectrum.data[i - loNote] = weights[i];
     }
 
-    guiSpectrum.oct.setText(juce::String(oct), juce::NotificationType::dontSendNotification);
-    guiSpectrum.pitch.setText(juce::String(pitch), juce::NotificationType::dontSendNotification);
+    guiSpectrum.oct = oct;
+    guiSpectrum.pitch = pitch;
 
 }
 
