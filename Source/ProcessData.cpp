@@ -93,17 +93,19 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     weight = weights[f0ind];
     retrigger = ampHalf2 / ampFull;
 
-    /*float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
-    ref += params.midiNum * 1.0f/params.smoothFactor;*/
+    
     ampdB = int16ToDb(ampFull);
-  
-    //when attacksmooth is one attackdB is approximately ampdB
-    attackdB =  attackdB * (1.0f - 1.0f / params.attackSmooth);
-    attackdB += ampdB * 1.0f / params.attackSmooth;
 
-    velocityAmp = velocityAmp * (1.0f - 1.0f / params.velocitySmooth);
-    velocityAmp += velocityAmp * 1.0f / params.velocitySmooth;
-    velocityAngle = std::atan(ampFull / velocityAmp);
+    float ref = attackdB * (1.0f - 1.0f/(float)params.attackSmooth);
+    ref += ampdB * 1.0f/(float)params.attackSmooth;
+    //when attacksmooth is one attackdB is approximately ampdB
+    attackdB = ref;
+    attackdB = std::max(attackdB, -60.0f); //infinity introduced errors in some instances
+
+    ref = velocityAmp * (1.0f - 1.0f/(float)params.velocitySmooth);
+    ref += ampFull * 1.0f/(float)params.velocitySmooth;
+    velocityAmp = ref;
+    velocityAngle = std::atan(ampFull / velocityAmp)*180 / MY_PI;
 
     int loOct = loNote / 12;
     int currentOct = f0ind / 12;

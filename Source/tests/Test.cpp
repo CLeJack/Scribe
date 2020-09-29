@@ -12,7 +12,7 @@ int main()
 
     auto store = Storage(props);
     
-    fvec signal0 = importCsv("input/_test_a3.csv", 2.5*44100);
+    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*44100);
 
     #if PRINT == 1
     printRows(*store.frequencies.get(), "output/_0_freqs.csv");
@@ -39,18 +39,19 @@ int main()
     audioParams.trigStart = 1;
     audioParams.retrigStart = .9f;
     audioParams.retrigStop = 1.1f;
-    audioParams.smooth = 4;
+    audioParams.midiSmooth = 4;
+    audioParams.attackSmooth = 4;
+    audioParams.velocitySmooth = 4;
     audioParams.octave = 0;
     audioParams.semitone = 0;
     audioParams.loOct = 2;
-    audioParams.velDbMax = -20;
-    audioParams.velDbMin = -30;
+    audioParams.velPTheta = 4;
     audioParams.velMax = 127;
     audioParams.velMin = 0;
     audioParams.loNote = 28;
 
     MidiSwitch midiSwitch = MidiSwitch();
-
+    Calculations calcs;
 
     for(int i = 0; i < loops; i++)
     {
@@ -72,7 +73,7 @@ int main()
             signalDS[i] = trueSignal[i*props.dsFactor];
         }
 
-        Calculations calcs;
+        
 
         calcs.updateRangeInfo(audioParams, signalDS.size());
 
@@ -103,7 +104,10 @@ int main()
             (float)calcs.f0ratio,
             (float)calcs.noteRatio,
             calcs.ampFull,
+            calcs.velocityAmp,
             calcs.ampdB,
+            calcs.attackdB,
+            calcs.velocityAngle,
             calcs.retrigger,
             (float)message.on,
             (float)message.onVel,

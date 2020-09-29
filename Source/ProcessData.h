@@ -91,9 +91,9 @@ struct AudioParams
     float retrigStart = 0;
     float retrigStop = 0;
 
-    int midiSmooth = 0;
-    int attackSmooth = 0;
-    int velocitySmooth = 0;
+    int midiSmooth = 1;
+    int attackSmooth = 1;
+    int velocitySmooth = 1;
 
     int octave = 0;
     int semitone = 0;
