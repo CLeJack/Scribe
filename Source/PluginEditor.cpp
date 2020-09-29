@@ -85,15 +85,14 @@ GUIState ScribeAudioProcessorEditor::getTabState()
     return guiTabs.guiState;
 }
 
-void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weights, int pitch, int oct, int loNote)
+void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weights, int loNote, float weight)
 {
     for (int i = loNote; i < loNote + 48; i++) 
     {
         guiSpectrum.data[i - loNote] = weights[i];
     }
 
-    guiSpectrum.oct = oct;
-    guiSpectrum.pitch = pitch;
+    guiSpectrum.weight = weight;
 
 }
 
@@ -104,4 +103,5 @@ void ScribeAudioProcessorEditor::updateWindow(const std::vector<float>& signal, 
         guiWindow.signalVec[i] = signal[i];
     }
     guiWindow.dBBuff.push(ampdB);
+    guiWindow.currentdB = ampdB;
 }

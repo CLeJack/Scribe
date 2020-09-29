@@ -67,7 +67,7 @@ Storage::Storage(Properties& props)
 
 void Calculations::updateRangeInfo(const AudioParams& params, int signalSize)
 {
-    loNote = params.loOct * 12;
+    loNote = params.loNote;
     hiNote = loNote + 48; //4 octaves
 
     //full signal start calculates octave 0 which isn't needed
@@ -93,12 +93,43 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     weight = weights[f0ind];
     retrigger = ampHalf2 / ampFull;
 
+    /*float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
+    ref += params.midiNum * 1.0f/params.smoothFactor;*/
     ampdB = int16ToDb(ampFull);
+  
+    //when attacksmooth is one attackdB is approximately ampdB
+    attackdB =  attackdB * (1.0f - 1.0f / params.attackSmooth);
+    attackdB += ampdB * 1.0f / params.attackSmooth;
 
-    //note validation --sending to 0 will cue MidiSwitch to ignore this note
-    f0ind = weight < params.weightThreshold ? 0 : f0ind;
-    f0ind = f0ind < loNote ? 0 : f0ind;
-    f0ind = ampdB < params.noise ? 0 : f0ind;
+    velocityAmp = velocityAmp * (1.0f - 1.0f / params.velocitySmooth);
+    velocityAmp += velocityAmp * 1.0f / params.velocitySmooth;
+    velocityAngle = std::atan(ampFull / velocityAmp);
+
+    int loOct = loNote / 12;
+    int currentOct = f0ind / 12;
+
+    switch (currentOct - loOct) 
+    {
+        case 0:
+            weightThreshold = params.weight0;
+            noiseThreshold = params.noise0;
+            break;
+        case 1:
+            weightThreshold = params.weight1;
+            noiseThreshold = params.noise1;
+            break;
+        case 2:
+            weightThreshold = params.weight2;
+            noiseThreshold = params.noise2;
+            break;
+        case 3:
+            weightThreshold = params.weight3;
+            noiseThreshold = params.noise3;
+            break;
+        default:
+            weightThreshold = params.weight3;
+            noiseThreshold = params.noise3;
+    }
 
     //note Ind undergoes an octave correction if necessary;
     //weight data can be distributed between 1st, 2nd and 3rd harmonics in some instances
@@ -106,9 +137,8 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     noteRatio = f0ratio;
     if (f0ratio < params.octStr)
     {
-        noteInd = f0ind - 12 < 0 ? 0 : f0ind - 12;
+        noteInd = f0ind - 12;
         noteRatio = ratios[noteInd];
-        weight = weights[noteInd] + weights[f0ind];
     }
 
     f0oct = f0ind / 12;
@@ -118,41 +148,14 @@ void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, con
     notePitch = noteInd % 12;
 }
 
-void Calculations::updateSignalInfo(const fvec& weights, const fvec& signal, const AudioParams& params)
+void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams& params, const Calculations& calcs) 
 {
-    //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
-    fvec comy3 = CoMY3(signal);
+    int ind = calcs.noteInd;
+    ind = weight < weightThreshold ? 0 : ind;
+    ind = attackdB < noiseThreshold ? 0 : ind;
+    ind = ind < 0 ? 0 : ind;
 
-    //amplitude measured using the full signal window and half signal window
-    ampFull = comy3[0];
-    ampHalf1 = comy3[1];
-    ampHalf2 = comy3[2];
-
-    //fundamental index naively chosen by the greatest peak in frequency spectrum
-    f0ind = maxArg(weights);
-    f0pitch = f0ind % 12;
-    auto octaves = getRelativeOctaveWeight(weights, f0pitch, params.loNote);
-    f0oct = maxArg(octaves);
-    
-
-    //max value associated with f0ind
-    weight = weights[f0pitch];
-    retrigger = ampHalf2 / ampFull;
-
-    ampdB = int16ToDb(ampFull);
-
-    //note validation --sending to 0 will cue MidiSwitch to ignore this note
-    noteInd = correctOctave(weights, f0pitch, params.loNote);
-    noteInd = ampdB < params.noise ? 0 : noteInd;
-    noteInd = weight < params.weightThreshold ? 0 : f0ind;
-    noteOct = noteInd / 12;
-    notePitch = notePitch % 12;
-
-}
-
-void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params) 
-{
-    midiNum = midiShift(noteInd, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
+    midiNum = midiShift(ind, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
 }
 
 fvec getPeaks(const fvec& signal)
@@ -203,79 +206,36 @@ fvec weightRatio(const fvec& arr, int octSize)
     for(int i = octSize; i < arr.size(); i++)
     {
         output[i] = arr[i] /arr[i-octSize];
+        output[i] = output[i] > 10 ? 10 : output[i];
     }
 
     return output;
 }
 
-fvec getRelativeOctaveWeight(const fvec& weights, int pitchIndex, int loNote, int octSize)
-{
-    fvec output(8,0);
-    int minOctaveIndex = loNote / octSize;
-    int theoreticalNote = minOctaveIndex * octSize + pitchIndex;
-    int lowestIndex = theoreticalNote < loNote ? theoreticalNote + octSize : theoreticalNote;
-    int ind = 0;
 
-    for (int i = lowestIndex; i < weights.size(); i++)
-    {
-        ind = i / octSize;
-        ind = ind > output.size() ? output.size() : ind;
-        output[i/octSize] += weights[i];
-    }
-
-    return output;
-}
-
-int correctOctave(const fvec& weights, int pitchIndex, int loNote, int octSize) 
-{
-    int minOctaveIndex = loNote / octSize;
-    int theoreticalNote = minOctaveIndex * octSize + pitchIndex;
-    int lowestIndex = theoreticalNote < loNote ? theoreticalNote + octSize : theoreticalNote;
-    int octaveCount = (weights.size() - lowestIndex) / octSize;
-
-    ivec indices(octaveCount, lowestIndex);
-    fvec octWeights(octaveCount);
-
-    for (int i = 1; i < octaveCount; i++) 
-    {
-        indices[i] = indices[i - 1] + octSize;
-    }
-
-    for (int i = 0; i < octaveCount; i++) 
-    {
-        for (int j = indices[i]; j < std::max(indices[i] + 12, (int)weights.size()); j++) 
-        {
-            octWeights[i] += weights[j];
-        }
-    }
-
-    int bestIndex = maxArg(octWeights);
-
-    return indices[bestIndex];
-}
 
 MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params)
 {
     auto output = MidiParams();
 
     output.weight = calcs.weight;
-    output.weightThreshold = params.weightThreshold;
+    output.weightThreshold = calcs.weightThreshold;
 
     output.midiNum = calcs.midiNum;
-    output.ampdB = calcs.ampdB;
-    output.noisedB = params.noise;
+    output.ampdB = calcs.attackdB;
+    output.noisedB = calcs.noiseThreshold;
     output.releasedB = params.release;
 
     output.retrig = calcs.retrigger;
     output.retrigStart = params.retrigStart;
     output.retrigStop = params.retrigStop;
     
-    output.velDbMin = params.velDbMin;
-    output.velDbMax = params.velDbMax;
+    output.velPTheta = params.velPTheta;
+    output.velocityAngle = calcs.velocityAngle;
     output.velMin = params.velMin;
     output.velMax = params.velMax;
     
-    output.smoothFactor = params.smooth;
+    output.smoothFactor = params.midiSmooth;
 
     return output;
 }

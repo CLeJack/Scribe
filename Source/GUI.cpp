@@ -178,55 +178,22 @@ inline void displayBars(juce::Rectangle<float>& display, juce::Rectangle<float>&
     juce::Colour colour, juce::Colour hilight,
     juce::Graphics& g) 
 {
-    g.setColour(colour); 
-    
-    float W = (display.getRight() - display.getX()) / data.size(); 
-    float H = 0; 
-    float X = display.getX(); 
-    float Y = display.getBottom(); 
-    float max = maxValue(data); 
-        
-    for (int i = 0; i < data.size(); i++)
-    {
-        //values range from .001 to 1 giving a range of -3 to 0 for log10
-        H = data[i] / max; //attempt [0,1] constraint
-        H = H > 1 ? 1 : H;
-        H = H < 0 ? 0 : H; //enforce constraint
-        H *= display.getHeight();
-
-        bar.setBounds(X, Y - H, W, H);
-        if (data[i] == max)
-        {
-            g.setColour(hilight);
-        }
-        g.fillRect(bar);
-
-        g.setColour(colour);
-        X += W;
-    }
-}
-
-inline void displaySwitch(juce::Rectangle<float>& display, juce::Rectangle<float>& bar, std::vector<float>& data,
-    juce::Colour colour, juce::Colour hilight,
-    juce::Graphics& g) 
-{
     g.setColour(colour);
 
     float W = (display.getRight() - display.getX()) / data.size();
-    float H = 0;
+    float H = display.getHeight();
     float X = display.getX();
-    float Y = display.getBottom();
+    float Y = 0;
+    float floor = display.getBottom();
+    float maxInd = maxArg(data);
 
     for (int i = 0; i < data.size(); i++)
     {
-        //values range from .001 to 1 giving a range of -3 to 0 for log10
-        H = data[i];
-        H *= display.getHeight();
-
-        bar.setBounds(X, Y - H, W, H);
+        Y = display.getBottom() - data[i] * H;
+        bar.setBounds(X, Y, W, floor - Y);
 
         g.drawRect(bar);
-        if (data[i] == 1)
+        if (i == maxInd)
         {
             g.setColour(hilight);
             g.fillRect(bar);
@@ -247,37 +214,29 @@ void GuiSpectrum::paint(juce::Graphics& g)
     float H = getHeight() ;
     float X = 0;
     float Y = 0;
-    float outerPad = H * 0.05f;
+    float outerPad = H * 0.1f;
     
     //display section ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    juce::Rectangle<float> displays(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
-    
-    auto octDisplay = displays.removeFromTop(displays.getHeight() * 0.5f);
-    auto pitchDisplay = octDisplay.removeFromRight(octDisplay.getWidth() * 0.6f);
-    octDisplay.removeFromRight(outerPad);
-
-    auto specDisplay = displays.removeFromBottom(displays.getHeight() - outerPad);
+    juce::Rectangle<float> display(outerPad, outerPad, W - 2*outerPad, H - 2*outerPad);
 
     g.setColour(BOLD_BLACK_INK);
-    g.drawRect(octDisplay, 2.0f);
-    g.drawRect(pitchDisplay, 2.0f);
-    g.drawRect(specDisplay, 2.0f);
+
+    g.drawRect(display, 2.0f);
 
     juce::Rectangle<float> bar;
  
-    displayBars(specDisplay, bar, data, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+    displayBars(display, bar, data, FADE_BLACK_INK, FADE_GREEN_INK, g);
 
-    std::vector<float> octVec(8, 0);
-    std::vector<float> pitchVec(12, 0);
+    W = display.getWidth();
+    H = display.getHeight();
+    X = display.getX();
+    Y = display.getBottom() - weight * H;
 
-    oct = oct > octVec.size() ? octVec.size() : oct;
-    pitch = pitch > pitchVec.size() ? pitchVec.size() : pitch;
+    g.setColour(FADE_GREEN_INK);
+    g.drawLine(X, Y, X + W, Y, 2.0f);
 
-    octVec[oct] = 1;
-    pitchVec[pitch] = 1;
-
-    displaySwitch(octDisplay, bar, octVec, FADE_BLACK_INK, BOLD_BLACK_INK, g);
-    displaySwitch(pitchDisplay, bar, pitchVec, FADE_BLACK_INK, BOLD_BLACK_INK, g);
+    Y = display.getY();
+    g.drawText(juce::String(weight, 3), X, Y, X + W * 0.2f, Y + H * 0.1f, juce::Justification::centred);
 
 
 
@@ -288,7 +247,7 @@ void GuiSpectrum::resized()
 }
 
 //3. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GuiWindow::GuiWindow() : dBBuff(60, 0), signalVec(201,0)
+GuiWindow::GuiWindow() : dBBuff(60, -60), signalVec(201,0)
 {
 }
 
@@ -360,13 +319,48 @@ void GuiWindow::paint(juce::Graphics& g)
 
     g.strokePath(dBPath, stroke);
 
+    //reference lines
+    g.setColour(FADE_GREEN_INK);
+    float max = maxValue(dBBuff.vec);
+    W = panel0.getRight();
+    X = panel0.getX();
+    floor = panel0.getBottom();
+    H = panel0.getHeight();
+    
+    Y = 0;
+    DB_Y(Y, currentdB, 60);
+    g.drawLine(X, Y, W, Y);
+   
+    g.setColour(FADE_RED_INK);
+
+    Y = 0;
+    DB_Y(Y, max, 60);
+    g.drawLine(X, Y, W, Y);
+
+    //reference values
+    W = panel0.getWidth() * 0.2f;
+    X = panel0.getX();
+    Y = panel0.getY();
+    H = panel0.getHeight() * 0.1f;
+    g.drawText(juce::String(currentdB, 2), 
+        X, Y, X + W, Y + H,
+        juce::Justification::centred);
+
+    g.setColour(FADE_RED_INK);
+
+    X = X + W;
+    g.drawText(juce::String(max, 2),
+        X, Y, X + W, Y + H,
+        juce::Justification::centred);
+    
     //add signal data to path
+    g.setColour(BOLD_BLACK_INK);
 
     W = panel1.getWidth() / (float)signalVec.size();
     H = panel1.getHeight();
     X = panel1.getX();
     floor = panel1.getBottom();
-    float max = absMaxValue(signalVec);
+    max = absMaxValue(signalVec);
     Y = (signalVec[0] + max) / (2*max);
     Y = Y > 1 ? 1 : Y;
     Y = floor - H * Y;

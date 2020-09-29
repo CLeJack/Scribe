@@ -25,23 +25,34 @@ ScribeAudioProcessor::ScribeAudioProcessor()
 
     addParameter (loOctP = new juce:: AudioParameterInt ("loOct", "Lowest Octave", 0, 3, 2));
     addParameter (octStrP = new juce:: AudioParameterInt ("octStr", "Octave Strength", 0, 5, 3));
-    addParameter(loNoteP = new juce::AudioParameterInt("loNote", "Lowest Octave", 12, 36, 28));
+    addParameter(loNoteP = new juce::AudioParameterInt("loNote", "Lowest Note", 12, 36, 28));
 
     addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
     addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -50));
     
     addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 45));
 
+    addParameter(noiseP0 = new juce::AudioParameterInt("noise0", "Noise Floor 0 (dB)", -90, 0, -25));
+    addParameter(noiseP1 = new juce::AudioParameterInt("noise1", "Noise Floor 1 (dB)", -90, 0, -30));
+    addParameter(noiseP2 = new juce::AudioParameterInt("noise2", "Noise Floor 2 (dB)", -90, 0, -35));
+    addParameter(noiseP3 = new juce::AudioParameterInt("noise3", "Noise Floor 3 (dB)", -90, 0, -40));
+
+    addParameter(weightP0 = new juce::AudioParameterInt("weight0", "Weight 0", 0, 200, 10));
+    addParameter(weightP1 = new juce::AudioParameterInt("weight1", "Weight 1", 0, 200, 20));
+    addParameter(weightP2 = new juce::AudioParameterInt("weight2", "Weight 2", 0, 200, 30));
+    addParameter(weightP3 = new juce::AudioParameterInt("weight3", "Weight 3", 0, 200, 30));
+
     addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start", 50, 120, 90));
     addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop", 50, 120, 100)); 
     
-    addParameter (smoothP  = new juce::AudioParameterInt ("smooth", "Detection smoothing", 1, 32, 4));
+    addParameter (midiSmoothP  = new juce::AudioParameterInt ("midiSmooth", "Midi smoothing", 1, 32, 4));
+    addParameter(attackSmoothP = new juce::AudioParameterInt("attackSmooth", "Detection smoothing", 1, 32, 4));
+    addParameter(velocitySmoothP = new juce::AudioParameterInt("velSmooth", "Detection smoothing", 1, 32, 4));
     
     addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
     addParameter (semitoneP  = new juce::AudioParameterInt ("semitone", "Semitone Shift", -12, 12, 0));
     
-    addParameter (velDbMaxP  = new juce::AudioParameterInt("velDbMax", "Vel dB Max (dB)", -90, 0, -20));
-    addParameter (velDbMinP  = new juce::AudioParameterInt("velDbMin", "Vel dB Min (dB)", -90, 0, -30));
+    addParameter(velPThetaP = new juce::AudioParameterFloat("velPTheta", "Vel. Per Theta", 0.0f, 64.0f, 4.0f));
     addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
     addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 40));
     
@@ -265,15 +276,11 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         audioParams.loNote, audioParams.loNote + 48, calcs.signalStart, signalDS.size());
 
     weights = sumNormalize(weights);
-    //fvec ratios = weightRatio(weights, 12);
+    fvec ratios = weightRatio(weights, 12);
 
-    fvec pitchWeights(12, 0);
-    fvec octWeights(4, 0);
+    calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
 
-    //calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
-
-    calcs.updateSignalInfo(weights, signalDS, audioParams);
-    calcs.updateMidiNum(store, props, audioParams);
+    calcs.updateMidiNum(store, props, audioParams, calcs);
 
     MidiSwitch& midiSwitch = *store.midiSwitch.get();
     SwitchMessage message{};
@@ -334,13 +341,13 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 
 void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
 {
-    editor->updateSpectrum(weights, calcs.f0pitch, calcs.f0oct, getLoNoteP());
+    editor->updateSpectrum(weights, getLoNoteP(), calcs.weight);
     editor->calcs = calcs;
     editor->repaint();
 }
 void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
 {
-    editor->updateWindow(signal, calcs.ampdB);
+    editor->updateWindow(signal, calcs.attackdB);
     editor->calcs = calcs;
     editor->repaint();
 }
@@ -361,22 +368,36 @@ AudioParams ScribeAudioProcessor::getAudioParams()
     output.octStr = getOctStrP();
     output.loNote = getLoNoteP();
 
-    output.noise = getNoiseP();
+    
     output.release = getReleaseP();
     
-    output.weightThreshold = getWeightP();
+    output.noise = getNoiseP();
+    output.weight = getWeightP();
+
+    output.noise1 = getNoiseP1();
+    output.weight1 = getWeightP1();
+
+    output.noise2 = getNoiseP2();
+    output.weight2 = getWeightP2();
+
+    output.noise3 = getNoiseP3();
+    output.weight3 = getWeightP3();
+    
+    output.noise0 = getNoiseP0();
+    output.weight0 = getWeightP0();
 
     output.retrigStart = getRetrigStartP();
     output.retrigStop = getRetrigStopP();
 
-    output.smooth = getSmoothP();
+    output.midiSmooth = getMidiSmoothP();
+    output.attackSmooth = getAttackSmoothP();
+    output.velocitySmooth = getVelocitySmoothP();
 
     output.octave = getOctaveP();
     output.semitone = getSemitoneP();
 
-    output.velDbMax = getVelDbMaxP();
-    output.velDbMin = getVelDbMinP();
 
+    output.velPTheta = getVelPThetaP();
     output.velMax = getVelMaxP();
     output.velMin = getVelMinP();
 

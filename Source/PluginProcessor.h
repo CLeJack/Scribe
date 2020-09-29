@@ -96,18 +96,31 @@ private:
     juce::AudioParameterInt* releaseP;
 
     juce::AudioParameterInt* weightP;
-    
+
+    juce::AudioParameterInt* noiseP1;
+    juce::AudioParameterInt* weightP1;
+
+    juce::AudioParameterInt* noiseP2;
+    juce::AudioParameterInt* weightP2;
+
+    juce::AudioParameterInt* noiseP3;
+    juce::AudioParameterInt* weightP3;
+
+    juce::AudioParameterInt* noiseP0;
+    juce::AudioParameterInt* weightP0;
+
     juce::AudioParameterInt* trigStartP;
     juce::AudioParameterInt* retrigStartP;
     juce::AudioParameterInt* retrigStopP;
     
-    juce::AudioParameterInt* smoothP;
+    juce::AudioParameterInt* midiSmoothP;
+    juce::AudioParameterInt* attackSmoothP;
+    juce::AudioParameterInt* velocitySmoothP;
     
     juce::AudioParameterInt* octaveP;
     juce::AudioParameterInt* semitoneP;
     
-    juce::AudioParameterInt* velDbMinP;
-    juce::AudioParameterInt* velDbMaxP;
+    juce::AudioParameterFloat* velPThetaP;
     juce::AudioParameterInt* velMinP;
     juce::AudioParameterInt* velMaxP;
     
@@ -122,15 +135,28 @@ private:
 
     inline float getWeightP() { return (float)*weightP / 1000.0f; }
 
+    inline float getNoiseP1() { return (float)*noiseP1; }
+    inline float getWeightP1() { return (float)*weightP1 / 1000.0f; }
+
+    inline float getNoiseP2() { return (float)*noiseP2; }
+    inline float getWeightP2() { return (float)*weightP2 / 1000.0f; }
+
+    inline float getNoiseP3() { return (float)*noiseP3; }
+    inline float getWeightP3() { return (float)*weightP3 / 1000.0f; }
+
+    inline float getNoiseP0() { return (float)*noiseP0; }
+    inline float getWeightP0() { return (float)*weightP0 / 1000.0f; }
+
     inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
     inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
-    inline int getSmoothP() { return *smoothP; }
+    inline int getMidiSmoothP() { return *midiSmoothP; }
+    inline int getAttackSmoothP() { return *attackSmoothP; }
+    inline int getVelocitySmoothP() { return *velocitySmoothP; }
 
     inline int getOctaveP() { return *octaveP; }
     inline int getSemitoneP() { return *semitoneP; }
 
-    inline float getVelDbMinP() { return (float)*velDbMinP; }
-    inline float getVelDbMaxP() { return (float)*velDbMaxP; }
+    inline float getVelPThetaP() { return *velPThetaP; }
     inline int getVelMinP() { return *velMinP; }
     inline int getVelMaxP() { return *velMaxP; }
     inline int getChannelInP() { return *channelInP; }

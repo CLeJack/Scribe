@@ -54,16 +54,17 @@ int MidiSwitch::getVelocity(const MidiParams& params)
         return params.velMax;
     }
     
+    /*
     float diff = std::abs(params.velDbMax - params.velDbMin);
     float pct = std::abs(params.ampdB - params.velDbMin)/diff;
     
     int vel = pct*(params.velMax - params.velMin) + params.velMin;
     vel = vel > params.velMax ? params.velMax : vel;
     vel = vel < params.velMin ? params.velMin : vel;
+    */
 
-    //std::cout<<params.amp<< ", "<<diff<< ", "<<pct<< ", "<<vel<<"\n";
-
-    return vel;
+    int vel = params.velPTheta * params.velocityAngle + params.velMin;
+    return std::min(vel, params.velMax);
 }
 
 void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
@@ -161,26 +162,6 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         state = MidiState::off;
     }
     return output;
-}
-
-
-
-float MidiSwitch::SMA(float prev_avg, float current_val, int size)
-{
-    /*
-    it seems this method has two vunerabilities
-
-    1. it holds on to data introduced into the history much longer than if an actual window was used
-       e.g. if a million was introduced with a prev_avg of 1, many updates would be needed to flush a million
-       if a window of size N with history was used, only N+1 updates would be needed.
-
-    2. rounding error is introduced with each division.
-
-    neither should be an issue here
-    */
-    float avg = prev_avg - prev_avg / size;
-    avg += current_val / size;
-    return avg;
 }
 
 float MidiSwitch::smoothNote(const MidiParams& params)

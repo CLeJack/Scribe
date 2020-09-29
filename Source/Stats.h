@@ -53,3 +53,6 @@ fvec CoMX2(const fvec& arr);
 fvec diff(const fvec& arr);
 
 fvec hadamardX(const fvec& arr1, const fvec& arr2);
+
+//simple moving average without storage
+float SMA(float hist, float val, float size);

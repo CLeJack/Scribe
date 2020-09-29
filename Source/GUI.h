@@ -136,8 +136,7 @@ public:
     void paint(juce::Graphics& g) override;
 
     std::vector<float> data;
-    int oct;
-    int pitch;
+    float weight = 0;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
 };
@@ -153,6 +152,9 @@ public:
 
     FloatBuffer dBBuff;
     std::vector<float> signalVec;
+
+    float currentdB = 0;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiWindow);
 };
 

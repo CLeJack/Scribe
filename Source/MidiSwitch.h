@@ -21,8 +21,8 @@ struct MidiParams
     float retrigStart = 0;
     float retrigStop = 0;
     
-    float velDbMin = 0;
-    float velDbMax = 0;
+    float velPTheta = 0;
+    float velocityAngle = 45;
     int velMin = 0;
     int velMax = 0;
     
@@ -75,9 +75,6 @@ struct MidiSwitch
     int getVelocity(const MidiParams& params);
 
     float smoothNote(const MidiParams& params);
-
-    //simple moving average without storage
-    float SMA(float prev_avg, float current_val, int size);
 
     MidiState state = MidiState::off;
     int initCounter = 0;

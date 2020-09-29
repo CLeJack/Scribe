@@ -12,7 +12,7 @@ int main()
 
     auto store = Storage(props);
     
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*44100);
+    fvec signal0 = importCsv("input/_test_a3.csv", 2.5*44100);
 
     #if PRINT == 1
     printRows(*store.frequencies.get(), "output/_0_freqs.csv");
@@ -34,7 +34,7 @@ int main()
 
     audioParams.noise = -50;
     audioParams.release = -50;
-    audioParams.weightThreshold = .09f;
+    //audioParams.weightThreshold = .03f;
     audioParams.octStr = 3;
     audioParams.trigStart = 1;
     audioParams.retrigStart = .9f;
@@ -47,6 +47,7 @@ int main()
     audioParams.velDbMin = -30;
     audioParams.velMax = 127;
     audioParams.velMin = 0;
+    audioParams.loNote = 28;
 
     MidiSwitch midiSwitch = MidiSwitch();
 
@@ -83,7 +84,7 @@ int main()
         fvec ratios = weightRatio(weights, 12);
         
         calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
-        calcs.updateMidiNum(store, props, audioParams);
+        calcs.updateMidiNum(store, props, audioParams, calcs);
 
         MidiSwitch& midiSwitch = *store.midiSwitch.get();
         SwitchMessage message{};
@@ -99,12 +100,11 @@ int main()
             (float)calcs.f0ind,
             (float)calcs.noteInd,
             (float)calcs.weight,
+            (float)calcs.f0ratio,
+            (float)calcs.noteRatio,
             calcs.ampFull,
             calcs.ampdB,
-            calcs.trigger,
             calcs.retrigger,
-            calcs.f0ratio,
-            calcs.noteRatio,
             (float)message.on,
             (float)message.onVel,
             (float)message.off,

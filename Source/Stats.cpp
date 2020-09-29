@@ -394,3 +394,23 @@ fvec hadamardX(const fvec& arr1, const fvec& arr2)
     }    
     return output;
 }
+
+float SMA(float hist, float val, float size)
+{
+    /*
+    it seems this method has two vunerabilities
+
+    1. it holds on to data introduced into the history much longer than if an actual window was used
+       e.g. if 1 million was introduced with a prev_avg of 1, many updates would be needed to flush 1 million
+       if a window of size N with history was used, only N+1 updates would be needed.
+
+    2. rounding error is introduced with each division.
+
+    neither should be an issue here
+    */
+
+    //need to debug this, can't see why it's broken
+    float avg = hist - hist / size;
+    avg = avg +  val / size;
+    return avg;
+}

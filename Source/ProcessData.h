@@ -73,19 +73,32 @@ struct AudioParams
     int noise = 0;
     int release = 0;
 
-    float weightThreshold = 0;
+    float weight= 0;
+
+    int noise0 = 0;
+    float weight0 = 0;
+
+    int noise1 = 0;
+    float weight1 = 0;
+
+    int noise2 = 0;
+    float weight2 = 0;
+    
+    int noise3 = 0;
+    float weight3 = 0;
 
     float trigStart = 0;
     float retrigStart = 0;
     float retrigStop = 0;
 
-    int smooth = 0;
+    int midiSmooth = 0;
+    int attackSmooth = 0;
+    int velocitySmooth = 0;
 
     int octave = 0;
     int semitone = 0;
 
-    int velDbMin = 0;
-    int velDbMax = 0;
+    int velPTheta = 0;
     int velMin = 0;
     int velMax = 0;
 
@@ -100,9 +113,9 @@ struct Calculations
     //combining all of this data in structs adds a lot of abstraction
     //I'm keep function calls explicit so the process is more transparent within the audioblock
     void updateRangeInfo(const AudioParams& params, int signalSize);
+    void updateAudioParams(const AudioParams& params);
     void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
-    void updateSignalInfo(const fvec& weights, const fvec& signal, const AudioParams& params);
-    void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams params);
+    void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams& params, const Calculations& calcs);
     
     //range info
     int loNote = 0;
@@ -120,15 +133,21 @@ struct Calculations
     int notePitch = 0;
     float noteRatio = 0;
 
-    float weight = 0;
+    float weight = 0;  
+
+    float weightThreshold = 0;
+    float noiseThreshold = 0;
+    float releaseThreshold = 0;
+
+    float retrigger = 0;
 
     float ampFull = 0;
     float ampHalf1 = 0;
     float ampHalf2 = 0;
-    
-    float trigger = 0;
-    float retrigger = 0;
     float ampdB = 0;
+    float attackdB = -60;
+    float velocityAmp = 0;
+    float velocityAngle = 45;
 
     // midinum
     int midiNum = 0;
@@ -143,8 +162,5 @@ void clearAboveInd(fvec& arr, int ind);
 
 fvec weightRatio(const fvec& arr, int octSize);
 
-fvec getRelativeOctaveWeight(const fvec& weights, int pitchIndex, int loNote, int octSize = 12);
-
-int correctOctave(const fvec& weights, int pitchIndex, int loNote, int octSize = 12);
 
 MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);

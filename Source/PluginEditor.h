@@ -25,7 +25,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     GUIState getTabState();
-    void updateSpectrum(const std::vector<float>& weights, int pitch, int oct, int loNote);
+    void updateSpectrum(const std::vector<float>& weights, int loNote, float weight);
     void updateWindow(const std::vector<float>& signal, float ampdB);
 
     Calculations calcs;
