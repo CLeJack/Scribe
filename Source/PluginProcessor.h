@@ -127,7 +127,7 @@ private:
     juce::AudioParameterInt* channelInP;
 
     //took forever to realize this was being instantiated during each loop;
-    Calculations calc; 
+    Calculations calcs; 
 
     inline int getLoOctP() { return *loOctP; }
     inline int getOctStrP() { return *octStrP; }

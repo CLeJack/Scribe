@@ -32,10 +32,10 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     
     addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 45));
 
-    addParameter(noiseP0 = new juce::AudioParameterInt("noise0", "Noise Floor 0 (dB)", -90, 0, -25));
-    addParameter(noiseP1 = new juce::AudioParameterInt("noise1", "Noise Floor 1 (dB)", -90, 0, -30));
-    addParameter(noiseP2 = new juce::AudioParameterInt("noise2", "Noise Floor 2 (dB)", -90, 0, -35));
-    addParameter(noiseP3 = new juce::AudioParameterInt("noise3", "Noise Floor 3 (dB)", -90, 0, -40));
+    addParameter(noiseP0 = new juce::AudioParameterInt("noise0", "Noise Floor 0 (dB)", -90, 0, -30));
+    addParameter(noiseP1 = new juce::AudioParameterInt("noise1", "Noise Floor 1 (dB)", -90, 0, -35));
+    addParameter(noiseP2 = new juce::AudioParameterInt("noise2", "Noise Floor 2 (dB)", -90, 0, -40));
+    addParameter(noiseP3 = new juce::AudioParameterInt("noise3", "Noise Floor 3 (dB)", -90, 0, -45));
 
     addParameter(weightP0 = new juce::AudioParameterInt("weight0", "Weight 0", 0, 200, 10));
     addParameter(weightP1 = new juce::AudioParameterInt("weight1", "Weight 1", 0, 200, 20));
@@ -250,8 +250,6 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     juce::MidiMessage note;
 
     AudioParams audioParams = getAudioParams();
-    Calculations calcs;
-
 
     //add the block to history
     auto* channelData = buffer.getReadPointer(*channelInP);
