@@ -7,152 +7,97 @@
 #include "Stats.h"
 #include "DCT.h"
 #include "MidiSwitch.h"
+#include "AudioParams.h"
+#include "Calculations.h"
 
-struct Properties
+
+
+
+
+namespace Scribe {
+
+	void initialize(float srate, float blockSize);//set all required non-const variables here
+	bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
+
+	namespace Tuning 
+	{
+		const float refFreq = 440; //concert tuning
+		const float semitone = float(std::pow(2, 1.0 / 12.0)); //12 Tone equal temperament
+		const int octaveSize = 12;
+
+		const int lowExp = -57; // -57 = C0
+		const int highExp = 50 - 24 + 1; // 50 = B8; aliasing exist in octaves 7 to 8;
+	}
+
+	namespace Audio 
+	{
+		const float historyTime = .05f;
+		int historySamples = 0;
+
+		float srate = 44100;
+		float blockSize = 128;
+	}
+
+	namespace DownSample 
+	{
+		const float srate = 4000;
+		const int historySamples = int(historyTime * dsRate);
+
+		//for use with DCT
+		//full signal start calculates octave 0 which isn't needed
+	    //half signal starts calculations on octave 1 which should be bass guitar range
+		const int signalStart = historySamples / 2;
+
+		int factor = 0;
+		int blockSize = 0;
+	}
+
+
+	//arrays & buffers
+	fvec frequencies = fvec (highExp - lowExp, 0);
+	fvec weights     = fvec (frequencies.size(), 0);
+	fvec ratios      = fvec (frequencies.size(), 0);
+
+	fvec timeVector  = fvec (Scribe::DownSample::historySamples, 0);
+	cmatrix matrix   = cmatrix (frequencies.size(), cvec (Scribe::DownSample::historySamples, std::complex<float>(0, 0)));
+	
+	std::unique_ptr<FloatBuffer> history;
+	fvec historyDS = fvec (Scribe::DownSample::historySamples, 0.0001f);
+
+	//midi state machine
+	MidiSwitch midiSwitch;
+}
+
+void updateRangeCalcs();
+void updateAudioParams();
+
+//pass in order vec from the float buffer
+void updateSignalCalcs(const fvec& signal);
+void updateMidiCalcs();
+MidiParams getMidiParams();
+
+
+inline int secToBlocks(float seconds, float srate, float blockSize, float timeDivisor = 1000.0f)
 {
-    Properties();
-    Properties(float srate, float blockSize);
+	// second to blocks
+	// set time divisor to 1000 for milliseconds, or 1 for seconds 
+	// srate (samples/sec) * seconds / blockSize (samples) + 1;
+	// gives a minimum of 1 block when seconds = 0
+	return srate * (seconds/timeDivisor) / blockSize + 1;
+}
 
-    float blockSize = 128;
-    float srate = 44100;
-    const float histTime = .05f;
-
-    const float refFreq = 440; //concert tuning
-    const float semitone = float(std::pow(2, 1.0/12.0)); //12 Tone equal temperament
-    const int octaveSize = 12;
-    
-
-    //float lowExp = -57 + 12; // -57 = C0
-    int lowExp = -57; // -57 = C0
-    int highExp = 50 - 24 + 1; // 50 = B8; aliasing exist in octaves 7 to 8;
-
-    int freqSize = 0;
-    int histSamples = 0;
-    int transBlocks = 1;
-
-    
-    float dsRate = 4000;
-    int dsFactor = 0;
-    int dsHistSamples = 0;
-    int dsBlock = 0;
-
-    //used in the main loop to allow for cleaner downsampling;
-    int dsIndex = 0;
-    
-};
-
-
-
-struct Storage
+inline float weightLimit(float minWeight, float weightScale, float minIndex, float currentIndex, float octSize) 
 {
-    Storage();
-    Storage(Properties& props);
-    std::unique_ptr<fvec> frequencies;
-    std::unique_ptr<fvec> exFrequencies;
+	// log plot of weight limits that increases by a factor of weightScale 
+	// for each octave above the lowest allowed index
+	// and offset by minWeight
+	return minWeight + weightScale * std::log10 ( (currentIndex - minIndex) / octSize);
+}
 
-    std::unique_ptr<fvec> timeVector;
-
-    std::unique_ptr<cmatrix> matrix;
-    std::unique_ptr<cmatrix> exMatrix;
-
-    std::unique_ptr<FloatBuffer> history;
-    std::unique_ptr<FloatBuffer> historyDS;
-
-    std::unique_ptr<MidiSwitch> midiSwitch;
-    
-};
-
-struct AudioParams 
+inline float noiseLimit(float minNoise, float noiseScale, float minIndex, float currentIndex, float octSize) 
 {
-    //holds data provided by the plugin and used as reference for
-    //frequency or midi calculations
-    int loOct = 0;
-    int octStr = 0;
-    int loNote = 0;
-
-    int noise = 0;
-    int release = 0;
-
-    float weight= 0;
-
-    int noise0 = 0;
-    float weight0 = 0;
-
-    int noise1 = 0;
-    float weight1 = 0;
-
-    int noise2 = 0;
-    float weight2 = 0;
-    
-    int noise3 = 0;
-    float weight3 = 0;
-
-    float trigStart = 0;
-    float retrigStart = 0;
-    float retrigStop = 0;
-
-    int midiSmooth = 1;
-    int attackSmooth = 1;
-    int velocitySmooth = 1;
-
-    int octave = 0;
-    int semitone = 0;
-
-    int velPTheta = 0;
-    int velMin = 0;
-    int velMax = 0;
-
-    int channelIn = 0;
-};
-
-struct Calculations 
-{
-    //holds data calculated within the audio block or a simulation of an audio block
-
-
-    //combining all of this data in structs adds a lot of abstraction
-    //I'm keep function calls explicit so the process is more transparent within the audioblock
-    void updateRangeInfo(const AudioParams& params, int signalSize);
-    void updateAudioParams(const AudioParams& params);
-    void updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params);
-    void updateMidiNum(const Storage& storage, const Properties& props, const AudioParams& params, const Calculations& calcs);
-    
-    //range info
-    int loNote = 0;
-    int hiNote = 0;
-    int signalStart = 0;
-
-    // signal indo
-    int f0ind = 0;
-    int f0oct = 0;
-    int f0pitch = 0;
-    float f0ratio = 0;
-    
-    int noteInd = 0;
-    int noteOct = 0;
-    int notePitch = 0;
-    float noteRatio = 0;
-
-    float weight = 0;  
-
-    float weightThreshold = 0;
-    float noiseThreshold = 0;
-    float releaseThreshold = 0;
-
-    float retrigger = 0;
-
-    float ampFull = 0;
-    float ampHalf1 = 0;
-    float ampHalf2 = 0;
-    float ampdB = 0;
-    float attackdB = -60;
-    float velocityAmp = 0;
-    float velocityAngle = 45;
-
-    // midinum
-    int midiNum = 0;
-};
-
+	return noiseScale * ((currentIndex - minIndex) / octSize) + minNoise;
+}
 
 fvec getPeaks(const fvec& signal);
 void alignWithPeaks(fvec& arr, const fvec& peaks);
@@ -163,4 +108,3 @@ void clearAboveInd(fvec& arr, int ind);
 fvec weightRatio(const fvec& arr, int octSize);
 
 
-MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params);

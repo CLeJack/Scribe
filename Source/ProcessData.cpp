@@ -1,163 +1,122 @@
 #include "ProcessData.h"
 
 // struct setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-Properties::Properties()
+
+void Scribe::initialize(float srate, float blockSize) 
 {
-    freqSize = 1 + highExp - lowExp;
-    histSamples = int(histTime * srate) + 1;
+    namespace SA = Scribe::Audio;
+    namespace SD = Scribe::DownSample;
 
-}
+    SA::historySamples = int(SA::historyTime * SA::srate) + 1;
+    SA::srate          = srate;
+    SA::blockSize      = blockSize;
 
-Properties::Properties(float srate, float blockSize)
-{
-    this->srate = srate;
-    this->blockSize = blockSize;
+    Scribe::isInitialized = true;
 
-    freqSize = 1 + highExp - lowExp;
-    histSamples = int(histTime * srate) + 1;
+    SD::factor    = SA::srate / SD::srate;
+    SD::blockSize = SA::blockSize / SD::factor;
 
-    //dsRate = srate;
-    dsFactor = srate/dsRate;
-    dsHistSamples = int(histTime * dsRate);
-    dsBlock = blockSize/dsFactor;
-    
-}
-
-Storage::Storage()
-{
-}
-
-Storage::Storage(Properties& props)
-{
-    int fSize = props.freqSize;
-
-    //exFreq, exWeight, etc.
-    //split each index into 3 components; ignore the last index
-    int exSize = (fSize - 1) *3 + 1; 
-
-    frequencies.reset   (new fvec(fSize,0));
-    exFrequencies.reset (new fvec(exSize,0));
-    
-    history.reset   (new FloatBuffer(props.histSamples,0));
-    historyDS.reset (new FloatBuffer(props.dsHistSamples,0));
-
-
-    matrix.reset     ( new cmatrix (fSize,  cvec (props.dsHistSamples, std::complex<float>(0,0) )));
-    exMatrix.reset   ( new cmatrix (exSize, cvec (props.dsHistSamples, std::complex<float>(0,0) )));
-
-    timeVector.reset ( new fvec(props.dsHistSamples, 0));
-
-    midiSwitch.reset ( new MidiSwitch());
-
-    setETFrequencies (*frequencies.get(), props.refFreq,
-                      props.semitone, props.lowExp, props.highExp);
-
-    expandFrequencies (*frequencies.get(), *exFrequencies.get());
-
-    setTimeVector (*timeVector.get(), props.dsRate);
-
-    setComplexMatrix (*matrix.get(), *frequencies.get(), *timeVector.get());
-
-    setComplexMatrix (*exMatrix.get(), *exFrequencies.get(), *timeVector.get());
-
-
+    setTimeVector(Scribe::timeVector, SD::srate);
+    setComplexMatrix(Scribe::matrix, Scribe::frequencies, Scribe::timeVector);
 }
 
 
-
-void Calculations::updateRangeInfo(const AudioParams& params, int signalSize)
+void updateRangeCalcs()
 {
-    loNote = params.loNote;
-    hiNote = loNote + 48; //4 octaves
+    namespace CR = Calculations::Range;
 
-    //full signal start calculates octave 0 which isn't needed
-    //half signal starts calculations on octave 1 which should be bass guitar range
-    signalStart = 1 + signalSize / 2; 
+    CR::lowNote  = AudioParams::lowNote;
+    CR::highNote = CR::lowNote + 48; //4 octaves
 }
 
-void Calculations::updateSignalInfo(const fvec& weights, const fvec& ratios, const fvec& signal, const AudioParams& params)
+
+//pass in order vec from the float buffer
+void updateSignalCalcs(const fvec& signal)
 {
+    namespace C = Calculations;
+    namespace S = Scribe;
+    namespace A = AudioParams;
+
     //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
     fvec comy3 = CoMY3(signal);
 
-    //amplitude measured using the full signal window and half signal window
-    ampFull = comy3[0];
-    ampHalf1 = comy3[1];
-    ampHalf2 = comy3[2];
+    C::Amp::amp = comy3[0];
+    C::Amp::half1 = comy3[1]; // oldest half of the signal
+    C::Amp::half2 = comy3[2]; // newest half
 
-    //fundamental index naively chosen by the greatest peak in frequency spectrum
-    f0ind = maxArg(weights);
-    f0ratio = ratios[f0ind];
+    //fundamental index chosen by the greatest peak in frequency spectrum
+    C::Fundamental::index = maxArg (S::weights);
+    C::Fundamental::ratio = S::ratios [C::Fundamental::index];
 
-    //max value associated with f0ind
-    weight = weights[f0ind];
-    retrigger = ampHalf2 / ampFull;
+    C::weight = S::weights [C::Fundamental::index];
+
+    C::retrigger = C::Amp::half2 / C::Amp::amp; //compare the full signal amplitude with the earliest half
 
     
-    ampdB = int16ToDb(ampFull);
+    C::Amp::dB = int16ToDb(C::Amp::amp);
 
-    float ref = attackdB * (1.0f - 1.0f/(float)params.attackSmooth);
-    ref += ampdB * 1.0f/(float)params.attackSmooth;
-    //when attacksmooth is one attackdB is approximately ampdB
-    attackdB = ref;
-    attackdB = std::max(attackdB, -60.0f); //infinity introduced errors in some instances
+    C::Delay::amp = SMA (C::Delay::amp, C::Amp::amp,
+        secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize));
+    
+    C::Delay::amp = std::max(C::Delay::amp, -60.0f); //infinity introduces errors in SMA
 
-    ref = velocityAmp * (1.0f - 1.0f/(float)params.velocitySmooth);
-    ref += ampFull * 1.0f/(float)params.velocitySmooth;
-    velocityAmp = ref;
-    velocityAngle = std::atan(ampFull / velocityAmp)*180 / MY_PI;
 
-    int loOct = loNote / 12;
-    int currentOct = f0ind / 12;
+    C::Amp::dB = SMA (C::Delay::dB, C::Amp::dB,
+        secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize));
 
-    switch (currentOct - loOct) 
+    
+    C::Angle::amp = std::atan (C::Amp::amp / C::Delay::amp) * 180 / MY_PI;
+    C::Angle::dB = std::atan  (C::Amp::dB  / C::Delay::dB ) * 180 / MY_PI;
+
+
+    // note Ind undergoes an octave correction if necessary;
+    // weight data can be distributed between 1st, 2nd and 3rd harmonics in some instances
+    // this is the only way I can see to fix this until I implement statistical methods
+    C::Note::index = C::Fundamental::index;
+    C::Note::ratio = C::Fundamental::ratio;
+    if ( C::Fundamental::ratio < A::Threshold::ratio)
     {
-        case 0:
-            weightThreshold = params.weight0;
-            noiseThreshold = params.noise0;
-            break;
-        case 1:
-            weightThreshold = params.weight1;
-            noiseThreshold = params.noise1;
-            break;
-        case 2:
-            weightThreshold = params.weight2;
-            noiseThreshold = params.noise2;
-            break;
-        case 3:
-            weightThreshold = params.weight3;
-            noiseThreshold = params.noise3;
-            break;
-        default:
-            weightThreshold = params.weight3;
-            noiseThreshold = params.noise3;
+        C::Note::index -= S::Tuning::octaveSize;
+        C::Note::ratio = S::ratios [C::Note::index];
     }
 
-    //note Ind undergoes an octave correction if necessary;
-    //weight data can be distributed between 1st, 2nd and 3rd harmonics in some instances
-    noteInd = f0ind;
-    noteRatio = f0ratio;
-    if (f0ratio < params.octStr)
-    {
-        noteInd = f0ind - 12;
-        noteRatio = ratios[noteInd];
-    }
+    //This must be calculated after the note has been properly updated
+    C::Threshold::weight = weightLimit(
+        A::Threshold::weight,
+        A::Scale::weight,
+        A::lowNote,
+        C::Note::index,
+        S::Tuning::octaveSize);
 
-    f0oct = f0ind / 12;
-    f0pitch = f0ind % 12;
+    //This must be calculated after the note has been properly updated
+    C::Threshold::noise = noiseLimit(
+        A::Threshold::noise,
+        A::Scale::noise,
+        A::lowNote,
+        C::Note::index,
+        S::Tuning::octaveSize);
 
-    noteOct = noteInd / 12;
-    notePitch = noteInd % 12;
+
+    C::Fundamental::octave /= S::Tuning::octaveSize;
+    C::Fundamental::pitch  %= S::Tuning::octaveSize;
+
+    C::Note::octave /= S::Tuning::octaveSize;
+    C::Note::pitch %= S::Tuning::octaveSize;
 }
 
-void Calculations::updateMidiNum(const Storage& storage, const Properties& props, const AudioParams& params, const Calculations& calcs) 
+void updateMidiNum() 
 {
-    int ind = calcs.noteInd;
-    ind = weight < weightThreshold ? 0 : ind;
-    ind = attackdB < noiseThreshold ? 0 : ind;
+    namespace C = Calculations;
+    namespace S = Scribe;
+    namespace A = AudioParams;
+
+    int ind = C::Note::index;
+    ind = C::weight    < C::Threshold::weight ? 0 : ind;
+    ind = C::Delay::dB < C::Threshold::noise  ? 0 : ind;
     ind = ind < 0 ? 0 : ind;
 
-    midiNum = midiShift(ind, *storage.frequencies.get(), props.refFreq, params.octave, params.semitone);
+    C::Midi::index = midiShift(ind, S::frequencies, S::Tuning::refFreq, A::Shift::octave, A::Shift::semitone);
+    C::Midi::velocity = midiVelocity(A::Velocity::max, A::Velocity::min, C::Angle::amp, A::Angle::amp); 
 }
 
 fvec getPeaks(const fvec& signal)

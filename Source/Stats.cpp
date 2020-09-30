@@ -384,17 +384,6 @@ float getPeriod(float freq, float srate, int size)
 }
 
 
-
-fvec hadamardX(const fvec& arr1, const fvec& arr2)
-{
-    fvec output(arr1.size(), 0);
-    for(int i = 0; i < arr1.size(); i++)
-    {
-        output[i] = arr1[i] * arr2[i];
-    }    
-    return output;
-}
-
 float SMA(float hist, float val, float size)
 {
     /*
@@ -406,11 +395,7 @@ float SMA(float hist, float val, float size)
 
     2. rounding error is introduced with each division.
 
-    neither should be an issue here
+    log(0) introduces infinities, but rounding error shouldn't be an issue.
     */
-
-    //need to debug this, can't see why it's broken
-    float avg = hist - hist / size;
-    avg = avg +  val / size;
-    return avg;
+    return hist - (hist / size) + (val / size);
 }

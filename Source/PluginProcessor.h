@@ -65,20 +65,19 @@ public:
 private:
     //==============================================================================
     void initialize();
+    void updateAudioParams();
+
 
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    void spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor);
-    void windowProcess(const fvec& signal, const Calculations& calcs, ScribeAudioProcessorEditor* editor);
-    void logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame);
+    void spectrumProcess(ScribeAudioProcessorEditor* editor);
+    void windowProcess(ScribeAudioProcessorEditor* editor);
+    void logProcess(ScribeAudioProcessorEditor* editor, const SwitchMessage& message, int frame);
     void settingsProcess();
-
-    std::unique_ptr<Properties> propsPtr;
-    std::unique_ptr<Storage> storagePtr;
+    
 
     std::vector<juce::MidiMessage> notes;
-    bool hostInitialized = false;
 
     int frameCounter = 0;
 
@@ -87,84 +86,55 @@ private:
 
     //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    juce::AudioParameterInt* loOctP;
-    juce::AudioParameterInt* octStrP;
-    juce::AudioParameterInt* loNoteP;
+    juce::AudioParameterInt* ratioP;
+    juce::AudioParameterInt* lowNoteP;
 
-    
     juce::AudioParameterInt* noiseP;
+    juce::AudioParameterInt* noiseScaleP;
+
     juce::AudioParameterInt* releaseP;
 
     juce::AudioParameterInt* weightP;
-
-    juce::AudioParameterInt* noiseP1;
-    juce::AudioParameterInt* weightP1;
-
-    juce::AudioParameterInt* noiseP2;
-    juce::AudioParameterInt* weightP2;
-
-    juce::AudioParameterInt* noiseP3;
-    juce::AudioParameterInt* weightP3;
-
-    juce::AudioParameterInt* noiseP0;
-    juce::AudioParameterInt* weightP0;
+    juce::AudioParameterInt* weightScaleP;
 
     juce::AudioParameterInt* trigStartP;
     juce::AudioParameterInt* retrigStartP;
     juce::AudioParameterInt* retrigStopP;
     
     juce::AudioParameterInt* midiSmoothP;
-    juce::AudioParameterInt* attackSmoothP;
-    juce::AudioParameterInt* velocitySmoothP;
+    juce::AudioParameterInt* ampSmoothP;
+    juce::AudioParameterInt* dBSmoothP;
     
     juce::AudioParameterInt* octaveP;
     juce::AudioParameterInt* semitoneP;
     
-    juce::AudioParameterFloat* velPThetaP;
+    juce::AudioParameterFloat* maxAngleP;
     juce::AudioParameterInt* velMinP;
     juce::AudioParameterInt* velMaxP;
     
     juce::AudioParameterInt* channelInP;
 
-    //took forever to realize this was being instantiated during each loop;
-    Calculations calcs; 
-
-    inline int getLoOctP() { return *loOctP; }
-    inline int getOctStrP() { return *octStrP; }
-    inline int getLoNoteP() { return *loNoteP; }
+    inline int getRatioP() { return *ratioP; }
+    inline int getLowNoteP() { return *lowNoteP; }
 
     inline float getNoiseP() { return (float)*noiseP; }
     inline float getReleaseP() { return (float)*releaseP; }
 
     inline float getWeightP() { return (float)*weightP / 1000.0f; }
 
-    inline float getNoiseP1() { return (float)*noiseP1; }
-    inline float getWeightP1() { return (float)*weightP1 / 1000.0f; }
-
-    inline float getNoiseP2() { return (float)*noiseP2; }
-    inline float getWeightP2() { return (float)*weightP2 / 1000.0f; }
-
-    inline float getNoiseP3() { return (float)*noiseP3; }
-    inline float getWeightP3() { return (float)*weightP3 / 1000.0f; }
-
-    inline float getNoiseP0() { return (float)*noiseP0; }
-    inline float getWeightP0() { return (float)*weightP0 / 1000.0f; }
-
     inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
     inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
     inline int getMidiSmoothP() { return *midiSmoothP; }
-    inline int getAttackSmoothP() { return *attackSmoothP; }
-    inline int getVelocitySmoothP() { return *velocitySmoothP; }
+    inline int getAmpSmoothP() { return *ampSmoothP; }
+    inline int getdBSmoothP() { return *dBSmoothP; }
 
     inline int getOctaveP() { return *octaveP; }
     inline int getSemitoneP() { return *semitoneP; }
 
-    inline float getVelPThetaP() { return *velPThetaP; }
+    inline float getMaxAngleP() { return *maxAngleP; }
     inline int getVelMinP() { return *velMinP; }
     inline int getVelMaxP() { return *velMaxP; }
     inline int getChannelInP() { return *channelInP; }
-
-    AudioParams getAudioParams();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

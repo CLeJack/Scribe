@@ -36,6 +36,8 @@ fvec sumNormalize(const fvec& arr);
 float sum(const fvec& arr);
 
 fvec pctDiff(const fvec& arr);
+fvec diff(const fvec& arr);
+
 
 //simple linear regression
 fvec linreg(const fvec& x, const fvec& y);
@@ -50,7 +52,7 @@ fvec CoMY3(const fvec& arr);
 float CoMX(const fvec& arr);
 fvec CoMX2(const fvec& arr);
 
-fvec diff(const fvec& arr);
+
 
 fvec hadamardX(const fvec& arr1, const fvec& arr2);
 
