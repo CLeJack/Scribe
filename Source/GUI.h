@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "GUIGlobals.h"
 #include "Stats.h"
 #include "CircularBuffer.h"
 
@@ -20,44 +21,9 @@ ctrl + f #. ClassName
 
 //0. General GUI ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//default x and y values for the project which other screen sizes are based around
-//16:9 res
-const int REFX = 800; 
-const int REFY = 450;
-
-//paper color theme
-const juce::Colour PAPER{ (juce::uint8)205, (juce::uint8)198, (juce::uint8)177 };
-
-const juce::Colour BOLD_RED_INK{ (juce::uint8)103, (juce::uint8)15, (juce::uint8)9 };
-const juce::Colour FADE_RED_INK{ (juce::uint8)98, (juce::uint8)53, (juce::uint8)50 };
-
-const juce::Colour BOLD_GREEN_INK{ (juce::uint8)21, (juce::uint8)73, (juce::uint8)23 };
-const juce::Colour FADE_GREEN_INK{ (juce::uint8)51, (juce::uint8)77, (juce::uint8)52 };
-
-const juce::Colour BOLD_BLUE_INK{ (juce::uint8)21, (juce::uint8)30, (juce::uint8)97 };
-const juce::Colour FADE_BLUE_INK{ (juce::uint8)53, (juce::uint8)58, (juce::uint8)95 };
-
-const juce::Colour BOLD_BLACK_INK{ (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
-const juce::Colour FADE_BLACK_INK{ (juce::uint8)36, (juce::uint8)36, (juce::uint8)36 };
 
 
-//implement this as a pluginProcessor field later
-//pass the plugin processor to the guitab;
-enum class GUIState { parameters, spectrum, window, log, settings };
 
-#define CALL_EACH_ELEM_FUNC(vec, func) {\
-for(int i = 0; i < vec.size(); i++)\
-    {\
-        vec[i].func;\
-    }\
-}
-
-#define APPLY_FUNC_TO_ELEM(func, vec) {\
-for(int i = 0; i < vec.size(); i++)\
-    {\
-        func(vec[i]);\
-    }\
-}
 
 inline void initText(juce::Label& component, const char* text, int justification)
 {
@@ -83,28 +49,7 @@ inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
     resizeW(area, pixw);
 }
 
-class SliderPanel : public juce::Component
-{
-public:
-    SliderPanel(const char* panelName, int sliderCount, bool showPanelDesc = true);
-    //add and make visible all components except desc when necessary
-    void setLabelNames(std::vector<const char*> names);
-    void setSliderDescriptions(std::vector<const char*> names);
-    void setRanges(std::vector<juce::Range<double>> ranges, std::vector<double> intervals);
-    void setSliderStyles(std::vector < juce::Slider::SliderStyle> styles);
-    void setSliderTextBoxes(std::vector<juce::Slider::TextEntryBoxPosition> positions);
-    void resized() override;
 
-    bool showPanelDesc;
-    juce::Label desc;
-    std::vector<juce::Slider> sliders;
-    std::vector<juce::Label> labels;
-
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SliderPanel);
-
-
-};
 
 //1. GuiParams ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -127,21 +72,7 @@ public:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiParams);
 };
 
-//1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class GuiSpectrum : public juce::Component
-{
-public:
-    GuiSpectrum();
-    void resized() override;
-    void paint(juce::Graphics& g) override;
 
-    std::vector<float> data;
-    float weight = 0;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GuiSpectrum);
-};
-
-//2. GuiWindow ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiWindow : public juce::Component
 {
 public:

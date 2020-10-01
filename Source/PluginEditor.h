@@ -28,9 +28,6 @@ public:
     void updateSpectrum(const std::vector<float>& weights, int loNote, float weight);
     void updateWindow(const std::vector<float>& signal, float ampdB);
 
-    Calculations calcs;
-    SwitchMessage message;
-
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

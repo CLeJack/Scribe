@@ -65,9 +65,12 @@ void SliderPanel::setSliderTextBoxes(std::vector<juce::Slider::TextEntryBoxPosit
 void SliderPanel::resized()
 {
     auto area = getLocalBounds();
-    resizeH(area, (int)getHeight() * 0.05f);
 
-    desc.setBounds(area.removeFromLeft(getWidth() * .2));
+    if (showPanelDesc) 
+    {
+        desc.setBounds(area.removeFromLeft(getWidth() * .2));
+    }
+    
 
     auto sliderArea = area.removeFromTop(getHeight() * 0.75f);
     for (int i = 0; i < sliders.size(); i++)
