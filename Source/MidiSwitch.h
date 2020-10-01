@@ -1,3 +1,4 @@
+#pragma once
 #include "Head.h"
 
 
@@ -12,7 +13,7 @@ struct MidiParams
     float weightThresh = 0;
 
     float midiNum = 0;
-    float ampdB = 0;
+    float delaydB = 0;
     float noiseThresh = 0;
     float releaseThresh = 0;
 

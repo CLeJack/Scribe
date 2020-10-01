@@ -170,6 +170,18 @@ fvec absMaxNormalize(const fvec& arr)
     return output;
 }
 
+void absMaxNormalize(fvec& arr)
+{
+    float max = absMaxValue(arr, 0);
+    if(max > 0)
+    {
+        for(int i =0; i< arr.size(); i++)
+        {
+            arr[i] = arr[i]/max;
+        }
+    }
+}
+
 fvec sumNormalize(const fvec& arr)
 {
     float total = 0;
@@ -189,6 +201,26 @@ fvec sumNormalize(const fvec& arr)
 
     }
     return output;
+}
+
+
+void sumNormalize(fvec& arr)
+{
+    float total = 0;
+    
+    for(int i = 0; i<arr.size(); i++)
+    {
+        total += arr[i];
+    }
+
+    if(total > 0)
+    {
+        for(int i = 0; i<arr.size(); i++)
+        {
+            arr[i] = arr[i]/total;
+        }
+
+    }
 }
 
 //~~misc. basic ops~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

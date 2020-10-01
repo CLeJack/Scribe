@@ -8,121 +8,118 @@
 int main()
 {
     
-    auto props = Properties(44100, 128);
+    namespace S = Scribe;
+    namespace A = AudioParams;
+    namespace C = Calculations;
 
-    auto store = Storage(props);
-    
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*44100);
+    float srate = 44100;
+    float blockSize = 128;
+
+    S::initialize(srate, blockSize);
+
+    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*srate);
 
     #if PRINT == 1
-    printRows(*store.frequencies.get(), "output/_0_freqs.csv");
-    printRows(*store.exFrequencies.get(), "output/_0_exfreqs.csv");
-    printColumn(*store.timeVector.get(), "output/_0_timeVector.csv");
+    printRows(S::frequencies, "output/_0_freqs.csv");
+    printColumn(S::timeVector, "output/_0_timeVector.csv");
 
-    printMatrixReal(*store.matrix.get(), "output/_0_cmatrix.csv",0);
-    printMatrix(*store.exMatrix.get(), "output/_0_excmatrix.csv",0);
+    printMatrixReal(S::matrix, "output/_0_cmatrix.csv",0);
 
     printColumn(signal0, "output/_1_signal.csv");
 
     #endif
 
-    int loops = (signal0.size() / props.blockSize);
+    int loops = (signal0.size() / S::Audio::blockSize);
     int start = 0;
     int end = 0;
 
-    AudioParams audioParams;
+    A::Threshold::noise = -35;
+    A::Threshold::release = -50;
+    A::Threshold::weight = .1f;
+    A::Threshold::ratio = 3;
+    A::Threshold::retrigStart = 0.9f;
+    A::Threshold::retrigStop = 1.0f;
+    A::SmoothTime::midi = 11;
+    A::SmoothTime::amp = 11;
+    A::SmoothTime::dB = 11;
+    A::Shift::octave = 0;
+    A::Shift::semitone = 0;
+    
+    A::Angle::amp = 55;
+    A::Velocity::max = 127;
+    A::Velocity::min = 0;
+    A::Range::lowNote = 28;
 
-    audioParams.noise = -50;
-    audioParams.release = -50;
-    //audioParams.weightThreshold = .03f;
-    audioParams.octStr = 3;
-    audioParams.trigStart = 1;
-    audioParams.retrigStart = .9f;
-    audioParams.retrigStop = 1.1f;
-    audioParams.midiSmooth = 4;
-    audioParams.attackSmooth = 4;
-    audioParams.velocitySmooth = 4;
-    audioParams.octave = 0;
-    audioParams.semitone = 0;
-    audioParams.loOct = 2;
-    audioParams.velPTheta = 4;
-    audioParams.velMax = 127;
-    audioParams.velMin = 0;
-    audioParams.loNote = 28;
-
-    MidiSwitch midiSwitch = MidiSwitch();
-    Calculations calcs;
+    
 
     for(int i = 0; i < loops; i++)
     {
-        fvec block(props.blockSize, 0);
-        int offset = i*props.blockSize;
-        for(int i = 0; i < props.blockSize; i++)
+        fvec block(S::Audio::blockSize, 0);
+        int offset = i * S::Audio::blockSize;
+        for(int i = 0; i < S::Audio::blockSize; i++)
         {
             //continually pushing to the down sample history gives a really bad signal
             //even with filtering, so use the full history and down sample from there always
-            store.history.get()->push( signal0[i + offset] );
+            S::history.get()->push( signal0[i + offset] );
         }
         
-        fvec trueSignal = store.history.get()->toOrderedVec();
-        
-        fvec signalDS(props.dsHistSamples,0);
+        fvec trueSignal = S::history.get()->toOrderedVec();
 
-        for(int i = 0; i < signalDS.size(); i++)
+        for(int i = 0; i < S::historyDS.size(); i++)
         {
-            signalDS[i] = trueSignal[i*props.dsFactor];
+            S::historyDS[i] = trueSignal[i * S::DownSample::factor];
         }
 
         
+        updateRangeCalcs();
 
-        calcs.updateRangeInfo(audioParams, signalDS.size());
+        dct(S::weights, S::matrix, S::historyDS,
+            C::Range::lowNote, C::Range::highNote, 
+            S::DownSample::signalStart, S::historyDS.size());
 
-        int windowStart = signalDS.size() - signalDS.size()/2;
-        fvec weights = dct(*store.matrix.get(), signalDS,
-            calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
-
-        weights = sumNormalize(weights);
-        fvec ratios = weightRatio(weights, 12);
+        sumNormalize(S::weights);
+        weightRatio(S::ratios, S::weights, 12);
         
-        calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
-        calcs.updateMidiNum(store, props, audioParams, calcs);
+        updateSignalCalcs();
+        updateMidiCalcs();
 
-        MidiSwitch& midiSwitch = *store.midiSwitch.get();
         SwitchMessage message{};
         
-        MidiParams midiParams = getMidiParams(calcs, audioParams);
+        MidiParams midiParams = getMidiParams();
 
-        message = midiSwitch.update(midiParams);
+        message = S::midiSwitch.update(midiParams);
         
 
         
 #if PRINT == 1
         fvec output = {
-            (float)calcs.f0ind,
-            (float)calcs.noteInd,
-            (float)calcs.weight,
-            (float)calcs.f0ratio,
-            (float)calcs.noteRatio,
-            calcs.ampFull,
-            calcs.velocityAmp,
-            calcs.ampdB,
-            calcs.attackdB,
-            calcs.velocityAngle,
-            calcs.retrigger,
+            (float)C::Fundamental::index,
+            (float)C::Note::index,
+            (float)C::weight,
+            C::Threshold::weight,
+            (float)C::Fundamental::ratio,
+            (float)C::Note::ratio,
+            C::Amp::amp,
+            C::Delay::amp,
+            C::Amp::dB,
+            C::Delay::dB,
+            C::Threshold::noise,
+            C::Angle::amp,
+            C::retrigger,
             (float)message.on,
             (float)message.onVel,
             (float)message.off,
             (float)message.offVel,
-            (float) message.send,
-            midiSwitch.notes.current,
-            midiSwitch.notes.prev,
-            (float)midiSwitch.state};
+            (float)message.send,
+            S::midiSwitch.notes.current,
+            S::midiSwitch.notes.prev,
+            (float)S::midiSwitch.state};
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( signalDS, "output/_2_historyDS.csv");
-        printRows( weights, "output/_2_weights.csv");
-        printRows( ratios, "output/_2_ratios.csv");
+        printRows( S::historyDS, "output/_2_historyDS.csv");
+        printRows( S::weights, "output/_2_weights.csv");
+        printRows( S::ratios, "output/_2_ratios.csv");
         printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2

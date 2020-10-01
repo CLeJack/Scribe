@@ -73,7 +73,7 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     SwitchMessage output = SwitchMessage();
     float smooth;
     smooth = smoothNote(params); //should be called before on, retrigger
-    if(params.ampdB < params.releaseThresh )
+    if(params.delaydB < params.releaseThresh )
     {
         state = MidiState::off;
     }
@@ -112,7 +112,7 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.ampdB > params.noiseThresh && params.midiNum != 0)
+    else if(params.delaydB > params.noiseThresh && params.midiNum != 0)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
@@ -137,7 +137,7 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.retrigVal >= params.retrigStop  || params.ampdB < params.releaseThresh)
+    else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
     {
         state = MidiState::off;
     }

@@ -4,6 +4,9 @@
 
 // Discrete Customized Transform
 
+void dct(fvec& weights, const cmatrix& matrix, const fvec& signal, 
+                int rowi, int rowf, int indi, int indf);
+
 fvec dct(const cmatrix& matrix, const fvec& signal, 
                 int rowi, int rowf, int indi, int indf);
 

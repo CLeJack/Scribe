@@ -2,22 +2,77 @@
 
 // struct setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
 
-void Scribe::initialize(float srate, float blockSize) 
-{
-    namespace SA = Scribe::Audio;
-    namespace SD = Scribe::DownSample;
+namespace Scribe {
 
-    SA::historySamples = int(SA::historyTime * SA::srate) + 1;
-    SA::srate          = srate;
-    SA::blockSize      = blockSize;
+	void initialize(float srate, float blockSize)
+    {
+        namespace SA = Scribe::Audio;
+        namespace SD = Scribe::DownSample;
+        namespace ST = Scribe::Tuning;
 
-    Scribe::isInitialized = true;
+        SA::historySamples = int(SA::historyTime * SA::srate) + 1;
+        SA::srate          = srate;
+        SA::blockSize      = blockSize;
 
-    SD::factor    = SA::srate / SD::srate;
-    SD::blockSize = SA::blockSize / SD::factor;
+        Scribe::isInitialized = true;
 
-    setTimeVector(Scribe::timeVector, SD::srate);
-    setComplexMatrix(Scribe::matrix, Scribe::frequencies, Scribe::timeVector);
+        SD::factor    = SA::srate / SD::srate;
+        SD::blockSize = SA::blockSize / SD::factor;
+
+        setETFrequencies(Scribe::frequencies, ST::refFreq, ST::semitone, ST::lowExp, ST::highExp);
+        setTimeVector(Scribe::timeVector, SD::srate);
+        setComplexMatrix(Scribe::matrix, Scribe::frequencies, Scribe::timeVector);
+
+        history.reset(new FloatBuffer(SA::historySamples, 0.0f));
+    }
+	bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
+
+	namespace Tuning 
+	{
+		const float refFreq = 440; //concert tuning
+		const float semitone = float(std::pow(2, 1.0 / 12.0)); //12 Tone equal temperament
+		const int octaveSize = 12;
+
+		const int lowExp = -57; // -57 = C0
+		const int highExp = 50 - 24 + 1; // 50 = B8; aliasing exist in octaves 7 to 8;
+	}
+
+	namespace Audio 
+	{
+		const float historyTime = .05f;
+		int historySamples = 0;
+
+		float srate = 44100;
+		float blockSize = 128;
+	}
+
+	namespace DownSample 
+	{
+		const float srate = 4000;
+		const int historySamples = int(Audio::historyTime * srate);
+
+		//for use with DCT
+		//full signal start calculates octave 0 which isn't needed
+	    //half signal starts calculations on octave 1 which should be bass guitar range
+		const int signalStart = historySamples / 2;
+
+		int factor = 0;
+		int blockSize = 0;
+	}
+
+
+	//arrays & buffers
+	fvec frequencies = fvec (Tuning::highExp - Tuning::lowExp, 0);
+	fvec weights     = fvec (frequencies.size(), 0);
+	fvec ratios      = fvec (frequencies.size(), 0);
+
+	fvec timeVector  = fvec (DownSample::historySamples, 0);
+	cmatrix matrix   = cmatrix (frequencies.size(), cvec (DownSample::historySamples, std::complex<float>(0, 0)));
+	
+	std::unique_ptr<FloatBuffer> history;
+	fvec historyDS = fvec (DownSample::historySamples, 0.0001f);
+
+    MidiSwitch midiSwitch = MidiSwitch();
 }
 
 
@@ -25,20 +80,20 @@ void updateRangeCalcs()
 {
     namespace CR = Calculations::Range;
 
-    CR::lowNote  = AudioParams::lowNote;
+    CR::lowNote  = AudioParams::Range::lowNote;
     CR::highNote = CR::lowNote + 48; //4 octaves
 }
 
 
 //pass in order vec from the float buffer
-void updateSignalCalcs(const fvec& signal)
+void updateSignalCalcs()
 {
     namespace C = Calculations;
     namespace S = Scribe;
     namespace A = AudioParams;
 
     //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
-    fvec comy3 = CoMY3(signal);
+    fvec comy3 = CoMY3(S::historyDS);
 
     C::Amp::amp = comy3[0];
     C::Amp::half1 = comy3[1]; // oldest half of the signal
@@ -54,17 +109,17 @@ void updateSignalCalcs(const fvec& signal)
 
     
     C::Amp::dB = int16ToDb(C::Amp::amp);
+    C::Amp::dB = C::Amp::dB < -90 ? -90 : C::Amp::dB;
 
-    C::Delay::amp = SMA (C::Delay::amp, C::Amp::amp,
-        secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize));
-    
-    C::Delay::amp = std::max(C::Delay::amp, -60.0f); //infinity introduces errors in SMA
+    C::Blocks::amp = secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize);
+    C::Blocks::dB = secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize);
+    C::Blocks::midi = secToBlocks (A::SmoothTime::midi, S::Audio::srate, S::Audio::blockSize);
+
+    C::Delay::amp = SMA (C::Delay::amp, C::Amp::amp, C::Blocks::amp);
+
+    C::Delay::dB = SMA (C::Delay::dB, C::Amp::dB, C::Blocks::dB);
 
 
-    C::Amp::dB = SMA (C::Delay::dB, C::Amp::dB,
-        secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize));
-
-    
     C::Angle::amp = std::atan (C::Amp::amp / C::Delay::amp) * 180 / MY_PI;
     C::Angle::dB = std::atan  (C::Amp::dB  / C::Delay::dB ) * 180 / MY_PI;
 
@@ -74,7 +129,8 @@ void updateSignalCalcs(const fvec& signal)
     // this is the only way I can see to fix this until I implement statistical methods
     C::Note::index = C::Fundamental::index;
     C::Note::ratio = C::Fundamental::ratio;
-    if ( C::Fundamental::ratio < A::Threshold::ratio)
+    if ( C::Fundamental::ratio < A::Threshold::ratio 
+      && C::Fundamental::index >= S::Tuning::octaveSize)
     {
         C::Note::index -= S::Tuning::octaveSize;
         C::Note::ratio = S::ratios [C::Note::index];
@@ -84,7 +140,7 @@ void updateSignalCalcs(const fvec& signal)
     C::Threshold::weight = weightLimit(
         A::Threshold::weight,
         A::Scale::weight,
-        A::lowNote,
+        A::Range::lowNote,
         C::Note::index,
         S::Tuning::octaveSize);
 
@@ -92,7 +148,7 @@ void updateSignalCalcs(const fvec& signal)
     C::Threshold::noise = noiseLimit(
         A::Threshold::noise,
         A::Scale::noise,
-        A::lowNote,
+        A::Range::lowNote,
         C::Note::index,
         S::Tuning::octaveSize);
 
@@ -104,7 +160,7 @@ void updateSignalCalcs(const fvec& signal)
     C::Note::pitch %= S::Tuning::octaveSize;
 }
 
-void updateMidiNum() 
+void updateMidiCalcs() 
 {
     namespace C = Calculations;
     namespace S = Scribe;
@@ -173,30 +229,40 @@ fvec weightRatio(const fvec& arr, int octSize)
     return output;
 }
 
-
-
-MidiParams getMidiParams(const Calculations& calcs, const AudioParams& params)
+void weightRatio(fvec& ratios, const fvec& arr, int octSize)
 {
+
+    for(int i = octSize; i < arr.size(); i++)
+    {
+        ratios[i] = arr[i] /arr[i-octSize];
+        ratios[i] = ratios[i] > 10 ? 10 : ratios[i];
+    }
+}
+
+
+
+MidiParams getMidiParams()
+{
+    namespace C = Calculations;
+    namespace A = AudioParams;
+
     auto output = MidiParams();
 
-    output.weight = calcs.weight;
-    output.weightThreshold = calcs.weightThreshold;
+    output.weightVal = C::weight;
+    output.weightThresh = C::Threshold::weight;
 
-    output.midiNum = calcs.midiNum;
-    output.ampdB = calcs.attackdB;
-    output.noisedB = calcs.noiseThreshold;
-    output.releasedB = params.release;
+    output.midiNum = C::Midi::index;
+    output.delaydB = C::Delay::dB;
+    output.noiseThresh = C::Threshold::noise;
+    output.releaseThresh = C::Threshold::release;
 
-    output.retrig = calcs.retrigger;
-    output.retrigStart = params.retrigStart;
-    output.retrigStop = params.retrigStop;
+    output.retrigVal = C::retrigger;
+    output.retrigStart = A::Threshold::retrigStart;
+    output.retrigStop = A::Threshold::retrigStop;
     
-    output.velPTheta = params.velPTheta;
-    output.velocityAngle = calcs.velocityAngle;
-    output.velMin = params.velMin;
-    output.velMax = params.velMax;
+    output.velocityVal = C::Midi::velocity;
     
-    output.smoothFactor = params.midiSmooth;
+    output.smoothFactor = C::Blocks::midi;
 
     return output;
 }

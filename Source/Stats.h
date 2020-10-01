@@ -30,8 +30,10 @@ int minArg(const fvec& arr);
 
 
 fvec absMaxNormalize(const fvec& arr);
+void absMaxNormalize(fvec& arr);
 
 fvec sumNormalize(const fvec& arr);
+void sumNormalize(fvec& arr);
 
 float sum(const fvec& arr);
 

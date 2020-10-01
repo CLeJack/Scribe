@@ -7,72 +7,72 @@
 #include "Stats.h"
 #include "DCT.h"
 #include "MidiSwitch.h"
-#include "AudioParams.h"
-#include "Calculations.h"
+#include "Globals.h"
 
 
 
-
-
+//Scribe program
 namespace Scribe {
 
 	void initialize(float srate, float blockSize);//set all required non-const variables here
-	bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
+	extern bool isInitialized; //don't run PluginProcessor ready state loop without this set to true
 
 	namespace Tuning 
 	{
-		const float refFreq = 440; //concert tuning
-		const float semitone = float(std::pow(2, 1.0 / 12.0)); //12 Tone equal temperament
-		const int octaveSize = 12;
+		extern const float refFreq; //concert tuning
+		extern const float semitone; //12 Tone equal temperament
+		extern const int octaveSize;
 
-		const int lowExp = -57; // -57 = C0
-		const int highExp = 50 - 24 + 1; // 50 = B8; aliasing exist in octaves 7 to 8;
+		extern const int lowExp; // -57 = C0
+		extern const int highExp; // 50 = B8; aliasing exist in octaves 7 to 8;
 	}
 
 	namespace Audio 
 	{
-		const float historyTime = .05f;
-		int historySamples = 0;
+		extern const float historyTime;
+		extern int historySamples;
 
-		float srate = 44100;
-		float blockSize = 128;
+		extern float srate;
+		extern float blockSize;
 	}
 
 	namespace DownSample 
 	{
-		const float srate = 4000;
-		const int historySamples = int(historyTime * dsRate);
+		extern const float srate;
+		extern const int historySamples;
 
 		//for use with DCT
 		//full signal start calculates octave 0 which isn't needed
 	    //half signal starts calculations on octave 1 which should be bass guitar range
-		const int signalStart = historySamples / 2;
+		extern const int signalStart;
 
-		int factor = 0;
-		int blockSize = 0;
+		extern int factor;
+		extern int blockSize;
 	}
 
 
 	//arrays & buffers
-	fvec frequencies = fvec (highExp - lowExp, 0);
-	fvec weights     = fvec (frequencies.size(), 0);
-	fvec ratios      = fvec (frequencies.size(), 0);
+	extern fvec frequencies;
+	extern fvec weights;
+	extern fvec ratios;
 
-	fvec timeVector  = fvec (Scribe::DownSample::historySamples, 0);
-	cmatrix matrix   = cmatrix (frequencies.size(), cvec (Scribe::DownSample::historySamples, std::complex<float>(0, 0)));
+	extern fvec timeVector;
+	extern cmatrix matrix;
 	
-	std::unique_ptr<FloatBuffer> history;
-	fvec historyDS = fvec (Scribe::DownSample::historySamples, 0.0001f);
+	extern std::unique_ptr<FloatBuffer> history;
+	extern fvec historyDS;
 
 	//midi state machine
-	MidiSwitch midiSwitch;
+	extern MidiSwitch midiSwitch;
 }
+
+
 
 void updateRangeCalcs();
 void updateAudioParams();
 
 //pass in order vec from the float buffer
-void updateSignalCalcs(const fvec& signal);
+void updateSignalCalcs();
 void updateMidiCalcs();
 MidiParams getMidiParams();
 
@@ -88,10 +88,9 @@ inline int secToBlocks(float seconds, float srate, float blockSize, float timeDi
 
 inline float weightLimit(float minWeight, float weightScale, float minIndex, float currentIndex, float octSize) 
 {
-	// log plot of weight limits that increases by a factor of weightScale 
-	// for each octave above the lowest allowed index
-	// and offset by minWeight
-	return minWeight + weightScale * std::log10 ( (currentIndex - minIndex) / octSize);
+	float x = (currentIndex - minIndex) /octSize;
+	x = x < 0 ? 0 : x;
+	return minWeight + weightScale * std::log10 ( 1 + x) / 100;
 }
 
 inline float noiseLimit(float minNoise, float noiseScale, float minIndex, float currentIndex, float octSize) 
@@ -107,4 +106,5 @@ void clearAboveInd(fvec& arr, int ind);
 
 fvec weightRatio(const fvec& arr, int octSize);
 
+void weightRatio(fvec& ratios, const fvec& arr, int octSize);
 
