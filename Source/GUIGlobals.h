@@ -19,6 +19,8 @@ const int REFY = 450;
 
 //paper color theme
 const juce::Colour PAPER{ (juce::uint8)205, (juce::uint8)198, (juce::uint8)177 };
+const juce::Colour PAPER_DARK{ (juce::uint8)183, (juce::uint8)173, (juce::uint8)143 };
+const juce::Colour PAPER_Light{ (juce::uint8)213, (juce::uint8)207, (juce::uint8)190 };
 
 const juce::Colour BOLD_RED_INK{ (juce::uint8)103, (juce::uint8)15, (juce::uint8)9 };
 const juce::Colour FADE_RED_INK{ (juce::uint8)98, (juce::uint8)53, (juce::uint8)50 };
@@ -32,15 +34,15 @@ const juce::Colour FADE_BLUE_INK{ (juce::uint8)53, (juce::uint8)58, (juce::uint8
 const juce::Colour BOLD_BLACK_INK{ (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
 const juce::Colour FADE_BLACK_INK{ (juce::uint8)36, (juce::uint8)36, (juce::uint8)36 };
 
-const juce::Colour MARKER1{ (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
-const juce::Colour MARKER2{ (juce::uint8)64, (juce::uint8)64, (juce::uint8)64 };
-const juce::Colour MARKER3{ (juce::uint8)128, (juce::uint8)128, (juce::uint8)128 };
-const juce::Colour MARKER4{ (juce::uint8)192, (juce::uint8)192, (juce::uint8)192 };
+const juce::Colour MARKER0{ (juce::uint8)0, (juce::uint8)0, (juce::uint8)0 };
+const juce::Colour MARKER1{ (juce::uint8)64, (juce::uint8)64, (juce::uint8)64 };
+const juce::Colour MARKER2{ (juce::uint8)128, (juce::uint8)128, (juce::uint8)128 };
+const juce::Colour MARKER3{ (juce::uint8)192, (juce::uint8)192, (juce::uint8)192 };
 
 
 //implement this as a pluginProcessor field later
 //pass the plugin processor to the guitab;
-enum class GUIState { parameters, spectrum, window, log, settings };
+enum class GUIState { main, spectrum, signal, midi, settings };
 
 #define CALL_EACH_ELEM_FUNC(vec, func) {\
 for(int i = 0; i < vec.size(); i++)\
@@ -62,3 +64,44 @@ area.removeFromRight(val);\
 area.removeFromTop(val);\
 area.removeFromBottom(val);\
 }
+
+
+/*
+
+
+//--- Label
+
+backgroundColourId                  = 0x1000280, PAPER
+
+textColourId                        = 0x1000281, BOLD_BLACK_INK
+
+outlineColourId                     = 0x1000282, FADE_BLACK_INK
+
+
+//--- Slider
+
+backgroundColourId                  = 0x1001200, PAPER
+
+thumbColourId                       = 0x1001300, BOLD_BLACK_INK
+
+trackColourid                       = 0x1001310, FADE_BLACK_INK
+
+//--- TabbedComponent
+
+backgroundColourId                  = 0x1005800, PAPER_DARK
+
+outlineColourId                     = 0x1005801, FADE_BLACK_INK
+
+
+
+//--- TabbedButtonBar
+
+tabOutlineColourId                  = 0x1005812, FADE_BLACK_INK
+
+tabTextColourId                     = 0x1005813, FADE_BLACK_INK
+
+frontOutlineColourId                = 0x1005814, BOLD_BLACK_INK
+
+frontTextColourId                   = 0x1005815, BOLD_BLACK_INK
+
+*/

@@ -230,7 +230,7 @@ void ScribeAudioProcessor::updateAudioParams()
     
     A::Threshold::ratio = getRatioP();
     
-    A::lowNote = getLowNoteP();
+    A::Range::lowNote = getLowNoteP();
 
 
     A::Threshold::release = getReleaseP();
@@ -295,14 +295,14 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     updateRangeCalcs();
 
     //discrete customized transform (dft) using a portion of frequency and signal
-    fvec weights = dct(
+    dct(S::weights,
         S::matrix,  //dft using this matrix
         S::historyDS, //on this signal
         C::Range::lowNote, C::Range::highNote, //for these rows
         S::DownSample::signalStart, S::historyDS.size()); //and these columns
 
-    weights = sumNormalize(weights);
-    fvec ratios = weightRatio(weights, 12);
+    sumNormalize(S::weights);
+    weightRatio(S::ratios, S::weights, 12);
 
     //I need void version of the above for pre existing matrices;
 

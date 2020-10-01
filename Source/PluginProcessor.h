@@ -12,6 +12,11 @@
 
 #include "ProcessData.h"
 #include "GUI.h"
+#include "GUIGlobals.h"
+#include "GUIMain.h"
+#include "GUISpectrum.h"
+#include "GUISignal.h"
+#include "GUIMidi.h"
 
 
 enum class PluginState {waiting, ready, updating};

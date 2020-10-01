@@ -11,3 +11,5 @@
 #pragma once
 #include <JuceHeader.h>
 #include "GUIGlobals.h"
+
+class GuiMidi : public juce::Component {};

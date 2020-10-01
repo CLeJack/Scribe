@@ -11,25 +11,26 @@
 
 //==============================================================================
 ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+    : AudioProcessorEditor (&p), audioProcessor (p), guiSpectrum(Scribe::frequencies.size(), Scribe::Tuning::octaveSize)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (REFX, REFY);
 
+    setLookAndFeel(new PaperLookAndFeel());
     addAndMakeVisible(guiTabs);
     auto colour = findColour (juce::ResizableWindow::backgroundColourId);
 
-    guiTabs.addTab("Params",   colour, &guiParams,   false);
+    guiTabs.addTab("Main",   colour, &guiMain,   false);
     guiTabs.addTab("Spectrum", colour, &guiSpectrum, false);
-    guiTabs.addTab("Window",   colour, &guiWindow,   false);
-    guiTabs.addTab("Log",      colour, &guiLog,      false);
+    guiTabs.addTab("Signal",   colour, &guiSignal,   false);
+    guiTabs.addTab("Midi",      colour, &guiMidi,      false);
     guiTabs.addTab("Settings", colour, &guiSettings, false);
 
-    guiParams.resized();
+    guiMain.resized();
     guiSpectrum.resized();
-    guiWindow.resized();
-    guiLog.resized();
+    guiSignal.resized();
+    guiMidi.resized();
     guiSettings.resized();
 
 }
@@ -49,14 +50,14 @@ void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
     //g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
     switch (guiTabs.guiState) 
     {
-        case GUIState::log:
-            paintLog();
+        case GUIState::main:
+            
             break;
         case GUIState::spectrum:
-            paintSpectrum();
+            //paintSpectrum();
             break;
-        case GUIState::window:
-            paintWindow();
+        case GUIState::signal:
+            //paintWindow();
             break;
     }
     
@@ -70,10 +71,6 @@ void ScribeAudioProcessorEditor::resized()
 
 void ScribeAudioProcessorEditor::paintLog() 
 {
-    guiLog.setValueLabels(calcs.f0ind, calcs.f0ratio, calcs.f0oct, calcs.f0pitch,
-        calcs.noteInd, calcs.noteRatio, calcs.noteOct, calcs.notePitch,
-        calcs.ampFull, calcs.ampdB, calcs.retrigger, calcs.retrigger,
-        message.on, message.onVel, message.off, message.offVel);
 }
 void ScribeAudioProcessorEditor::paintSpectrum()
 {
@@ -89,19 +86,29 @@ void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weight
 {
     for (int i = loNote; i < loNote + 48; i++) 
     {
-        guiSpectrum.data[i - loNote] = weights[i];
+        guiSpectrum.bars.weights[i - loNote] = weights[i];
     }
 
-    guiSpectrum.weight = weight;
+    guiSpectrum.meter.dB = Calculations::Amp::dB;
+
+    float minWeight = AudioParams::Threshold::weight;
+    float weightScale = AudioParams::Scale::weight;
+    float minInd = Calculations::Range::lowNote;
+
+    for (int i = 0; i < guiSpectrum.thresholds.relativeHeights.size(); i++) 
+    {
+        guiSpectrum.thresholds.relativeHeights[i] = weightLimit(minWeight, weightScale, minInd, i * 12 + minInd, Scribe::Tuning::octaveSize);
+    }
+    
 
 }
 
 void ScribeAudioProcessorEditor::updateWindow(const std::vector<float>& signal, float ampdB) 
 {
-    for (int i = 0; i < std::min(guiWindow.signalVec.size(), signal.size()); i++) 
-    {
-        guiWindow.signalVec[i] = signal[i];
-    }
-    guiWindow.dBBuff.push(ampdB);
-    guiWindow.currentdB = ampdB;
+    //for (int i = 0; i < std::min(guiWindow.signalVec.size(), signal.size()); i++) 
+    //{
+    //    guiWindow.signalVec[i] = signal[i];
+    //}
+    //guiWindow.dBBuff.push(ampdB);
+    //guiWindow.currentdB = ampdB;
 }

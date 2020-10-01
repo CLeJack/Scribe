@@ -11,6 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "GUIGlobals.h"
+#include "Stats.h"
 
 class SpectrumSliders : public juce::Component 
 {
@@ -24,11 +25,11 @@ public:
 class SpectrumBackground : public juce::Component 
 {
 public:
-    SpectrumBackground(float barsCount, float octaveSize);
+    SpectrumBackground(float barCount, float octaveSize);
 
     void paint(juce::Graphics& g) override;
     
-    float barsCount;
+    float barCount;
     float octaveSize;
 
 };
@@ -36,9 +37,9 @@ public:
 class SpectrumThresholds : public juce::Component 
 {
 public:
+
     void paint(juce::Graphics& g) override;
-    
-    std::vector<juce::Colour> colours{ 4 };
+
     std::vector<float> relativeHeights{ 4, 0 };
 };
 
@@ -56,7 +57,7 @@ class SpectrumNotes : public juce::Component
 {
 public:
     SpectrumNotes(float barCount, float octaveSize);
-    void paint(juce::Graphics& g);
+    //void paint(juce::Graphics& g);
 
     std::vector<char*> letters = { "C", " ", "D", " ", "E", "F", " ", "G", " ","A", " ", "B" };
     std::vector<char*> panel;
@@ -65,11 +66,10 @@ public:
 class SpectrumdB : public juce::Component 
 {
 public:
-    SpectrumdB();
     void paint(juce::Graphics& g);
 
-    float dB;
-    float mindB;
+    float dB = -60;
+    float mindB = -60;
 };
 
 //1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,14 +78,13 @@ class GuiSpectrum : public juce::Component
 public:
     GuiSpectrum(int barCount, int octaveSize);
     void resized() override;
-    void paint(juce::Graphics& g) override;
 
     SpectrumBackground background;
     SpectrumSliders sliderPanel;
     SpectrumThresholds thresholds;
     SpectrumNotes notes;
     SpectrumBars bars;
-    SpectrumdB dB;
+    SpectrumdB meter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GuiSpectrum);
 };

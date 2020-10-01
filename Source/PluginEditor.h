@@ -33,10 +33,10 @@ private:
     // access the processor object that created it.
     ScribeAudioProcessor& audioProcessor;
 
-    GuiParams guiParams;
+    GuiMain guiMain;
     GuiSpectrum guiSpectrum;
-    GuiWindow guiWindow;
-    GuiLog guiLog;
+    GuiSignal guiSignal;
+    GuiMidi guiMidi;
     GuiSettings guiSettings;
     GuiTabs guiTabs;
 
