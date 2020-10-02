@@ -10,11 +10,11 @@ namespace Scribe {
         namespace SD = Scribe::DownSample;
         namespace ST = Scribe::Tuning;
 
-        SA::historySamples = int(SA::historyTime * SA::srate) + 1;
+        
         SA::srate          = srate;
         SA::blockSize      = blockSize;
-
-        Scribe::isInitialized = true;
+        SA::historySamples = int(SA::historyTime * SA::srate) + 1;
+        
 
         SD::factor    = SA::srate / SD::srate;
         SD::blockSize = SA::blockSize / SD::factor;
@@ -24,6 +24,8 @@ namespace Scribe {
         setComplexMatrix(Scribe::matrix, Scribe::frequencies, Scribe::timeVector);
 
         history.reset(new FloatBuffer(SA::historySamples, 0.0f));
+
+        Scribe::isInitialized = true;
     }
 	bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
 
@@ -34,7 +36,7 @@ namespace Scribe {
 		const int octaveSize = 12;
 
 		const int lowExp = -57; // -57 = C0
-		const int highExp = 50 - 24 + 1; // 50 = B8; aliasing exist in octaves 7 to 8;
+		const int highExp = 50 - 24; // 50 = B8; aliasing exist in octaves 7 to 8;
 	}
 
 	namespace Audio 
@@ -62,7 +64,7 @@ namespace Scribe {
 
 
 	//arrays & buffers
-	fvec frequencies = fvec (Tuning::highExp - Tuning::lowExp, 0);
+	fvec frequencies = fvec (1 + Tuning::highExp - Tuning::lowExp, 0);
 	fvec weights     = fvec (frequencies.size(), 0);
 	fvec ratios      = fvec (frequencies.size(), 0);
 

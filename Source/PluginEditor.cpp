@@ -18,14 +18,21 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
     setSize (REFX, REFY);
 
     setLookAndFeel(new PaperLookAndFeel());
-    addAndMakeVisible(guiTabs);
-    auto colour = findColour (juce::ResizableWindow::backgroundColourId);
 
-    guiTabs.addTab("Main",   colour, &guiMain,   false);
-    guiTabs.addTab("Spectrum", colour, &guiSpectrum, false);
-    guiTabs.addTab("Signal",   colour, &guiSignal,   false);
-    guiTabs.addTab("Midi",      colour, &guiMidi,      false);
-    guiTabs.addTab("Settings", colour, &guiSettings, false);
+    guiMain.setLookAndFeel(new PaperLookAndFeel());
+    guiTabs.setLookAndFeel(new PaperLookAndFeel());
+    guiSpectrum.setLookAndFeel(new PaperLookAndFeel());
+    guiSignal.setLookAndFeel(new PaperLookAndFeel());
+    guiMidi.setLookAndFeel(new PaperLookAndFeel());
+    guiSettings.setLookAndFeel(new PaperLookAndFeel());
+
+    addAndMakeVisible(guiTabs);
+
+    guiTabs.addTab("Main",   PAPER, &guiMain,   false);
+    guiTabs.addTab("Spectrum", PAPER, &guiSpectrum, false);
+    guiTabs.addTab("Signal", PAPER, &guiSignal,   false);
+    guiTabs.addTab("Midi", PAPER, &guiMidi,      false);
+    guiTabs.addTab("Settings", PAPER, &guiSettings, false);
 
     guiMain.resized();
     guiSpectrum.resized();

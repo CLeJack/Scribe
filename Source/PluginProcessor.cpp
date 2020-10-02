@@ -48,7 +48,7 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
     addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 40));
     
-    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  0, 1) );
+    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
 
     pluginState = PluginState::waiting;
     
@@ -277,7 +277,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     updateAudioParams();
 
     //add the block to history
-    auto* channelData = buffer.getReadPointer(*channelInP);
+    auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
     {
         S::history.get()->push(normToInt16Range(channelData[i]));
@@ -337,7 +337,8 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     if (frameCounter == 0 && editor != nullptr) 
     {
         //const juce::MessageManagerLock mmLock;
-        editor->repaint();
+        //editor->repaint();
+        //send data--not sure if repaint is needed
     }
     
 

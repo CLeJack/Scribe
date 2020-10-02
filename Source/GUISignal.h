@@ -11,5 +11,23 @@
 #pragma once
 #include <JuceHeader.h>
 #include "GUIGlobals.h"
+#include "CircularBuffer.h"
 
-class GuiSignal : public juce::Component {};
+class SignalScope : public juce::Component 
+{
+    void paint(juce::Graphics& g) override;
+};
+
+class SignaldB : public juce::Component 
+{
+    void paint(juce::Graphics& g) override;
+
+    fvec thresholds;
+    
+};
+
+class GuiSignal : public juce::Component 
+{
+    GuiSignal();
+    void resized() override;
+};

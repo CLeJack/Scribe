@@ -18,8 +18,8 @@ class SpectrumSliders : public juce::Component
 public:
     SpectrumSliders();
     void resized() override;
-    std::vector<juce::Slider> sliders { 4 };
-    std::vector<juce::Label> labels   { 4 };
+    std::vector<juce::Slider> sliders;
+    std::vector<juce::Label> labels;
 };
 
 class SpectrumBackground : public juce::Component 
@@ -37,36 +37,35 @@ public:
 class SpectrumThresholds : public juce::Component 
 {
 public:
-
+    SpectrumThresholds();
     void paint(juce::Graphics& g) override;
 
-    std::vector<float> relativeHeights{ 4, 0 };
+    std::vector<float> relativeHeights;
 };
 
 class SpectrumBars : public juce::Component 
 {
 public:
     SpectrumBars(float barCount);
-    void paint(juce::Graphics& g);
+    void paint(juce::Graphics& g) override;
 
     std::vector<float> weights;
-    float currentWeight;
 };
 
 class SpectrumNotes : public juce::Component 
 {
 public:
     SpectrumNotes(float barCount, float octaveSize);
-    //void paint(juce::Graphics& g);
+    void paint(juce::Graphics& g) override;
 
-    std::vector<char*> letters = { "C", " ", "D", " ", "E", "F", " ", "G", " ","A", " ", "B" };
-    std::vector<char*> panel;
+    std::vector<int> keyReference = { 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0 };
+    std::vector<int> keys;
 };
 
 class SpectrumdB : public juce::Component 
 {
 public:
-    void paint(juce::Graphics& g);
+    void paint(juce::Graphics& g) override;
 
     float dB = -60;
     float mindB = -60;

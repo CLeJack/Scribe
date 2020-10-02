@@ -13,6 +13,12 @@
 
 GuiSpectrum::GuiSpectrum(int barCount, int octaveSize) : background(barCount, octaveSize), bars(barCount), notes(barCount, octaveSize)
 {
+    addAndMakeVisible(background);
+    addAndMakeVisible(sliderPanel);
+    addAndMakeVisible(thresholds);
+    addAndMakeVisible(notes);
+    addAndMakeVisible(bars);
+    addAndMakeVisible(meter);
 }
 
 void GuiSpectrum::resized() 
@@ -35,38 +41,35 @@ void GuiSpectrum::resized()
 
     pad = std::min(H, W) * 0.05f;
     
-    auto sliderArea = area.removeFromLeft(pad * 3);
-    
-    area.removeFromLeft(pad);
+    auto sliderArea = juce::Rectangle<int>(X, Y, W * 0.2f, H);
 
-    auto displayArea = area.removeFromLeft(pad * 12);
+    auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W * 0.7f, H);
 
-    area.removeFromLeft(pad);
+    auto meterArea = juce::Rectangle<int>(displayArea.getRight(), Y, W * 0.1f, H);
 
-    auto dBArea = area; //remaining 15%
+    displayArea.removeFromLeft(pad);
+    displayArea.removeFromRight(pad);
 
     //set all bounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     sliderPanel.setBounds(sliderArea);
-    meter.setBounds(dBArea);
-
+    
 
     background.setBounds (displayArea);
 
-    pad = displayArea.getWidth() * 0.05f;
-
-    REMOVE_FROM_ALL_SIDES(displayArea, pad);
-
-    notes.setBounds(displayArea.removeFromBottom(displayArea.getHeight() * 0.1f));
+    notes.setBounds(displayArea.removeFromBottom(displayArea.getHeight() * 0.05f));
 
     thresholds.setBounds (displayArea);
     bars.setBounds       (displayArea);
+
+
+    meter.setBounds(meterArea);
     
 
     
 
 }
 
-SpectrumSliders::SpectrumSliders() 
+SpectrumSliders::SpectrumSliders() : sliders(4), labels(4)
 {
     labels[0].setText("Noise Floor", juce::NotificationType::dontSendNotification);
     labels[1].setText("Noise Slope", juce::NotificationType::dontSendNotification);
@@ -77,6 +80,9 @@ SpectrumSliders::SpectrumSliders()
     sliders[1].setRange(-20, 0, 1);
     sliders[2].setRange(12, 28, 1);
     sliders[3].setRange(0, 10, 1);
+
+    APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
+    APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
 
 }
 
@@ -89,8 +95,13 @@ void SpectrumSliders::resized()
     for (int i = 0; i < sliders.size(); i++) 
     {
         auto rect = area.removeFromTop(H);
-        labels[i].setBounds(rect.removeFromBottom(rect.getHeight() * 0.15f));
-        sliders[i].setBounds(area);
+        labels[i].setBounds(rect.removeFromBottom(rect.getHeight() * 0.30f));
+        sliders[i].setBounds(rect);
+        sliders[i].setTextBoxStyle(
+            juce::Slider::TextEntryBoxPosition::TextBoxLeft,
+            true,
+            rect.getWidth() * 0.30f,
+            rect.getHeight() * 0.30f);
     }
 
 }
@@ -101,38 +112,47 @@ SpectrumBackground::SpectrumBackground(float barCount, float octaveSize) : barCo
 
 void SpectrumBackground::paint(juce::Graphics& g) 
 {
+
     
-    auto area = getLocalBounds();
+
+
     int segments = barCount / octaveSize;
-    float W = area.getWidth();
+    float W = getWidth();
     float w = W / segments;
-    float X = getX();
-    float Y = getY();
+    float X = 0;
+    float Y = 0;
     float H = getHeight();
 
     for (int i = 0; i < segments; i++) 
     {
         g.setColour(i % 2 == 0 ? PAPER_DARK : PAPER);
         g.fillRect(X, Y, w, H);
+        
+        X += w;
     }
-
-    g.setColour(BOLD_BLACK_INK);
-    g.drawRect(getLocalBounds(), 2);
+    
 }
 
+
+SpectrumThresholds::SpectrumThresholds() : relativeHeights(4, 0) 
+{
+    for (int i = 0; i < relativeHeights.size(); i++) 
+    {
+        relativeHeights[i] = (i + 1) * .05;
+    }
+}
 
 #define SET_SPECTRUM_THRESHOLDS(color, index){\
 g.setColour(color);\
-Y = floor - relativeHeights[index] * H;\
-g.drawLine(X, Y, W, Y); \
+Y = H - relativeHeights[index] * H;\
+g.drawLine(X, Y, W, Y, 2.0f); \
 }
 void SpectrumThresholds::paint(juce::Graphics& g) 
 {
-    float Y = getY();
-    float floor = getBottom();
+    float Y = 0;
     float H = getHeight();
-    float X = getX();
-    float W = getRight();
+    float X = 0;
+    float W = getWidth();
 
 
     SET_SPECTRUM_THRESHOLDS(MARKER0, 0);
@@ -150,10 +170,9 @@ SpectrumBars::SpectrumBars(float barCount) : weights(barCount)
 void SpectrumBars::paint(juce::Graphics& g) 
 {
     float Y = 0;
-    float X = getX();
+    float X = 0;
     float W = getWidth() / weights.size();
-    float right = getRight();
-    float floor = getBottom();
+    float right = X+W;
     float H = getHeight();
 
     int maxInd = maxArg(weights);
@@ -167,12 +186,12 @@ void SpectrumBars::paint(juce::Graphics& g)
         if (i == maxInd) 
         {
             g.setColour(BOLD_GREEN_INK);
-            g.fillRect(X, floor - Y, W, Y);
+            g.fillRect(X, H - Y, W, Y);
             g.setColour(BOLD_BLACK_INK);
         }
 
 
-        g.drawRect(X,floor - Y, W, Y);
+        g.drawLine(X,H - Y, W, H - Y, 2.0f);
 
         X += W;
     }
@@ -180,14 +199,31 @@ void SpectrumBars::paint(juce::Graphics& g)
     g.setColour(BOLD_GREEN_INK);
 
     Y = H * weights[maxInd];
-    g.drawLine(getX(), floor - Y, right, floor - Y, 2.0f);
+    g.drawLine(0, H - Y, right, H - Y, 2.0f);
+
+    g.setColour(BOLD_BLACK_INK);
+    g.drawRect(getLocalBounds(), 2.0f);
 }
 
-SpectrumNotes::SpectrumNotes(float barCount, float octaveSize) : panel(barCount)
+SpectrumNotes::SpectrumNotes(float barCount, float octaveSize) : keys(barCount)
 {
-    for(int i = 0; i < panel.size(); i++)
+    for(int i = 0; i < keys.size(); i++)
     {
-        panel[i] = letters[i % (int)octaveSize];
+        keys[i] = keyReference[i % (int)octaveSize];
+    }
+}
+
+void SpectrumNotes::paint(juce::Graphics& g) 
+{
+    float X = 0;
+    float Y = 0;
+    float W = getWidth() / (float)keys.size();
+    float H = getHeight();
+    for (int i = 0; i < keys.size(); i++) 
+    {
+        g.setColour(keys[i] == 0 ? PAPER_LIGHT : FADE_BLACK_INK);
+        g.fillRect(X, Y, W, H);
+        X += W;
     }
 }
 
@@ -199,10 +235,10 @@ void SpectrumdB::paint(juce::Graphics& g)
     auto area = getLocalBounds();
 
     g.setColour(FADE_BLACK_INK);
-
     g.fillRect(area.removeFromBottom(area.getHeight() * pct));
 
     g.setColour(BOLD_BLACK_INK);
+    g.drawRect(getLocalBounds(), 2);
 
-    g.drawRect(getLocalBounds());
+    
 }
