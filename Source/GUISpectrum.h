@@ -62,14 +62,6 @@ public:
     std::vector<int> keys;
 };
 
-class SpectrumdB : public juce::Component 
-{
-public:
-    void paint(juce::Graphics& g) override;
-
-    float dB = -60;
-    float mindB = -60;
-};
 
 //1. GuiSpectrum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiSpectrum : public juce::Component
@@ -83,7 +75,6 @@ public:
     SpectrumThresholds thresholds;
     SpectrumNotes notes;
     SpectrumBars bars;
-    SpectrumdB meter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GuiSpectrum);
 };

@@ -18,7 +18,6 @@ GuiSpectrum::GuiSpectrum(int barCount, int octaveSize) : background(barCount, oc
     addAndMakeVisible(thresholds);
     addAndMakeVisible(notes);
     addAndMakeVisible(bars);
-    addAndMakeVisible(meter);
 }
 
 void GuiSpectrum::resized() 
@@ -43,9 +42,7 @@ void GuiSpectrum::resized()
     
     auto sliderArea = juce::Rectangle<int>(X, Y, W * 0.2f, H);
 
-    auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W * 0.7f, H);
-
-    auto meterArea = juce::Rectangle<int>(displayArea.getRight(), Y, W * 0.1f, H);
+    auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W , H);
 
     displayArea.removeFromLeft(pad);
     displayArea.removeFromRight(pad);
@@ -60,9 +57,6 @@ void GuiSpectrum::resized()
 
     thresholds.setBounds (displayArea);
     bars.setBounds       (displayArea);
-
-
-    meter.setBounds(meterArea);
     
 
     
@@ -71,8 +65,8 @@ void GuiSpectrum::resized()
 
 SpectrumSliders::SpectrumSliders() : sliders(4), labels(4)
 {
-    labels[0].setText("Noise Floor", juce::NotificationType::dontSendNotification);
-    labels[1].setText("Noise Slope", juce::NotificationType::dontSendNotification);
+    labels[0].setText("Weight Floor", juce::NotificationType::dontSendNotification);
+    labels[1].setText("Weight Scale", juce::NotificationType::dontSendNotification);
     labels[2].setText("Low Note", juce::NotificationType::dontSendNotification);
     labels[3].setText("Octave Ratio", juce::NotificationType::dontSendNotification);
 
@@ -191,7 +185,7 @@ void SpectrumBars::paint(juce::Graphics& g)
         }
 
 
-        g.drawLine(X,H - Y, W, H - Y, 2.0f);
+        g.drawLine(X,H - Y, X + W, H - Y, 2.0f);
 
         X += W;
     }
@@ -199,7 +193,7 @@ void SpectrumBars::paint(juce::Graphics& g)
     g.setColour(BOLD_GREEN_INK);
 
     Y = H * weights[maxInd];
-    g.drawLine(0, H - Y, right, H - Y, 2.0f);
+    g.drawLine(0, H - Y, getWidth(), H - Y, 2.0f);
 
     g.setColour(BOLD_BLACK_INK);
     g.drawRect(getLocalBounds(), 2.0f);
@@ -225,20 +219,4 @@ void SpectrumNotes::paint(juce::Graphics& g)
         g.fillRect(X, Y, W, H);
         X += W;
     }
-}
-
-
-void SpectrumdB::paint(juce::Graphics& g) 
-{
-    dB = dB < mindB ? mindB : dB;
-    float pct = std::abs((mindB - dB) / mindB);
-    auto area = getLocalBounds();
-
-    g.setColour(FADE_BLACK_INK);
-    g.fillRect(area.removeFromBottom(area.getHeight() * pct));
-
-    g.setColour(BOLD_BLACK_INK);
-    g.drawRect(getLocalBounds(), 2);
-
-    
 }

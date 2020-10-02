@@ -339,6 +339,25 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         //const juce::MessageManagerLock mmLock;
         //editor->repaint();
         //send data--not sure if repaint is needed
+        switch (editor->getTabState()) 
+        {
+        case GUIState::spectrum:
+            editor->updateSpectrum();
+            break;
+        case GUIState::signal:
+            editor->updateSignal();
+            break;
+        case GUIState::midi:
+            editor->updateMidi();
+            break;
+        case GUIState::settings:
+            editor->updateSettings();
+            break;
+        case GUIState::main:
+            break;
+        }
+
+        editor->repaint();
     }
     
 

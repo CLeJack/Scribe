@@ -10,8 +10,10 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-ScribeAudioProcessorEditor::ScribeAudioProcessorEditor (ScribeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), guiSpectrum(Scribe::frequencies.size(), Scribe::Tuning::octaveSize)
+ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p),
+    guiSpectrum(Scribe::frequencies.size(), Scribe::Tuning::octaveSize),
+    guiSignal(Scribe::DownSample::historySamples, 60, 4)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -76,46 +78,9 @@ void ScribeAudioProcessorEditor::resized()
 }
 
 
-void ScribeAudioProcessorEditor::paintLog() 
-{
-}
-void ScribeAudioProcessorEditor::paintSpectrum()
-{
-}
-void ScribeAudioProcessorEditor::paintWindow() {}
+
 
 GUIState ScribeAudioProcessorEditor::getTabState() 
 {
     return guiTabs.guiState;
-}
-
-void ScribeAudioProcessorEditor::updateSpectrum(const std::vector<float>& weights, int loNote, float weight)
-{
-    for (int i = loNote; i < loNote + 48; i++) 
-    {
-        guiSpectrum.bars.weights[i - loNote] = weights[i];
-    }
-
-    guiSpectrum.meter.dB = Calculations::Amp::dB;
-
-    float minWeight = AudioParams::Threshold::weight;
-    float weightScale = AudioParams::Scale::weight;
-    float minInd = Calculations::Range::lowNote;
-
-    for (int i = 0; i < guiSpectrum.thresholds.relativeHeights.size(); i++) 
-    {
-        guiSpectrum.thresholds.relativeHeights[i] = weightLimit(minWeight, weightScale, minInd, i * 12 + minInd, Scribe::Tuning::octaveSize);
-    }
-    
-
-}
-
-void ScribeAudioProcessorEditor::updateWindow(const std::vector<float>& signal, float ampdB) 
-{
-    //for (int i = 0; i < std::min(guiWindow.signalVec.size(), signal.size()); i++) 
-    //{
-    //    guiWindow.signalVec[i] = signal[i];
-    //}
-    //guiWindow.dBBuff.push(ampdB);
-    //guiWindow.currentdB = ampdB;
 }

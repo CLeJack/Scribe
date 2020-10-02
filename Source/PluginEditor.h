@@ -13,8 +13,7 @@
 
 
 //==============================================================================
-/**
-*/
+
 class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
@@ -25,8 +24,36 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     GUIState getTabState();
-    void updateSpectrum(const std::vector<float>& weights, int loNote, float weight);
-    void updateWindow(const std::vector<float>& signal, float ampdB);
+    
+    inline void updateSpectrum()
+    {
+        for (int i = 0; i < Scribe::weights.size(); i++)
+        {
+            guiSpectrum.bars.weights[i] = Scribe::weights[i];
+        }
+    }
+
+    inline void updateSignal()
+    {
+        for (int i = 0; i < Scribe::historyDS.size(); i++)
+        {
+            guiSignal.scope.signalVec[i] = Scribe::historyDS[i];
+        }
+
+        guiSignal.meter.dBBuffer.push(Calculations::Amp::dB);
+
+        for (int i = 0; i < guiSignal.meter.thresholds.size(); i++)
+        {
+            guiSignal.meter.thresholds[i] = weightLimit(
+                AudioParams::Threshold::weight,
+                AudioParams::Scale::weight,
+                AudioParams::Range::lowNote,
+                Calculations::Range::lowNote + i * Scribe::Tuning::octaveSize,
+                Scribe::Tuning::octaveSize);
+        }
+    }
+    inline void updateMidi() {}
+    inline void updateSettings() {}
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -40,9 +67,8 @@ private:
     GuiSettings guiSettings;
     GuiTabs guiTabs;
 
-    void paintLog();
-    void paintSpectrum();
-    void paintWindow();
+    
+    
     
 
     
