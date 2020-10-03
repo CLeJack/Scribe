@@ -276,7 +276,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         S::DownSample::signalStart, S::historyDS.size()); //and these columns
 
     sumNormalize(S::weights);
-    weightRatio(S::ratios, S::weights, 12);
+    weightRatio(S::ratios, S::weights, S::Tuning::octaveSize);
 
     //I need void version of the above for pre existing matrices;
 

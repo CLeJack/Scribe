@@ -58,7 +58,7 @@ void GuiMidi::resized()
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MidiSliders::MidiSliders() : sliders(6), labels(6)
+MidiSliders::MidiSliders() : sliders(7), labels(7)
 {
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);

@@ -17,7 +17,7 @@ int main()
 
     S::initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*srate);
+    fvec signal0 = importCsv("input/_test_a3.csv", 2.5*srate);
 
     #if PRINT == 1
     printRows(S::frequencies, "output/_0_freqs.csv");
@@ -33,24 +33,10 @@ int main()
     int start = 0;
     int end = 0;
 
-    A::Threshold::noise = -35;
-    A::Threshold::release = -50;
-    A::Threshold::weight = .1f;
-    A::Threshold::ratio = 3;
-    A::Threshold::retrigStart = 0.9f;
-    A::Threshold::retrigStop = 1.0f;
-    A::SmoothTime::midi = 11;
-    A::SmoothTime::amp = 11;
-    A::SmoothTime::dB = 11;
-    A::Shift::octave = 0;
-    A::Shift::semitone = 0;
-    
-    A::Angle::amp = 55;
-    A::Velocity::max = 127;
-    A::Velocity::min = 0;
-    A::Range::lowNote = 28;
-
-    
+    A::Threshold::noise0 = -50;
+    A::Threshold::noise1 = -50;
+    A::Threshold::noise2 = -50;
+    A::Threshold::noise3 = -50;
 
     for(int i = 0; i < loops; i++)
     {
@@ -78,7 +64,7 @@ int main()
             S::DownSample::signalStart, S::historyDS.size());
 
         sumNormalize(S::weights);
-        weightRatio(S::ratios, S::weights, 12);
+        weightRatio(S::ratios, S::weights, S::Tuning::octaveSize);
         
         updateSignalCalcs();
         updateMidiCalcs();

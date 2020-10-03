@@ -208,7 +208,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiSignal.sliderPanel.labels[1].setText("Noise 1", juce::NotificationType::dontSendNotification);
     guiSignal.sliderPanel.labels[2].setText("Noise 2", juce::NotificationType::dontSendNotification);
     guiSignal.sliderPanel.labels[3].setText("Noise 3", juce::NotificationType::dontSendNotification);
-    guiSignal.sliderPanel.labels[4].setText("dB Delay (ms)", juce::NotificationType::dontSendNotification);
+    guiSignal.sliderPanel.labels[4].setText("dB Delay ", juce::NotificationType::dontSendNotification);
 
     guiSignal.sliderPanel.sliders[0].setRange(-60, 0, 1);
     guiSignal.sliderPanel.sliders[1].setRange(-60, 0, 1);
@@ -224,7 +224,7 @@ void ScribeAudioProcessorEditor::setSliders()
 
 
 
-    guiMidi.sliderPanel.labels[0].setText("Amp Delay (ms)", juce::NotificationType::dontSendNotification);
+    guiMidi.sliderPanel.labels[0].setText("Amp Delay", juce::NotificationType::dontSendNotification);
     guiMidi.sliderPanel.labels[1].setText("Max Vel. Angle", juce::NotificationType::dontSendNotification);
 
     guiMidi.sliderPanel.labels[2].setText("Min Vel.", juce::NotificationType::dontSendNotification);
@@ -233,6 +233,8 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.labels[4].setText("Oct. Shift", juce::NotificationType::dontSendNotification);
     guiMidi.sliderPanel.labels[5].setText("Semi Shift", juce::NotificationType::dontSendNotification);
 
+    guiMidi.sliderPanel.labels[6].setText("Midi Delay", juce::NotificationType::dontSendNotification);
+
 
     guiMidi.sliderPanel.sliders[0].setRange(0, 32, 1);
     guiMidi.sliderPanel.sliders[1].setRange(45, 90, 1);
@@ -240,6 +242,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.sliders[3].setRange(0, 127, 1);
     guiMidi.sliderPanel.sliders[4].setRange(-8, 8, 1);
     guiMidi.sliderPanel.sliders[5].setRange(-12, 12, 1);
+    guiMidi.sliderPanel.sliders[6].setRange(0, 32, 1);
 
     guiMidi.sliderPanel.sliders[0].setValue(AudioParams::SmoothTime::amp);
     guiMidi.sliderPanel.sliders[1].setValue(AudioParams::Angle::amp);
@@ -247,6 +250,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.sliders[3].setValue(AudioParams::Velocity::max);
     guiMidi.sliderPanel.sliders[4].setValue(AudioParams::Shift::octave);
     guiMidi.sliderPanel.sliders[5].setValue(AudioParams::Shift::semitone);
+    guiMidi.sliderPanel.sliders[6].setValue(AudioParams::SmoothTime::midi);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

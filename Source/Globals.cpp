@@ -32,7 +32,6 @@ namespace Calculations
     {
         float weight = 0;
         float noise = 0;
-        float release = 0;
         float retrigger = 0;
     }
 
@@ -87,17 +86,17 @@ namespace AudioParams
     {
         int ratio = 3;
 
-        int release = -50;
+        int release = -60;
 
         float noise0 = -30;
         float noise1 = -35;
         float noise2 = -40;
         float noise3 = -45;
 
-        float weight0 = 0.01f;
-        float weight1 = 0.02f;
-        float weight2 = 0.03f;
-        float weight3 = 0.03f;
+        float weight0 = 0.07f;
+        float weight1 = 0.1f;
+        float weight2 = 0.15f;
+        float weight3 = 0.17f;
 
         float retrigStart = 0.9f;
         float retrigStop = 1.0f;

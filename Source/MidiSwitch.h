@@ -23,7 +23,7 @@ struct MidiParams
     
     int velocityVal;
     
-    int smoothFactor = 0;
+    float smoothFactor = 0;
     bool constrain = false;
     int constrainStep = 2;
 };

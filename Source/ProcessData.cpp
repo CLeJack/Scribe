@@ -111,7 +111,7 @@ void updateSignalCalcs()
 
     
     C::Amp::dB = int16ToDb(C::Amp::amp);
-    C::Amp::dB = C::Amp::dB < -90 ? -90 : C::Amp::dB;
+    C::Amp::dB = (C::Amp::dB < -90) || std::isnan(C::Amp::dB) ? -90 : C::Amp::dB;
 
     //C::Blocks::amp = secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize);
     //C::Blocks::dB = secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize);
@@ -189,6 +189,7 @@ void updateMidiCalcs()
 
     C::Midi::index = midiShift(ind, S::frequencies, S::Tuning::refFreq, A::Shift::octave, A::Shift::semitone);
     C::Midi::velocity = midiVelocity(A::Velocity::max, A::Velocity::min, C::Angle::amp, A::Angle::amp); 
+
 }
 
 fvec getPeaks(const fvec& signal)
@@ -270,7 +271,7 @@ MidiParams getMidiParams()
     output.midiNum = C::Midi::index;
     output.delaydB = C::Delay::dB;
     output.noiseThresh = C::Threshold::noise;
-    output.releaseThresh = C::Threshold::release;
+    output.releaseThresh = A::Threshold::release;
 
     output.retrigVal = C::retrigger;
     output.retrigStart = A::Threshold::retrigStart;
