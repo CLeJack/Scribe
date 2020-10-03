@@ -113,9 +113,13 @@ void updateSignalCalcs()
     C::Amp::dB = int16ToDb(C::Amp::amp);
     C::Amp::dB = C::Amp::dB < -90 ? -90 : C::Amp::dB;
 
-    C::Blocks::amp = secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize);
-    C::Blocks::dB = secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize);
-    C::Blocks::midi = secToBlocks (A::SmoothTime::midi, S::Audio::srate, S::Audio::blockSize);
+    //C::Blocks::amp = secToBlocks (A::SmoothTime::amp, S::Audio::srate, S::Audio::blockSize);
+    //C::Blocks::dB = secToBlocks (A::SmoothTime::dB, S::Audio::srate, S::Audio::blockSize);
+    //C::Blocks::midi = secToBlocks (A::SmoothTime::midi, S::Audio::srate, S::Audio::blockSize);
+
+    C::Blocks::amp = A::SmoothTime::amp;
+    C::Blocks::dB = A::SmoothTime::dB;
+    C::Blocks::midi = A::SmoothTime::midi;
 
     C::Delay::amp = SMA (C::Delay::amp, C::Amp::amp, C::Blocks::amp);
 
@@ -138,21 +142,31 @@ void updateSignalCalcs()
         C::Note::ratio = S::ratios [C::Note::index];
     }
 
-    //This must be calculated after the note has been properly updated
-    C::Threshold::weight = weightLimit(
-        A::Threshold::weight,
-        A::Scale::weight,
-        A::Range::lowNote,
-        C::Note::index,
-        S::Tuning::octaveSize);
+    int loOct = C::Range::lowNote / S::Tuning::octaveSize;
+    int currentOct = C::Fundamental::index / S::Tuning::octaveSize;
 
-    //This must be calculated after the note has been properly updated
-    C::Threshold::noise = noiseLimit(
-        A::Threshold::noise,
-        A::Scale::noise,
-        A::Range::lowNote,
-        C::Note::index,
-        S::Tuning::octaveSize);
+    switch (currentOct - loOct)
+    {
+    case 0:
+        C::Threshold::weight = A::Threshold::weight0;
+        C::Threshold::noise = A::Threshold::noise0;
+        break;
+    case 1:
+        C::Threshold::weight = A::Threshold::weight1;
+        C::Threshold::noise = A::Threshold::noise1;
+        break;
+    case 2:
+        C::Threshold::weight = A::Threshold::weight2;
+        C::Threshold::noise = A::Threshold::noise2;
+        break;
+    case 3:
+        C::Threshold::weight = A::Threshold::weight3;
+        C::Threshold::noise = A::Threshold::noise3;
+        break;
+    default:
+        C::Threshold::weight = A::Threshold::weight3;
+        C::Threshold::noise = A::Threshold::noise3;
+    }
 
 
     C::Fundamental::octave /= S::Tuning::octaveSize;

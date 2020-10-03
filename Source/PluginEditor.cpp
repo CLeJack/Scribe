@@ -45,6 +45,8 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     CALL_EACH_ELEM_FUNC(guiSpectrum.sliderPanel.sliders, addListener(this));
     CALL_EACH_ELEM_FUNC(guiSignal.sliderPanel.sliders, addListener(this));
     CALL_EACH_ELEM_FUNC(guiMidi.sliderPanel.sliders, addListener(this));
+
+    setSliders();
     
 
 }
@@ -99,30 +101,46 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     namespace A = AudioParams;
     if (slider == &spectrum[0]) 
     {
-        A::Threshold::weight = slider->getValue();
+        A::Threshold::weight0 = slider->getValue();
     }
     else if (slider == &spectrum[1])
     {
-        A::Scale::weight = slider->getValue();
+        A::Threshold::weight1 = slider->getValue();
     }
     else if (slider == &spectrum[2])
     {
-        A::Range::lowNote = slider->getValue();
+        A::Threshold::weight2 = slider->getValue();
     }
     else if (slider == &spectrum[3])
+    {
+        A::Threshold::weight3 = slider->getValue();
+    }
+    else if (slider == &spectrum[4])
+    {
+        A::Range::lowNote = slider->getValue();
+    }
+    else if (slider == &spectrum[5])
     {
         A::Threshold::ratio = slider->getValue();
     }
 
     else if (slider == &signal[0])
     {
-        A::Threshold::noise = slider->getValue();
+        A::Threshold::noise0 = slider->getValue();
     }
     else if (slider == &signal[1])
     {
-        A::Scale::noise = slider->getValue();
+        A::Threshold::noise1 = slider->getValue();
     }
     else if (slider == &signal[2])
+    {
+        A::Threshold::noise2 = slider->getValue();
+    }
+    else if (slider == &signal[3])
+    {
+        A::Threshold::noise3 = slider->getValue();
+    }
+    else if (slider == &signal[4])
     {
         A::SmoothTime::dB = slider->getValue();
     }
@@ -156,7 +174,111 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
         A::Shift::semitone = slider->getValue();
     }
 
-    
-
 
 }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void ScribeAudioProcessorEditor::setSliders()
+{
+    guiSpectrum.sliderPanel.labels[0].setText("Weight 0", juce::NotificationType::dontSendNotification);
+    guiSpectrum.sliderPanel.labels[1].setText("Weight 1", juce::NotificationType::dontSendNotification);
+    guiSpectrum.sliderPanel.labels[2].setText("Weight 2", juce::NotificationType::dontSendNotification);
+    guiSpectrum.sliderPanel.labels[3].setText("Weight 3", juce::NotificationType::dontSendNotification);
+
+    guiSpectrum.sliderPanel.labels[4].setText("Low Note", juce::NotificationType::dontSendNotification);
+    guiSpectrum.sliderPanel.labels[5].setText("Octave Ratio", juce::NotificationType::dontSendNotification);
+
+    guiSpectrum.sliderPanel.sliders[0].setRange(0, 0.5, 0.002);
+    guiSpectrum.sliderPanel.sliders[1].setRange(0, 0.5, 0.002);
+    guiSpectrum.sliderPanel.sliders[2].setRange(0, 0.5, 0.002);
+    guiSpectrum.sliderPanel.sliders[3].setRange(0, 0.5, 0.002);
+
+    guiSpectrum.sliderPanel.sliders[4].setRange(12, 28, 1);
+    guiSpectrum.sliderPanel.sliders[5].setRange(0, 10, 1);
+
+    guiSpectrum.sliderPanel.sliders[0].setValue(AudioParams::Threshold::weight0);
+    guiSpectrum.sliderPanel.sliders[1].setValue(AudioParams::Threshold::weight1);
+    guiSpectrum.sliderPanel.sliders[2].setValue(AudioParams::Threshold::weight2);
+    guiSpectrum.sliderPanel.sliders[3].setValue(AudioParams::Threshold::weight3);
+    guiSpectrum.sliderPanel.sliders[4].setValue(AudioParams::Range::lowNote);
+    guiSpectrum.sliderPanel.sliders[5].setValue(AudioParams::Threshold::ratio);
+
+
+
+    guiSignal.sliderPanel.labels[0].setText("Noise 0", juce::NotificationType::dontSendNotification);
+    guiSignal.sliderPanel.labels[1].setText("Noise 1", juce::NotificationType::dontSendNotification);
+    guiSignal.sliderPanel.labels[2].setText("Noise 2", juce::NotificationType::dontSendNotification);
+    guiSignal.sliderPanel.labels[3].setText("Noise 3", juce::NotificationType::dontSendNotification);
+    guiSignal.sliderPanel.labels[4].setText("dB Delay (ms)", juce::NotificationType::dontSendNotification);
+
+    guiSignal.sliderPanel.sliders[0].setRange(-60, 0, 1);
+    guiSignal.sliderPanel.sliders[1].setRange(-60, 0, 1);
+    guiSignal.sliderPanel.sliders[2].setRange(-60, 0, 1);
+    guiSignal.sliderPanel.sliders[3].setRange(-60, 0, 1);
+    guiSignal.sliderPanel.sliders[4].setRange(0, 32, 1);
+
+    guiSignal.sliderPanel.sliders[0].setValue(AudioParams::Threshold::noise0);
+    guiSignal.sliderPanel.sliders[1].setValue(AudioParams::Threshold::noise1);
+    guiSignal.sliderPanel.sliders[2].setValue(AudioParams::Threshold::noise2);
+    guiSignal.sliderPanel.sliders[3].setValue(AudioParams::Threshold::noise3);
+    guiSignal.sliderPanel.sliders[4].setValue(AudioParams::SmoothTime::dB);
+
+
+
+    guiMidi.sliderPanel.labels[0].setText("Amp Delay (ms)", juce::NotificationType::dontSendNotification);
+    guiMidi.sliderPanel.labels[1].setText("Max Vel. Angle", juce::NotificationType::dontSendNotification);
+
+    guiMidi.sliderPanel.labels[2].setText("Min Vel.", juce::NotificationType::dontSendNotification);
+    guiMidi.sliderPanel.labels[3].setText("Max Vel.", juce::NotificationType::dontSendNotification);
+
+    guiMidi.sliderPanel.labels[4].setText("Oct. Shift", juce::NotificationType::dontSendNotification);
+    guiMidi.sliderPanel.labels[5].setText("Semi Shift", juce::NotificationType::dontSendNotification);
+
+
+    guiMidi.sliderPanel.sliders[0].setRange(0, 32, 1);
+    guiMidi.sliderPanel.sliders[1].setRange(45, 90, 1);
+    guiMidi.sliderPanel.sliders[2].setRange(0, 127, 1);
+    guiMidi.sliderPanel.sliders[3].setRange(0, 127, 1);
+    guiMidi.sliderPanel.sliders[4].setRange(-8, 8, 1);
+    guiMidi.sliderPanel.sliders[5].setRange(-12, 12, 1);
+
+    guiMidi.sliderPanel.sliders[0].setValue(AudioParams::SmoothTime::amp);
+    guiMidi.sliderPanel.sliders[1].setValue(AudioParams::Angle::amp);
+    guiMidi.sliderPanel.sliders[2].setValue(AudioParams::Velocity::min);
+    guiMidi.sliderPanel.sliders[3].setValue(AudioParams::Velocity::max);
+    guiMidi.sliderPanel.sliders[4].setValue(AudioParams::Shift::octave);
+    guiMidi.sliderPanel.sliders[5].setValue(AudioParams::Shift::semitone);
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void ScribeAudioProcessorEditor::updateSpectrum()
+{
+    for (int i = 0; i < Scribe::weights.size(); i++)
+    {
+        guiSpectrum.bars.weights[i] = Scribe::weights[i];
+    }
+
+    guiSpectrum.thresholds.relativeHeights[0] = AudioParams::Threshold::weight0;
+    guiSpectrum.thresholds.relativeHeights[1] = AudioParams::Threshold::weight1;
+    guiSpectrum.thresholds.relativeHeights[2] = AudioParams::Threshold::weight2;
+    guiSpectrum.thresholds.relativeHeights[3] = AudioParams::Threshold::weight3;
+}
+
+void ScribeAudioProcessorEditor::updateSignal()
+{
+    for (int i = 0; i < Scribe::historyDS.size(); i++)
+    {
+        guiSignal.scope.signalVec[i] = Scribe::historyDS[i];
+    }
+
+    guiSignal.meter.dBBuffer.push(Calculations::Amp::dB);
+
+    guiSignal.thresholds.relativeHeights[0] = AudioParams::Threshold::noise0;
+    guiSignal.thresholds.relativeHeights[1] = AudioParams::Threshold::noise1;
+    guiSignal.thresholds.relativeHeights[2] = AudioParams::Threshold::noise2;
+    guiSignal.thresholds.relativeHeights[3] = AudioParams::Threshold::noise3;
+}
+
+void ScribeAudioProcessorEditor::updateMidi() {}
+
+void ScribeAudioProcessorEditor::updateSettings() {}

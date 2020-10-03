@@ -79,7 +79,7 @@ namespace AudioParams
 {
     namespace Range 
     {
-        int lowNote = 0;
+        int lowNote = 28;
         int highNote = 0;
     }
     
@@ -89,9 +89,15 @@ namespace AudioParams
 
         int release = -50;
 
-        int noise = -35;
+        float noise0 = -30;
+        float noise1 = -35;
+        float noise2 = -40;
+        float noise3 = -45;
 
-        float weight = 10;
+        float weight0 = 0.01f;
+        float weight1 = 0.02f;
+        float weight2 = 0.03f;
+        float weight3 = 0.03f;
 
         float retrigStart = 0.9f;
         float retrigStop = 1.0f;
@@ -106,11 +112,11 @@ namespace AudioParams
 
     namespace SmoothTime //corresponds with Calculation Delay 
     {
-        //these were initially block sizes
-        //They will all change to milliseconds
-        int midi = 11; //formerly midiSmooth
-        int dB = 11; //formerly attack smooth
-        int amp = 11; //formerly velocity smooth
+        //these were milliseconds, but the behavior is strange; recheck calculation
+        //currently using block size which
+        int midi = 4; //formerly midiSmooth
+        int dB = 4; //formerly attack smooth
+        int amp = 4; //formerly velocity smooth
     }
     
     namespace Shift 
@@ -125,14 +131,14 @@ namespace AudioParams
         // min angle will be considered 45 
         // atan of a smoothed signal vs the current value will output
         // approx 45 when both are equal
-        float dB = 45;
-        float amp = 45;
+        float dB = 75;
+        float amp = 75;
     }
 
     namespace Velocity
     {
-        int min = 0;
-        int max = 0;
+        int min = 50;
+        int max = 127;
     }
 
     int channelIn = 0;

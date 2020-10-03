@@ -121,29 +121,6 @@ public:
 
     */
 
-    inline float getWeightP() { return AudioParams::Threshold::weight / 1000.0f; }
-    inline float getWeightScaleP() { return AudioParams::Scale::weight; }
-    inline int getRatioP() { return AudioParams::Threshold::ratio; }
-    inline int getLowNoteP() { return AudioParams::Range::lowNote; }
-
-    inline float getNoiseP() { return AudioParams::Threshold::noise; }
-    inline float getNoiseScaleP() { return AudioParams::Threshold::noise; }
-    inline float getReleaseP() { return (float)*releaseP; }
-    inline int getdBSmoothP() { return AudioParams::SmoothTime::dB; }
-    
-
-    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
-    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
-    inline int getMidiSmoothP() { return *midiSmoothP; }
-
-
-    inline int getAmpSmoothP() { return AudioParams::SmoothTime::amp; }
-    inline float getMaxAngleP() { return AudioParams::Angle::amp; }
-    inline int getVelMinP() { return AudioParams::Velocity::min; }
-    inline int getVelMaxP() { return AudioParams::Velocity::max; }
-    inline int getOctaveP() { return AudioParams::Shift::octave; }
-    inline int getSemitoneP() { return AudioParams::Shift::semitone; }
-
 
 private:
     //==============================================================================

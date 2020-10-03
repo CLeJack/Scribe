@@ -32,7 +32,9 @@ namespace Calculations
     namespace Threshold 
     {
         extern float weight;
+
         extern float noise;
+
         extern float release;
         extern float retrigger;
     }
@@ -90,9 +92,15 @@ namespace AudioParams
 
         extern int release;
 
-        extern int noise;
+        extern float weight0;
+        extern float weight1;
+        extern float weight2;
+        extern float weight3;
 
-        extern float weight;
+        extern float noise0;
+        extern float noise1;
+        extern float noise2;
+        extern float noise3;
 
         extern float retrigStart;
         extern float retrigStop;

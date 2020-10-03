@@ -48,19 +48,8 @@ void GuiSignal::resized()
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SignalSliders::SignalSliders() : sliders(3), labels(3)
+SignalSliders::SignalSliders() : sliders(5), labels(5)
 {
-    labels[0].setText("Noise Floor", juce::NotificationType::dontSendNotification);
-    labels[1].setText("Noise Scale", juce::NotificationType::dontSendNotification);
-    labels[2].setText("dB Delay (ms)", juce::NotificationType::dontSendNotification);
-
-    sliders[0].setRange(-60, 0, 1);
-    sliders[1].setRange(-20, 0, 1);
-    sliders[2].setRange(0, 25, 1);
-
-    sliders[0].setValue(-35);
-    sliders[1].setValue(-5);
-    sliders[2].setValue(11);
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
@@ -70,7 +59,7 @@ void SignalSliders::resized()
 {
     auto area = getLocalBounds();
 
-    float H = area.getHeight() * 0.25f;
+    float H = area.getHeight() / (float) sliders.size();
 
     for (int i = 0; i < sliders.size(); i++)
     {
@@ -106,6 +95,7 @@ void SignalScope::paint(juce::Graphics& g)
     Y = (signalVec[0] + max) / (2 * max);
     Y = Y > 1 ? 1 : Y;
     Y = H - H * Y;
+    Y = isnan(Y) ? 0 : Y;
 
     signalPath.startNewSubPath(X, Y);
 
@@ -115,6 +105,7 @@ void SignalScope::paint(juce::Graphics& g)
         Y = (signalVec[i] + max) / (2 * max);
         Y = Y > 1 ? 1 : Y;
         Y = H * Y;
+        Y = isnan(Y) ? 0 : Y;
         signalPath.lineTo(X, Y);
     }
 
@@ -182,7 +173,10 @@ SignalThresholds::SignalThresholds() : relativeHeights(4, 0)
 
 #define SET_SIGNAL_THRESHOLDS(color, index){\
 g.setColour(color);\
-Y = H - relativeHeights[index] * H;\
+Y = relativeHeights[index]/60;\
+Y = Y > 0 ? 0 : Y;\
+Y = Y < -1 ? -1 : Y;\
+Y = H - (H * (Y + 1));\
 g.drawLine(X, Y, W, Y, 2.0f); \
 }
 void SignalThresholds::paint(juce::Graphics& g)

@@ -60,31 +60,6 @@ void GuiMidi::resized()
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 MidiSliders::MidiSliders() : sliders(6), labels(6)
 {
-    labels[0].setText("Amp Delay (ms)", juce::NotificationType::dontSendNotification);
-    labels[1].setText("Max Vel. Angle", juce::NotificationType::dontSendNotification);
-    
-    labels[2].setText("Min Vel.", juce::NotificationType::dontSendNotification);
-    labels[3].setText("Max Vel.", juce::NotificationType::dontSendNotification);
-    
-    labels[4].setText("Oct. Shift", juce::NotificationType::dontSendNotification);
-    labels[5].setText("Semi Shift", juce::NotificationType::dontSendNotification);
-    
-
-    sliders[0].setRange(0, 25, 1);
-    sliders[1].setRange(45, 90, 1);
-    sliders[2].setRange(0, 127, 1);
-    sliders[3].setRange(0, 127, 1);
-    sliders[4].setRange(-8, 8, 1);
-    sliders[5].setRange(-12, 12, 1);
-
-    sliders[0].setValue(11);
-    sliders[1].setValue(65);
-    sliders[2].setValue(127);
-    sliders[3].setValue(40);
-    sliders[4].setValue(0);
-    sliders[5].setValue(0);
-
-    
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
@@ -94,7 +69,7 @@ void MidiSliders::resized()
 {
     auto area = getLocalBounds();
 
-    float H = area.getHeight() * 0.25f;
+    float H = area.getHeight() / (float)sliders.size();
 
     for (int i = 0; i < sliders.size(); i++)
     {

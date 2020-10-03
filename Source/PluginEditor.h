@@ -24,47 +24,17 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void sliderValueChanged(juce::Slider* slider) override ;
+    
+    void updateSpectrum();
+    void updateSignal();
+    void updateMidi();
+    void updateSettings();
+
+    void setSliders();
     GUIState getTabState();
     
-    inline void updateSpectrum()
-    {
-        for (int i = 0; i < Scribe::weights.size(); i++)
-        {
-            guiSpectrum.bars.weights[i] = Scribe::weights[i];
-        }
-
-        for (int i = 0; i < guiSpectrum.thresholds.relativeHeights.size(); i++)
-        {
-            guiSpectrum.thresholds.relativeHeights[i] = weightLimit(
-                AudioParams::Threshold::weight,
-                AudioParams::Scale::weight,
-                AudioParams::Range::lowNote,
-                Calculations::Range::lowNote + i * Scribe::Tuning::octaveSize,
-                Scribe::Tuning::octaveSize);
-        }
-    }
-
-    inline void updateSignal()
-    {
-        for (int i = 0; i < Scribe::historyDS.size(); i++)
-        {
-            guiSignal.scope.signalVec[i] = Scribe::historyDS[i];
-        }
-
-        guiSignal.meter.dBBuffer.push(Calculations::Amp::dB);
-
-        for (int i = 0; i < guiSignal.thresholds.relativeHeights.size(); i++)
-        {
-            guiSignal.thresholds.relativeHeights[i] = noiseLimit(
-                AudioParams::Threshold::weight,
-                AudioParams::Scale::weight,
-                AudioParams::Range::lowNote,
-                Calculations::Range::lowNote + i * Scribe::Tuning::octaveSize,
-                Scribe::Tuning::octaveSize);
-        }
-    }
-    inline void updateMidi() {}
-    inline void updateSettings() {}
+    
+    
 
 private:
     // This reference is provided as a quick way for your editor to

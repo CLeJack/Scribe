@@ -310,7 +310,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     
     if (frameCounter == 0 && editor != nullptr) 
     {
-        const juce::MessageManagerLock mmLock;
+        //const juce::MessageManagerLock mmLock;
 
         switch (editor->getTabState()) 
         {

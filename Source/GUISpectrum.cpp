@@ -30,7 +30,7 @@ void GuiSpectrum::resized()
     float H = area.getHeight();
     float W = area.getWidth();
 
-    float pad = std::min(H, W) * 0.1f;
+    float pad = area.getHeight() * 0.05f;
 
     REMOVE_FROM_ALL_SIDES(area, pad);
 
@@ -39,16 +39,12 @@ void GuiSpectrum::resized()
     H = area.getHeight();
     W = area.getWidth();
 
-    pad = std::min(H, W) * 0.05f;
-    
-    //auto sliderArea = juce::Rectangle<int>(X, Y, W * 0.2f, H);
-    auto sliderArea = area.removeFromLeft(getWidth() * 0.2f);
 
-    //auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W , H);
+    auto sliderArea = area.removeFromLeft(getWidth() * 0.2f);
+    area.removeFromLeft(pad);
+
     auto displayArea = area;
 
-    //displayArea.removeFromLeft(pad);
-    //displayArea.removeFromRight(pad);
 
     //set all bounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     sliderPanel.setBounds(sliderArea);
@@ -66,22 +62,8 @@ void GuiSpectrum::resized()
 
 }
 
-SpectrumSliders::SpectrumSliders() : sliders(4), labels(4)
+SpectrumSliders::SpectrumSliders() : sliders(6), labels(6)
 {
-    labels[0].setText("Weight Floor", juce::NotificationType::dontSendNotification);
-    labels[1].setText("Weight Scale", juce::NotificationType::dontSendNotification);
-    labels[2].setText("Low Note", juce::NotificationType::dontSendNotification);
-    labels[3].setText("Octave Ratio", juce::NotificationType::dontSendNotification);
-
-    sliders[0].setRange(0, 100, 1);
-    sliders[1].setRange(0, 100, 1);
-    sliders[2].setRange(12, 28, 1);
-    sliders[3].setRange(0, 10, 1);
-
-    sliders[0].setValue(.01);
-    sliders[1].setValue(66);
-    sliders[2].setValue(28);
-    sliders[3].setValue(3);
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
@@ -92,7 +74,7 @@ void SpectrumSliders::resized()
 {
     auto area = getLocalBounds();
 
-    float H = area.getHeight() * 0.25f;
+    float H = area.getHeight() / (float) sliders.size();
 
     for (int i = 0; i < sliders.size(); i++) 
     {
