@@ -14,6 +14,7 @@
 GuiSignal::GuiSignal(int signalSize, int bufferSize, int thresholdSize) : scope(signalSize), meter(bufferSize, thresholdSize)
 {
     addAndMakeVisible(sliderPanel);
+    addAndMakeVisible(thresholds);
     addAndMakeVisible(meter);
     addAndMakeVisible(scope);
 }
@@ -40,23 +41,26 @@ void GuiSignal::resized()
     sliderPanel.setBounds(panelArea);
     scope.setBounds(scopeArea);
     meter.setBounds(meterArea);
+    thresholds.setBounds(meterArea);
 
 
 
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SignalSliders::SignalSliders() : sliders(4), labels(4)
+SignalSliders::SignalSliders() : sliders(3), labels(3)
 {
     labels[0].setText("Noise Floor", juce::NotificationType::dontSendNotification);
     labels[1].setText("Noise Scale", juce::NotificationType::dontSendNotification);
-    labels[2].setText("Amp Delay (ms)", juce::NotificationType::dontSendNotification);
-    labels[3].setText("dB Delay (ms)", juce::NotificationType::dontSendNotification);
+    labels[2].setText("dB Delay (ms)", juce::NotificationType::dontSendNotification);
 
-    sliders[0].setRange(0, 100, 1);
-    sliders[1].setRange(0, 100, 1);
+    sliders[0].setRange(-60, 0, 1);
+    sliders[1].setRange(-20, 0, 1);
     sliders[2].setRange(0, 25, 1);
-    sliders[3].setRange(0, 25, 1);
+
+    sliders[0].setValue(-35);
+    sliders[1].setValue(-5);
+    sliders[2].setValue(11);
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
@@ -163,6 +167,36 @@ void SignalMeter::paint(juce::Graphics& g)
     g.strokePath(dBPath, stroke);
 
     g.drawRect(getLocalBounds(), 2);
+
+}
+
+//signal thresholds
+
+SignalThresholds::SignalThresholds() : relativeHeights(4, 0)
+{
+    for (int i = 0; i < relativeHeights.size(); i++)
+    {
+        relativeHeights[i] = (i + 1) * .05;
+    }
+}
+
+#define SET_SIGNAL_THRESHOLDS(color, index){\
+g.setColour(color);\
+Y = H - relativeHeights[index] * H;\
+g.drawLine(X, Y, W, Y, 2.0f); \
+}
+void SignalThresholds::paint(juce::Graphics& g)
+{
+    float Y = 0;
+    float H = getHeight();
+    float X = 0;
+    float W = getWidth();
+
+
+    SET_SIGNAL_THRESHOLDS(MARKER0, 0);
+    SET_SIGNAL_THRESHOLDS(MARKER1, 1);
+    SET_SIGNAL_THRESHOLDS(MARKER2, 2);
+    SET_SIGNAL_THRESHOLDS(MARKER3, 3);
 
 }
 

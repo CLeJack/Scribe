@@ -44,6 +44,15 @@ public:
     
 };
 
+class SignalThresholds : public juce::Component
+{
+public:
+    SignalThresholds();
+    void paint(juce::Graphics& g) override;
+
+    std::vector<float> relativeHeights;
+};
+
 class GuiSignal : public juce::Component 
 {
 public:
@@ -52,6 +61,8 @@ public:
 
     SignalSliders sliderPanel;
     SignalScope scope;
+
+    SignalThresholds thresholds;
     SignalMeter meter;
     
 };

@@ -14,7 +14,7 @@
 
 //==============================================================================
 
-class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor
+class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener
 {
 public:
     ScribeAudioProcessorEditor (ScribeAudioProcessor&);
@@ -23,6 +23,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void sliderValueChanged(juce::Slider* slider) override ;
     GUIState getTabState();
     
     inline void updateSpectrum()
@@ -30,6 +31,16 @@ public:
         for (int i = 0; i < Scribe::weights.size(); i++)
         {
             guiSpectrum.bars.weights[i] = Scribe::weights[i];
+        }
+
+        for (int i = 0; i < guiSpectrum.thresholds.relativeHeights.size(); i++)
+        {
+            guiSpectrum.thresholds.relativeHeights[i] = weightLimit(
+                AudioParams::Threshold::weight,
+                AudioParams::Scale::weight,
+                AudioParams::Range::lowNote,
+                Calculations::Range::lowNote + i * Scribe::Tuning::octaveSize,
+                Scribe::Tuning::octaveSize);
         }
     }
 
@@ -42,9 +53,9 @@ public:
 
         guiSignal.meter.dBBuffer.push(Calculations::Amp::dB);
 
-        for (int i = 0; i < guiSignal.meter.thresholds.size(); i++)
+        for (int i = 0; i < guiSignal.thresholds.relativeHeights.size(); i++)
         {
-            guiSignal.meter.thresholds[i] = weightLimit(
+            guiSignal.thresholds.relativeHeights[i] = noiseLimit(
                 AudioParams::Threshold::weight,
                 AudioParams::Scale::weight,
                 AudioParams::Range::lowNote,
@@ -66,9 +77,6 @@ private:
     GuiMidi guiMidi;
     GuiSettings guiSettings;
     GuiTabs guiTabs;
-
-    
-    
     
 
     

@@ -66,6 +66,84 @@ public:
 
     PluginState pluginState;
     
+    //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    juce::AudioParameterInt* ratioP;
+    juce::AudioParameterInt* lowNoteP;
+
+    juce::AudioParameterInt* noiseP;
+    juce::AudioParameterInt* noiseScaleP;
+
+    juce::AudioParameterInt* releaseP;
+
+    juce::AudioParameterInt* weightP;
+    juce::AudioParameterInt* weightScaleP;
+
+    juce::AudioParameterInt* trigStartP;
+    juce::AudioParameterInt* retrigStartP;
+    juce::AudioParameterInt* retrigStopP;
+
+    juce::AudioParameterInt* midiSmoothP;
+    juce::AudioParameterInt* ampSmoothP;
+    juce::AudioParameterInt* dBSmoothP;
+
+    juce::AudioParameterInt* octaveP;
+    juce::AudioParameterInt* semitoneP;
+
+    juce::AudioParameterFloat* maxAngleP;
+    juce::AudioParameterInt* velMinP;
+    juce::AudioParameterInt* velMaxP;
+
+    juce::AudioParameterInt* channelInP;
+
+    /*
+    inline int getRatioP() { return *ratioP; }
+    inline int getLowNoteP() { return *lowNoteP; }
+
+    inline float getNoiseP() { return (float)*noiseP; }
+    inline float getReleaseP() { return (float)*releaseP; }
+
+    inline float getWeightP() { return (float)*weightP / 1000.0f; }
+
+    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
+    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
+    inline int getMidiSmoothP() { return *midiSmoothP; }
+    inline int getAmpSmoothP() { return *ampSmoothP; }
+    inline int getdBSmoothP() { return *dBSmoothP; }
+
+    inline int getOctaveP() { return *octaveP; }
+    inline int getSemitoneP() { return *semitoneP; }
+
+    inline float getMaxAngleP() { return *maxAngleP; }
+    inline int getVelMinP() { return *velMinP; }
+    inline int getVelMaxP() { return *velMaxP; }
+    inline int getChannelInP() { return *channelInP; }
+
+    */
+
+    inline float getWeightP() { return AudioParams::Threshold::weight / 1000.0f; }
+    inline float getWeightScaleP() { return AudioParams::Scale::weight; }
+    inline int getRatioP() { return AudioParams::Threshold::ratio; }
+    inline int getLowNoteP() { return AudioParams::Range::lowNote; }
+
+    inline float getNoiseP() { return AudioParams::Threshold::noise; }
+    inline float getNoiseScaleP() { return AudioParams::Threshold::noise; }
+    inline float getReleaseP() { return (float)*releaseP; }
+    inline int getdBSmoothP() { return AudioParams::SmoothTime::dB; }
+    
+
+    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
+    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
+    inline int getMidiSmoothP() { return *midiSmoothP; }
+
+
+    inline int getAmpSmoothP() { return AudioParams::SmoothTime::amp; }
+    inline float getMaxAngleP() { return AudioParams::Angle::amp; }
+    inline int getVelMinP() { return AudioParams::Velocity::min; }
+    inline int getVelMaxP() { return AudioParams::Velocity::max; }
+    inline int getOctaveP() { return AudioParams::Shift::octave; }
+    inline int getSemitoneP() { return AudioParams::Shift::semitone; }
+
 
 private:
     //==============================================================================
@@ -89,57 +167,7 @@ private:
 
     
 
-    //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    juce::AudioParameterInt* ratioP;
-    juce::AudioParameterInt* lowNoteP;
-
-    juce::AudioParameterInt* noiseP;
-    juce::AudioParameterInt* noiseScaleP;
-
-    juce::AudioParameterInt* releaseP;
-
-    juce::AudioParameterInt* weightP;
-    juce::AudioParameterInt* weightScaleP;
-
-    juce::AudioParameterInt* trigStartP;
-    juce::AudioParameterInt* retrigStartP;
-    juce::AudioParameterInt* retrigStopP;
     
-    juce::AudioParameterInt* midiSmoothP;
-    juce::AudioParameterInt* ampSmoothP;
-    juce::AudioParameterInt* dBSmoothP;
-    
-    juce::AudioParameterInt* octaveP;
-    juce::AudioParameterInt* semitoneP;
-    
-    juce::AudioParameterFloat* maxAngleP;
-    juce::AudioParameterInt* velMinP;
-    juce::AudioParameterInt* velMaxP;
-    
-    juce::AudioParameterInt* channelInP;
-
-    inline int getRatioP() { return *ratioP; }
-    inline int getLowNoteP() { return *lowNoteP; }
-
-    inline float getNoiseP() { return (float)*noiseP; }
-    inline float getReleaseP() { return (float)*releaseP; }
-
-    inline float getWeightP() { return (float)*weightP / 1000.0f; }
-
-    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
-    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
-    inline int getMidiSmoothP() { return *midiSmoothP; }
-    inline int getAmpSmoothP() { return *ampSmoothP; }
-    inline int getdBSmoothP() { return *dBSmoothP; }
-
-    inline int getOctaveP() { return *octaveP; }
-    inline int getSemitoneP() { return *semitoneP; }
-
-    inline float getMaxAngleP() { return *maxAngleP; }
-    inline int getVelMinP() { return *velMinP; }
-    inline int getVelMaxP() { return *velMaxP; }
-    inline int getChannelInP() { return *channelInP; }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

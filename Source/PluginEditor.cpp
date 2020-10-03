@@ -42,6 +42,11 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiMidi.resized();
     guiSettings.resized();
 
+    CALL_EACH_ELEM_FUNC(guiSpectrum.sliderPanel.sliders, addListener(this));
+    CALL_EACH_ELEM_FUNC(guiSignal.sliderPanel.sliders, addListener(this));
+    CALL_EACH_ELEM_FUNC(guiMidi.sliderPanel.sliders, addListener(this));
+    
+
 }
 
 ScribeAudioProcessorEditor::~ScribeAudioProcessorEditor()
@@ -83,4 +88,75 @@ void ScribeAudioProcessorEditor::resized()
 GUIState ScribeAudioProcessorEditor::getTabState() 
 {
     return guiTabs.guiState;
+}
+
+void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) 
+{
+    auto &spectrum = guiSpectrum.sliderPanel.sliders;
+    auto &signal = guiSignal.sliderPanel.sliders;
+    auto &midi = guiMidi.sliderPanel.sliders;
+
+    namespace A = AudioParams;
+    if (slider == &spectrum[0]) 
+    {
+        A::Threshold::weight = slider->getValue();
+    }
+    else if (slider == &spectrum[1])
+    {
+        A::Scale::weight = slider->getValue();
+    }
+    else if (slider == &spectrum[2])
+    {
+        A::Range::lowNote = slider->getValue();
+    }
+    else if (slider == &spectrum[3])
+    {
+        A::Threshold::ratio = slider->getValue();
+    }
+
+    else if (slider == &signal[0])
+    {
+        A::Threshold::noise = slider->getValue();
+    }
+    else if (slider == &signal[1])
+    {
+        A::Scale::noise = slider->getValue();
+    }
+    else if (slider == &signal[2])
+    {
+        A::SmoothTime::dB = slider->getValue();
+    }
+
+    else if (slider == &midi[0])
+    {
+        A::SmoothTime::amp = slider->getValue();
+    }
+    else if (slider == &midi[1])
+    {
+        A::Angle::amp = slider->getValue();
+    }
+
+    else if (slider == &midi[2])
+    {
+        A::Velocity::min = slider->getValue();
+    }
+
+    else if (slider == &midi[3])
+    {
+        A::Velocity::max = slider->getValue();
+    }
+
+    else if (slider == &midi[4])
+    {
+        A::Shift::octave = slider->getValue();
+    }
+
+    else if (slider == &midi[5])
+    {
+        A::Shift::semitone = slider->getValue();
+    }
+
+    
+
+
 }

@@ -24,31 +24,32 @@ ScribeAudioProcessor::ScribeAudioProcessor()
 {
 
     addParameter (ratioP = new juce:: AudioParameterInt ("ratio", "Octave Ratio", 0, 5, 3));
-    addParameter(lowNoteP = new juce::AudioParameterInt("lowNote", "Lowest Note", 12, 36, 28));
+    addParameter (lowNoteP = new juce::AudioParameterInt("lowNote", "Lowest Note", 12, 28, 28));
 
     addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
-    addParameter(noiseScaleP = new juce::AudioParameterInt("noiseScale", "Noise Floor Scaling (dB/oct)", -90, 0, -30));
+    addParameter (noiseScaleP = new juce::AudioParameterInt("noiseScale", "Noise Floor Scaling (dB/oct)", -90, 0, -30));
 
-    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -50));
+    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -60));
     
     addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight Threshold", 0, 100, 45));
-    addParameter(weightScaleP = new juce::AudioParameterInt("weightScale", "Weight Threshold Scaling", 1, 100, 66));
+    addParameter (weightScaleP = new juce::AudioParameterInt("weightScale", "Weight Threshold Scaling", 1, 100, 66));
 
     addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start", 50, 120, 90));
     addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop", 50, 120, 100)); 
     
     addParameter (midiSmoothP  = new juce::AudioParameterInt ("midiSmooth", "Midi smoothing (ms)", 0, 25, 11));
-    addParameter(ampSmoothP = new juce::AudioParameterInt("ampSmooth", "Amp Smoothing (ms)", 0, 25, 11));
-    addParameter(dBSmoothP = new juce::AudioParameterInt("dBSmooth", "dB Smoothing (ms)", 0, 25, 11));
+    addParameter (ampSmoothP = new juce::AudioParameterInt("ampSmooth", "Amp Smoothing (ms)", 0, 25, 11));
+    addParameter (dBSmoothP = new juce::AudioParameterInt("dBSmooth", "dB Smoothing (ms)", 0, 25, 11));
     
     addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
     addParameter (semitoneP  = new juce::AudioParameterInt ("semitone", "Semitone Shift", -12, 12, 0));
     
-    addParameter(maxAngleP = new juce::AudioParameterFloat("maxAngle", "Max Amplitude Angle (deg)", 45.0f, 90.0f, 50.0f));
+    addParameter (maxAngleP = new juce::AudioParameterFloat("maxAngle", "Max Amplitude Angle (deg)", 45.0f, 90.0f, 55.0f));
+    addParameter(velMinP = new juce::AudioParameterInt("velMin", "Vel Min", 0, 127, 40));
     addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
-    addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 40));
     
-    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
+    
+    //addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
 
     pluginState = PluginState::waiting;
     
@@ -226,34 +227,7 @@ void ScribeAudioProcessor::initialize()
 
 void ScribeAudioProcessor::updateAudioParams() 
 {
-    namespace A = AudioParams;
-    
-    A::Threshold::ratio = getRatioP();
-    
-    A::Range::lowNote = getLowNoteP();
 
-
-    A::Threshold::release = getReleaseP();
-
-    A::Threshold::noise  = getNoiseP();
-    A::Threshold::weight = getWeightP();
-
-    A::Threshold::retrigStart = getRetrigStartP();
-    A::Threshold::retrigStop  = getRetrigStopP();
-
-    A::SmoothTime::midi = getMidiSmoothP();
-    A::SmoothTime::amp  = getAmpSmoothP();
-    A::SmoothTime::dB   = getdBSmoothP();
-
-    A::Shift::octave   = getOctaveP();
-    A::Shift::semitone = getSemitoneP();
-
-
-    A::Angle::amp    = getMaxAngleP();
-    A::Velocity::max = getVelMaxP();
-    A::Velocity::min = getVelMinP();
-
-    A::channelIn = getChannelInP();
 }
 
 void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -274,7 +248,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     juce::MidiMessage note;
 
-    updateAudioParams();
+    //updateAudioParams(); //handled by gui now
 
     //add the block to history
     auto* channelData = buffer.getReadPointer(0);
@@ -336,9 +310,8 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     
     if (frameCounter == 0 && editor != nullptr) 
     {
-        //const juce::MessageManagerLock mmLock;
-        //editor->repaint();
-        //send data--not sure if repaint is needed
+        const juce::MessageManagerLock mmLock;
+
         switch (editor->getTabState()) 
         {
         case GUIState::spectrum:

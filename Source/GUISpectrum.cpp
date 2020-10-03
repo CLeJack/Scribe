@@ -11,7 +11,8 @@
 #include "GUISpectrum.h"
 
 
-GuiSpectrum::GuiSpectrum(int barCount, int octaveSize) : background(barCount, octaveSize), bars(barCount), notes(barCount, octaveSize)
+GuiSpectrum::GuiSpectrum(int barCount, int octaveSize) : 
+    background(barCount, octaveSize), bars(barCount), notes(barCount, octaveSize)
 {
     addAndMakeVisible(background);
     addAndMakeVisible(sliderPanel);
@@ -40,12 +41,14 @@ void GuiSpectrum::resized()
 
     pad = std::min(H, W) * 0.05f;
     
-    auto sliderArea = juce::Rectangle<int>(X, Y, W * 0.2f, H);
+    //auto sliderArea = juce::Rectangle<int>(X, Y, W * 0.2f, H);
+    auto sliderArea = area.removeFromLeft(getWidth() * 0.2f);
 
-    auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W , H);
+    //auto displayArea = juce::Rectangle<int>(sliderArea.getRight(), Y, W , H);
+    auto displayArea = area;
 
-    displayArea.removeFromLeft(pad);
-    displayArea.removeFromRight(pad);
+    //displayArea.removeFromLeft(pad);
+    //displayArea.removeFromRight(pad);
 
     //set all bounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     sliderPanel.setBounds(sliderArea);
@@ -71,9 +74,14 @@ SpectrumSliders::SpectrumSliders() : sliders(4), labels(4)
     labels[3].setText("Octave Ratio", juce::NotificationType::dontSendNotification);
 
     sliders[0].setRange(0, 100, 1);
-    sliders[1].setRange(-20, 0, 1);
+    sliders[1].setRange(0, 100, 1);
     sliders[2].setRange(12, 28, 1);
     sliders[3].setRange(0, 10, 1);
+
+    sliders[0].setValue(.01);
+    sliders[1].setValue(66);
+    sliders[2].setValue(28);
+    sliders[3].setValue(3);
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, labels);
@@ -165,7 +173,7 @@ void SpectrumBars::paint(juce::Graphics& g)
 {
     float Y = 0;
     float X = 0;
-    float W = getWidth() / weights.size();
+    float W = getWidth() / (float)weights.size();
     float right = X+W;
     float H = getHeight();
 
@@ -185,7 +193,7 @@ void SpectrumBars::paint(juce::Graphics& g)
         }
 
 
-        g.drawLine(X,H - Y, X + W, H - Y, 2.0f);
+        g.drawRect(X,H - Y, W, Y, 2.0f);
 
         X += W;
     }
@@ -206,6 +214,8 @@ SpectrumNotes::SpectrumNotes(float barCount, float octaveSize) : keys(barCount)
         keys[i] = keyReference[i % (int)octaveSize];
     }
 }
+
+
 
 void SpectrumNotes::paint(juce::Graphics& g) 
 {
