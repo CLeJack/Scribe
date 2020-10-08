@@ -170,6 +170,18 @@ fvec absMaxNormalize(const fvec& arr)
     return output;
 }
 
+void absMaxNormalize(fvec& arr)
+{
+    float max = absMaxValue(arr, 0);
+    if(max > 0)
+    {
+        for(int i =0; i< arr.size(); i++)
+        {
+            arr[i] = arr[i]/max;
+        }
+    }
+}
+
 fvec sumNormalize(const fvec& arr)
 {
     float total = 0;
@@ -189,6 +201,26 @@ fvec sumNormalize(const fvec& arr)
 
     }
     return output;
+}
+
+
+void sumNormalize(fvec& arr)
+{
+    float total = 0;
+    
+    for(int i = 0; i<arr.size(); i++)
+    {
+        total += arr[i];
+    }
+
+    if(total > 0)
+    {
+        for(int i = 0; i<arr.size(); i++)
+        {
+            arr[i] = arr[i]/total;
+        }
+
+    }
 }
 
 //~~misc. basic ops~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -384,17 +416,6 @@ float getPeriod(float freq, float srate, int size)
 }
 
 
-
-fvec hadamardX(const fvec& arr1, const fvec& arr2)
-{
-    fvec output(arr1.size(), 0);
-    for(int i = 0; i < arr1.size(); i++)
-    {
-        output[i] = arr1[i] * arr2[i];
-    }    
-    return output;
-}
-
 float SMA(float hist, float val, float size)
 {
     /*
@@ -406,11 +427,7 @@ float SMA(float hist, float val, float size)
 
     2. rounding error is introduced with each division.
 
-    neither should be an issue here
+    log(0) introduces infinities, but rounding error shouldn't be an issue.
     */
-
-    //need to debug this, can't see why it's broken
-    float avg = hist - hist / size;
-    avg = avg +  val / size;
-    return avg;
+    return hist - (hist / size) + (val / size);
 }

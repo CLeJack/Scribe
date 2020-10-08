@@ -1,5 +1,5 @@
 #pragma once
-#include "ProcessData.h"
+#include "ModelInstances.h"
 #include "Debug.h"
 
 #define PRINT 1
@@ -7,122 +7,100 @@
 
 int main()
 {
-    
-    auto props = Properties(44100, 128);
 
-    auto store = Storage(props);
-    
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*44100);
+    float srate = 44100;
+    float blockSize = 128;
+
+    scribe.initialize(srate, blockSize);
+
+    fvec signal0 = importCsv("input/_test_a3.csv", 2.5*srate);
 
     #if PRINT == 1
-    printRows(*store.frequencies.get(), "output/_0_freqs.csv");
-    printRows(*store.exFrequencies.get(), "output/_0_exfreqs.csv");
-    printColumn(*store.timeVector.get(), "output/_0_timeVector.csv");
+    printRows(scribe.frequencies, "output/_0_freqs.csv");
+    printColumn(scribe.timeVector, "output/_0_timeVector.csv");
 
-    printMatrixReal(*store.matrix.get(), "output/_0_cmatrix.csv",0);
-    printMatrix(*store.exMatrix.get(), "output/_0_excmatrix.csv",0);
+    printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
 
     printColumn(signal0, "output/_1_signal.csv");
 
     #endif
 
-    int loops = (signal0.size() / props.blockSize);
+    int loops = (signal0.size() / scribe.audio.blockSize);
     int start = 0;
     int end = 0;
 
-    AudioParams audioParams;
-
-    audioParams.noise = -50;
-    audioParams.release = -50;
-    //audioParams.weightThreshold = .03f;
-    audioParams.octStr = 3;
-    audioParams.trigStart = 1;
-    audioParams.retrigStart = .9f;
-    audioParams.retrigStop = 1.1f;
-    audioParams.midiSmooth = 4;
-    audioParams.attackSmooth = 4;
-    audioParams.velocitySmooth = 4;
-    audioParams.octave = 0;
-    audioParams.semitone = 0;
-    audioParams.loOct = 2;
-    audioParams.velPTheta = 4;
-    audioParams.velMax = 127;
-    audioParams.velMin = 0;
-    audioParams.loNote = 28;
-
-    MidiSwitch midiSwitch = MidiSwitch();
-    Calculations calcs;
+    params.threshold.noise0 = -68;
+    params.threshold.noise1 = -68;
+    params.threshold.noise2 = -68;
+    params.threshold.noise3 = -68;
 
     for(int i = 0; i < loops; i++)
     {
-        fvec block(props.blockSize, 0);
-        int offset = i*props.blockSize;
-        for(int i = 0; i < props.blockSize; i++)
+        fvec block(scribe.audio.blockSize, 0);
+        int offset = i * scribe.audio.blockSize;
+        for(int i = 0; i < scribe.audio.blockSize; i++)
         {
             //continually pushing to the down sample history gives a really bad signal
             //even with filtering, so use the full history and down sample from there always
-            store.history.get()->push( signal0[i + offset] );
+            scribe.history.get()->push( signal0[i + offset] );
         }
         
-        fvec trueSignal = store.history.get()->toOrderedVec();
-        
-        fvec signalDS(props.dsHistSamples,0);
+        fvec trueSignal = scribe.history.get()->toOrderedVec();
 
-        for(int i = 0; i < signalDS.size(); i++)
+        for(int i = 0; i < scribe.historyDS.size(); i++)
         {
-            signalDS[i] = trueSignal[i*props.dsFactor];
+            scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
         }
 
         
+        calcs.updateRange(params.range);
 
-        calcs.updateRangeInfo(audioParams, signalDS.size());
+        dct(scribe.weights, scribe.matrix, scribe.historyDS,
+            calcs.range.lowNote, calcs.range.highNote, 
+            scribe.audio.ds.signalStart, scribe.historyDS.size());
 
-        int windowStart = signalDS.size() - signalDS.size()/2;
-        fvec weights = dct(*store.matrix.get(), signalDS,
-            calcs.loNote, calcs.hiNote, calcs.signalStart, signalDS.size());
-
-        weights = sumNormalize(weights);
-        fvec ratios = weightRatio(weights, 12);
+        sumNormalize(scribe.weights);
+        weightRatio(scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
         
-        calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
-        calcs.updateMidiNum(store, props, audioParams, calcs);
+        calcs.updateSignal (scribe, params);
+        calcs.updateMidi   (scribe, params);
 
-        MidiSwitch& midiSwitch = *store.midiSwitch.get();
         SwitchMessage message{};
         
-        MidiParams midiParams = getMidiParams(calcs, audioParams);
+        MidiParams midiParams = getMidiParams(calcs);
 
-        message = midiSwitch.update(midiParams);
+        message = scribe.midiSwitch.update(midiParams);
         
 
         
 #if PRINT == 1
         fvec output = {
-            (float)calcs.f0ind,
-            (float)calcs.noteInd,
-            (float)calcs.weight,
-            (float)calcs.f0ratio,
-            (float)calcs.noteRatio,
-            calcs.ampFull,
-            calcs.velocityAmp,
-            calcs.ampdB,
-            calcs.attackdB,
-            calcs.velocityAngle,
-            calcs.retrigger,
+            (float)calcs.fundamental.index,
+            (float)calcs.note.index,
+            (float)calcs.targets.weight,
+            calcs.threshold.weight,
+            (float)calcs.fundamental.ratio,
+            (float)calcs.note.ratio,
+            calcs.amp.val,
+            calcs.amp.dB,
+            calcs.delay.dBShort,
+            calcs.delay.dBLong,
+            calcs.threshold.noise,
+            calcs.targets.retrigger,
             (float)message.on,
             (float)message.onVel,
             (float)message.off,
             (float)message.offVel,
-            (float) message.send,
-            midiSwitch.notes.current,
-            midiSwitch.notes.prev,
-            (float)midiSwitch.state};
+            (float)message.send,
+            scribe.midiSwitch.notes.current,
+            scribe.midiSwitch.notes.prev,
+            (float)scribe.midiSwitch.state};
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( signalDS, "output/_2_historyDS.csv");
-        printRows( weights, "output/_2_weights.csv");
-        printRows( ratios, "output/_2_ratios.csv");
+        printRows( scribe.historyDS, "output/_2_historyDS.csv");
+        printRows( scribe.weights, "output/_2_weights.csv");
+        printRows( scribe.ratios, "output/_2_ratios.csv");
         printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2

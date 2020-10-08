@@ -6,6 +6,8 @@
   ==============================================================================
 */
 #pragma once
+
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -22,41 +24,6 @@ ScribeAudioProcessor::ScribeAudioProcessor()
                        )
 #endif
 {
-
-    addParameter (loOctP = new juce:: AudioParameterInt ("loOct", "Lowest Octave", 0, 3, 2));
-    addParameter (octStrP = new juce:: AudioParameterInt ("octStr", "Octave Strength", 0, 5, 3));
-    addParameter(loNoteP = new juce::AudioParameterInt("loNote", "Lowest Note", 12, 36, 28));
-
-    addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
-    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -50));
-    
-    addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight ", 0, 100, 45));
-
-    addParameter(noiseP0 = new juce::AudioParameterInt("noise0", "Noise Floor 0 (dB)", -90, 0, -30));
-    addParameter(noiseP1 = new juce::AudioParameterInt("noise1", "Noise Floor 1 (dB)", -90, 0, -35));
-    addParameter(noiseP2 = new juce::AudioParameterInt("noise2", "Noise Floor 2 (dB)", -90, 0, -40));
-    addParameter(noiseP3 = new juce::AudioParameterInt("noise3", "Noise Floor 3 (dB)", -90, 0, -45));
-
-    addParameter(weightP0 = new juce::AudioParameterInt("weight0", "Weight 0", 0, 200, 10));
-    addParameter(weightP1 = new juce::AudioParameterInt("weight1", "Weight 1", 0, 200, 20));
-    addParameter(weightP2 = new juce::AudioParameterInt("weight2", "Weight 2", 0, 200, 30));
-    addParameter(weightP3 = new juce::AudioParameterInt("weight3", "Weight 3", 0, 200, 30));
-
-    addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start", 50, 120, 90));
-    addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop", 50, 120, 100)); 
-    
-    addParameter (midiSmoothP  = new juce::AudioParameterInt ("midiSmooth", "Midi smoothing", 1, 32, 4));
-    addParameter(attackSmoothP = new juce::AudioParameterInt("attackSmooth", "Detection smoothing", 1, 32, 4));
-    addParameter(velocitySmoothP = new juce::AudioParameterInt("velSmooth", "Detection smoothing", 1, 32, 4));
-    
-    addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
-    addParameter (semitoneP  = new juce::AudioParameterInt ("semitone", "Semitone Shift", -12, 12, 0));
-    
-    addParameter(velPThetaP = new juce::AudioParameterFloat("velPTheta", "Vel. Per Theta", 0.0f, 64.0f, 4.0f));
-    addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
-    addParameter (velMinP  = new juce::AudioParameterInt ("velMin", "Vel Min", 0, 127, 40));
-    
-    addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  0, 1) );
 
     pluginState = PluginState::waiting;
     
@@ -170,7 +137,7 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-    
+
 
     switch(pluginState)
     {
@@ -227,17 +194,11 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 //plugin state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void ScribeAudioProcessor::initialize()
-{
-    propsPtr.reset (new Properties (getSampleRate(), getBlockSize() ));
-    storagePtr.reset ( new Storage (*propsPtr.get() ));
-}
-
 void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     if(getSampleRate() > 0)
     {
-        initialize();
+        scribe.initialize(getSampleRate(), getBlockSize());
         pluginState = PluginState::ready;
     }
     buffer.clear();
@@ -245,47 +206,49 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    Storage& store = *storagePtr.get();
-    Properties& props = *propsPtr.get();
     juce::MidiMessage note;
 
-    AudioParams audioParams = getAudioParams();
+    //updateAudioParams(); //handled by gui now
 
     //add the block to history
-    auto* channelData = buffer.getReadPointer(*channelInP);
+    auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
     {
-        store.history.get()->push(normToInt16Range(channelData[i]));
+        scribe.history.get()->push(normToInt16Range(channelData[i]));
     }
 
     //down sample the signal; currently without filtering
-    fvec trueSignal = store.history.get()->toOrderedVec();
-    fvec signalDS(props.dsHistSamples, 0);
-    for (int i = 0; i < signalDS.size(); i++)
+    fvec trueSignal = scribe.history.get()->toOrderedVec();
+    
+    for (int i = 0; i < scribe.historyDS.size(); i++)
     {
-        signalDS[i] = trueSignal[i * props.dsFactor];
+        scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
     }
 
 
-    calcs.updateRangeInfo(audioParams, signalDS.size());
+    calcs.updateRange (params.range);
 
-    //discrete customized transform (dft) using a portion of frequency and signal
-    fvec weights = dct(*store.matrix.get(), signalDS,
-        audioParams.loNote, audioParams.loNote + 48, calcs.signalStart, signalDS.size());
+    //discrete customized transform (dct) using a portion of frequency and signal
+    dct (scribe.weights,
+        scribe.matrix,                                         //dft using this matrix
+        scribe.historyDS,                                      //on this signal
+        calcs.range.lowNote, calcs.range.highNote,             //for these rows
+        scribe.audio.ds.signalStart, scribe.historyDS.size()); //and these columns
 
-    weights = sumNormalize(weights);
-    fvec ratios = weightRatio(weights, 12);
+    sumNormalize (scribe.weights);
+    weightRatio  (scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
 
-    calcs.updateSignalInfo(weights, ratios, signalDS, audioParams);
+    //I need void version of the above for pre existing matrices;
 
-    calcs.updateMidiNum(store, props, audioParams, calcs);
+    calcs.updateSignal (scribe, params);
 
-    MidiSwitch& midiSwitch = *store.midiSwitch.get();
+    calcs.updateMidi   (scribe, params);
+
     SwitchMessage message{};
 
-    MidiParams midiParams = getMidiParams(calcs, audioParams);
+    MidiParams midiParams = getMidiParams(calcs);
 
-    message = midiSwitch.update(midiParams);
+    message = scribe.midiSwitch.update(midiParams);
 
     
 
@@ -298,28 +261,36 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         midiMessages.addEvent(note, 1);
     }
 
-    frameCounter = (frameCounter + 1) % 11;
+    //don't forget to update this to be srate specific
+    // 11 was with 44100 hz in mind and is approximately 30 fps
+    frameCounter = (frameCounter + 1) % 11; 
 
     frameCounter = message.send ? 0 : frameCounter;
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
+    
     if (frameCounter == 0 && editor != nullptr) 
     {
         //const juce::MessageManagerLock mmLock;
-        switch (editor->getTabState())
+
+        switch (editor->getTabState()) 
         {
         case GUIState::spectrum:
-            spectrumProcess(weights, calcs, editor);
+            editor->updateSpectrum();
             break;
-        case GUIState::window:
-            windowProcess(signalDS, calcs, editor);
+        case GUIState::signal:
+            editor->updateSignal();
             break;
-        case GUIState::log:
-            logProcess(editor, calcs, message, frameCounter);
+        case GUIState::midi:
+            editor->updateMidi(message.send);
             break;
         case GUIState::settings:
-            settingsProcess();
+            editor->updateSettings();
+            break;
+        case GUIState::main:
             break;
         }
+
+        editor->repaint();
     }
     
 
@@ -328,78 +299,9 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
 void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    
-    initialize();
-    pluginState = PluginState::ready;
+    pluginState = PluginState::waiting;
     
     buffer.clear();
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-void ScribeAudioProcessor::spectrumProcess(const fvec& weights, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
-{
-    editor->updateSpectrum(weights, getLoNoteP(), calcs.weight);
-    editor->calcs = calcs;
-    editor->repaint();
-}
-void ScribeAudioProcessor::windowProcess(const fvec& signal, const Calculations& calcs, ScribeAudioProcessorEditor* editor)
-{
-    editor->updateWindow(signal, calcs.attackdB);
-    editor->calcs = calcs;
-    editor->repaint();
-}
-void ScribeAudioProcessor::logProcess(ScribeAudioProcessorEditor* editor, const Calculations& calcs, const SwitchMessage& message, int frame)
-{
-        editor->calcs = calcs;
-        editor->message = message;
-        editor->repaint();
-}
-void ScribeAudioProcessor::settingsProcess() 
-{
-}
-
-AudioParams ScribeAudioProcessor::getAudioParams() 
-{
-    auto output = AudioParams();
-    output.loOct = getLoOctP();
-    output.octStr = getOctStrP();
-    output.loNote = getLoNoteP();
-
-    
-    output.release = getReleaseP();
-    
-    output.noise = getNoiseP();
-    output.weight = getWeightP();
-
-    output.noise1 = getNoiseP1();
-    output.weight1 = getWeightP1();
-
-    output.noise2 = getNoiseP2();
-    output.weight2 = getWeightP2();
-
-    output.noise3 = getNoiseP3();
-    output.weight3 = getWeightP3();
-    
-    output.noise0 = getNoiseP0();
-    output.weight0 = getWeightP0();
-
-    output.retrigStart = getRetrigStartP();
-    output.retrigStop = getRetrigStopP();
-
-    output.midiSmooth = getMidiSmoothP();
-    output.attackSmooth = getAttackSmoothP();
-    output.velocitySmooth = getVelocitySmoothP();
-
-    output.octave = getOctaveP();
-    output.semitone = getSemitoneP();
-
-
-    output.velPTheta = getVelPThetaP();
-    output.velMax = getVelMaxP();
-    output.velMin = getVelMinP();
-
-    output.channelIn = getChannelInP();
-
-    return output;
-}

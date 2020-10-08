@@ -13,9 +13,8 @@
 
 
 //==============================================================================
-/**
-*/
-class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor
+
+class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener
 {
 public:
     ScribeAudioProcessorEditor (ScribeAudioProcessor&);
@@ -24,28 +23,30 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    GUIState getTabState();
-    void updateSpectrum(const std::vector<float>& weights, int loNote, float weight);
-    void updateWindow(const std::vector<float>& signal, float ampdB);
+    void sliderValueChanged(juce::Slider* slider) override ;
+    
+    void updateSpectrum();
+    void updateSignal();
+    void updateMidi(bool send);
+    void updateSettings();
 
-    Calculations calcs;
-    SwitchMessage message;
+    void setSliders();
+    GUIState getTabState();
+    
+    
+    
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     ScribeAudioProcessor& audioProcessor;
 
-    GuiParams guiParams;
+    GuiMain guiMain;
     GuiSpectrum guiSpectrum;
-    GuiWindow guiWindow;
-    GuiLog guiLog;
+    GuiSignal guiSignal;
+    GuiMidi guiMidi;
     GuiSettings guiSettings;
     GuiTabs guiTabs;
-
-    void paintLog();
-    void paintSpectrum();
-    void paintWindow();
     
 
     

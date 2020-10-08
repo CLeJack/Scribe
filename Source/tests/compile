@@ -1,7 +1,7 @@
 #! /bin/bash
 UtilSrc=("CircularBuffer.cpp" "DCT.cpp" "Stats.cpp" "Tuning.cpp" "Waveforms.cpp")
 MidiSrc=("MidiSwitch.cpp")
-ProcSrc=("ProcessData.cpp")
+ProcSrc=("ProcessData.cpp" "DataModels.cpp")
 TestSrc=("Debug.cpp")
 
 Path="/mnt/e/Projects/Scribe/src/"

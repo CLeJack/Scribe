@@ -47,26 +47,6 @@ SwitchMessage MidiSwitch::update(const MidiParams& params)
     return output;
 }
 
-int MidiSwitch::getVelocity(const MidiParams& params)
-{
-    if(params.velMax == params.velMin)
-    {
-        return params.velMax;
-    }
-    
-    /*
-    float diff = std::abs(params.velDbMax - params.velDbMin);
-    float pct = std::abs(params.ampdB - params.velDbMin)/diff;
-    
-    int vel = pct*(params.velMax - params.velMin) + params.velMin;
-    vel = vel > params.velMax ? params.velMax : vel;
-    vel = vel < params.velMin ? params.velMin : vel;
-    */
-
-    int vel = params.velPTheta * params.velocityAngle + params.velMin;
-    return std::min(vel, params.velMax);
-}
-
 void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
 {
     // if a midiNum switches too rapidly without a retrigger--don't count it.
@@ -74,7 +54,7 @@ void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
     // or portamento logic
     m.on = midiRound(notes.current);
 
-    m.onVel = getVelocity(p);
+    m.onVel = p.velocityVal;
     m.off = midiRound(notes.prev);
     m.offVel = 0;
     m.send = true;
@@ -93,11 +73,11 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     SwitchMessage output = SwitchMessage();
     float smooth;
     smooth = smoothNote(params); //should be called before on, retrigger
-    if(params.ampdB < params.releasedB )
+    if(params.delaydB < params.releaseThresh )
     {
         state = MidiState::off;
     }
-    else if(params.retrig < params.retrigStart)
+    else if(params.retrigVal < params.retrigStart)
     {
         state = MidiState::retrigger;
     }
@@ -132,7 +112,7 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.ampdB > params.noisedB && params.midiNum != 0)
+    else if(params.delaydB > params.noiseThresh && params.midiNum != 0)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
@@ -147,7 +127,7 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
 SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
-    if(!notes.areZero() && params.retrig < params.retrigStop)
+    if(!notes.areZero() && params.retrigVal < params.retrigStop)
     {   
         //clear midiNum buffer if it hasn't been cleared out;
 
@@ -157,7 +137,7 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.retrig >= params.retrigStop  || params.ampdB < params.releasedB)
+    else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
     {
         state = MidiState::off;
     }

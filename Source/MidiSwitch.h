@@ -1,3 +1,4 @@
+#pragma once
 #include "Head.h"
 
 
@@ -8,25 +9,21 @@ struct ConstrainMidi : public MidiMode {};
 
 struct MidiParams
 {
-    float weight = 0;
-    float weightThreshold = 0;
+    float weightVal = 0;
+    float weightThresh = 0;
 
     float midiNum = 0;
-    float ampdB = 0;
-    float noisedB = 0;
-    float releasedB = 0;
+    float delaydB = 0;
+    float noiseThresh = 0;
+    float releaseThresh = 0;
 
-    float retrig = 0;
-    float trigStart = 0;
+    float retrigVal = 0;
     float retrigStart = 0;
     float retrigStop = 0;
     
-    float velPTheta = 0;
-    float velocityAngle = 45;
-    int velMin = 0;
-    int velMax = 0;
+    int velocityVal;
     
-    int smoothFactor = 0;
+    float smoothFactor = 0;
     bool constrain = false;
     int constrainStep = 2;
 };
@@ -72,6 +69,13 @@ struct MidiSwitch
     void onSequence(const MidiParams& p, SwitchMessage& m);
     void offSequence(const MidiParams& p, SwitchMessage& m);
 
+    
+
+    static int getMidiNumber(float freq, float refFreq)
+    {
+        return int(0.5f + 69 + 12 * std::log2(freq / refFreq));
+    }
+
     int getVelocity(const MidiParams& params);
 
     float smoothNote(const MidiParams& params);
@@ -84,25 +88,20 @@ struct MidiSwitch
 
 
 
+
 inline int midiRound(float val)
 {
     return int(0.5 + val);
 }
 
-inline int getMidiNumber(float freq, float refFreq)
-{
-    return int(0.5f + 69 + 12 * std::log2(freq/refFreq));
-}
-
-
-inline float midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift, int semitoneShift)
+inline int midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift, int semitoneShift)
 {
     if(f0ind <= 0)
     {
         return 0;
     }
     
-    int midi = getMidiNumber(freqs[f0ind], refFreq);
+    int midi = MidiSwitch::getMidiNumber(freqs[f0ind], refFreq);
     int oct = octShift + midi/12;
     int pitch = (midi%12) + semitoneShift;
 
@@ -113,5 +112,28 @@ inline float midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift
         return 0;
     }
     
-    return (float)out;
+    return out;
+}
+
+inline int midiVelocity(float maxVel, float minVel, float dBShort, float dBLong, float velRatio) 
+{
+
+    if (maxVel == minVel) 
+    {
+        return maxVel;
+    }
+
+    if(dBShort < dBLong)
+    {
+        return (maxVel - minVel)/2;
+    }
+
+    //(dBShort - dBLong) / dt = velRatio * (currentVel - minVel)/dt
+
+
+    int vel = (dBShort - dBLong) / velRatio + minVel;
+    vel = vel > maxVel ? maxVel : vel;
+    vel = vel < minVel ? minVel : vel;
+
+    return vel;
 }
