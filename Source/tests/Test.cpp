@@ -1,5 +1,5 @@
 #pragma once
-#include "ProcessData.h"
+#include "ModelInstances.h"
 #include "Debug.h"
 
 #define PRINT 1
@@ -7,105 +7,100 @@
 
 int main()
 {
-    
-    namespace S = Scribe;
-    namespace A = AudioParams;
-    namespace C = Calculations;
 
     float srate = 44100;
     float blockSize = 128;
 
-    S::initialize(srate, blockSize);
+    scribe.initialize(srate, blockSize);
 
     fvec signal0 = importCsv("input/_test_a3.csv", 2.5*srate);
 
     #if PRINT == 1
-    printRows(S::frequencies, "output/_0_freqs.csv");
-    printColumn(S::timeVector, "output/_0_timeVector.csv");
+    printRows(scribe.frequencies, "output/_0_freqs.csv");
+    printColumn(scribe.timeVector, "output/_0_timeVector.csv");
 
-    printMatrixReal(S::matrix, "output/_0_cmatrix.csv",0);
+    printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
 
     printColumn(signal0, "output/_1_signal.csv");
 
     #endif
 
-    int loops = (signal0.size() / S::Audio::blockSize);
+    int loops = (signal0.size() / scribe.audio.blockSize);
     int start = 0;
     int end = 0;
 
-    A::Threshold::noise0 = -50;
-    A::Threshold::noise1 = -50;
-    A::Threshold::noise2 = -50;
-    A::Threshold::noise3 = -50;
+    params.threshold.noise0 = -68;
+    params.threshold.noise1 = -68;
+    params.threshold.noise2 = -68;
+    params.threshold.noise3 = -68;
 
     for(int i = 0; i < loops; i++)
     {
-        fvec block(S::Audio::blockSize, 0);
-        int offset = i * S::Audio::blockSize;
-        for(int i = 0; i < S::Audio::blockSize; i++)
+        fvec block(scribe.audio.blockSize, 0);
+        int offset = i * scribe.audio.blockSize;
+        for(int i = 0; i < scribe.audio.blockSize; i++)
         {
             //continually pushing to the down sample history gives a really bad signal
             //even with filtering, so use the full history and down sample from there always
-            S::history.get()->push( signal0[i + offset] );
+            scribe.history.get()->push( signal0[i + offset] );
         }
         
-        fvec trueSignal = S::history.get()->toOrderedVec();
+        fvec trueSignal = scribe.history.get()->toOrderedVec();
 
-        for(int i = 0; i < S::historyDS.size(); i++)
+        for(int i = 0; i < scribe.historyDS.size(); i++)
         {
-            S::historyDS[i] = trueSignal[i * S::DownSample::factor];
+            scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
         }
 
         
-        updateRangeCalcs();
+        calcs.updateRange(params.range);
 
-        dct(S::weights, S::matrix, S::historyDS,
-            C::Range::lowNote, C::Range::highNote, 
-            S::DownSample::signalStart, S::historyDS.size());
+        dct(scribe.weights, scribe.matrix, scribe.historyDS,
+            calcs.range.lowNote, calcs.range.highNote, 
+            scribe.audio.ds.signalStart, scribe.historyDS.size());
 
-        sumNormalize(S::weights);
-        weightRatio(S::ratios, S::weights, S::Tuning::octaveSize);
+        sumNormalize(scribe.weights);
+        weightRatio(scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
         
-        updateSignalCalcs();
-        updateMidiCalcs();
+        calcs.updateSignal (scribe, params);
+        calcs.updateMidi   (scribe, params);
 
         SwitchMessage message{};
         
-        MidiParams midiParams = getMidiParams();
+        MidiParams midiParams = getMidiParams(calcs);
 
-        message = S::midiSwitch.update(midiParams);
+        message = scribe.midiSwitch.update(midiParams);
         
 
         
 #if PRINT == 1
         fvec output = {
-            (float)C::Fundamental::index,
-            (float)C::Note::index,
-            (float)C::weight,
-            C::Threshold::weight,
-            (float)C::Fundamental::ratio,
-            (float)C::Note::ratio,
-            C::Amp::amp,
-            C::Delay::amp,
-            C::Amp::dB,
-            C::Delay::dB,
-            C::Threshold::noise,
-            C::Angle::amp,
-            C::retrigger,
+            (float)calcs.fundamental.index,
+            (float)calcs.note.index,
+            (float)calcs.targets.weight,
+            calcs.threshold.weight,
+            (float)calcs.fundamental.ratio,
+            (float)calcs.note.ratio,
+            calcs.amp.val,
+            calcs.amp.dB,
+            calcs.delay.dBShort,
+            calcs.delay.dBLong,
+            calcs.threshold.noise,
+            calcs.targets.retrigger,
             (float)message.on,
             (float)message.onVel,
             (float)message.off,
             (float)message.offVel,
             (float)message.send,
-            S::midiSwitch.notes.current,
-            S::midiSwitch.notes.prev,
-            (float)S::midiSwitch.state};
+            scribe.midiSwitch.notes.current,
+            scribe.midiSwitch.notes.prev,
+            (float)scribe.midiSwitch.state};
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( S::historyDS, "output/_2_historyDS.csv");
-        printRows( S::weights, "output/_2_weights.csv");
-        printRows( S::ratios, "output/_2_ratios.csv");
+        printRows( scribe.historyDS, "output/_2_historyDS.csv");
+        printRows( scribe.weights, "output/_2_weights.csv");
+        printRows( scribe.ratios, "output/_2_ratios.csv");
         printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2

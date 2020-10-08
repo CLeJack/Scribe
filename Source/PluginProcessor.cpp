@@ -6,6 +6,8 @@
   ==============================================================================
 */
 #pragma once
+
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -22,34 +24,6 @@ ScribeAudioProcessor::ScribeAudioProcessor()
                        )
 #endif
 {
-
-    addParameter (ratioP = new juce:: AudioParameterInt ("ratio", "Octave Ratio", 0, 5, 3));
-    addParameter (lowNoteP = new juce::AudioParameterInt("lowNote", "Lowest Note", 12, 28, 28));
-
-    addParameter (noiseP  = new juce::AudioParameterInt("noise", "Noise Floor (dB)", -90, 0, -30));
-    addParameter (noiseScaleP = new juce::AudioParameterInt("noiseScale", "Noise Floor Scaling (dB/oct)", -90, 0, -30));
-
-    addParameter (releaseP  = new juce::AudioParameterInt("release", "Release Floor (dB)", -90, 0, -60));
-    
-    addParameter (weightP  = new juce::AudioParameterInt("weight", "Weight Threshold", 0, 100, 45));
-    addParameter (weightScaleP = new juce::AudioParameterInt("weightScale", "Weight Threshold Scaling", 1, 100, 66));
-
-    addParameter (retrigStartP  = new juce::AudioParameterInt("retrigStart", "Retrigger Start", 50, 120, 90));
-    addParameter (retrigStopP  = new juce::AudioParameterInt("retrigStop", "Retrigger Stop", 50, 120, 100)); 
-    
-    addParameter (midiSmoothP  = new juce::AudioParameterInt ("midiSmooth", "Midi smoothing (ms)", 0, 25, 11));
-    addParameter (ampSmoothP = new juce::AudioParameterInt("ampSmooth", "Amp Smoothing (ms)", 0, 25, 11));
-    addParameter (dBSmoothP = new juce::AudioParameterInt("dBSmooth", "dB Smoothing (ms)", 0, 25, 11));
-    
-    addParameter (octaveP  = new juce::AudioParameterInt ("octave", "Octave Shift", -8, 8, 0));
-    addParameter (semitoneP  = new juce::AudioParameterInt ("semitone", "Semitone Shift", -12, 12, 0));
-    
-    addParameter (maxAngleP = new juce::AudioParameterFloat("maxAngle", "Max Amplitude Angle (deg)", 45.0f, 90.0f, 55.0f));
-    addParameter(velMinP = new juce::AudioParameterInt("velMin", "Vel Min", 0, 127, 40));
-    addParameter (velMaxP  = new juce::AudioParameterInt ("velMax", "Vel Max", 0, 127, 100));
-    
-    
-    //addParameter (channelInP  = new juce::AudioParameterInt ("channelIn", "Input Channel", 0,  1, 1) );
 
     pluginState = PluginState::waiting;
     
@@ -163,7 +137,7 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-    
+
 
     switch(pluginState)
     {
@@ -220,21 +194,11 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 //plugin state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void ScribeAudioProcessor::initialize()
-{
-    Scribe::initialize(getSampleRate(), getBlockSize() );
-}
-
-void ScribeAudioProcessor::updateAudioParams() 
-{
-
-}
-
 void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     if(getSampleRate() > 0)
     {
-        initialize();
+        scribe.initialize(getSampleRate(), getBlockSize());
         pluginState = PluginState::ready;
     }
     buffer.clear();
@@ -242,10 +206,6 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    namespace S = Scribe;
-    namespace A = AudioParams;
-    namespace C = Calculations;
-
     juce::MidiMessage note;
 
     //updateAudioParams(); //handled by gui now
@@ -254,41 +214,41 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
     {
-        S::history.get()->push(normToInt16Range(channelData[i]));
+        scribe.history.get()->push(normToInt16Range(channelData[i]));
     }
 
     //down sample the signal; currently without filtering
-    fvec trueSignal = S::history.get()->toOrderedVec();
+    fvec trueSignal = scribe.history.get()->toOrderedVec();
     
-    for (int i = 0; i < S::historyDS.size(); i++)
+    for (int i = 0; i < scribe.historyDS.size(); i++)
     {
-        S::historyDS[i] = trueSignal[i * S::DownSample::factor];
+        scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
     }
 
 
-    updateRangeCalcs();
+    calcs.updateRange (params.range);
 
-    //discrete customized transform (dft) using a portion of frequency and signal
-    dct(S::weights,
-        S::matrix,  //dft using this matrix
-        S::historyDS, //on this signal
-        C::Range::lowNote, C::Range::highNote, //for these rows
-        S::DownSample::signalStart, S::historyDS.size()); //and these columns
+    //discrete customized transform (dct) using a portion of frequency and signal
+    dct (scribe.weights,
+        scribe.matrix,                                         //dft using this matrix
+        scribe.historyDS,                                      //on this signal
+        calcs.range.lowNote, calcs.range.highNote,             //for these rows
+        scribe.audio.ds.signalStart, scribe.historyDS.size()); //and these columns
 
-    sumNormalize(S::weights);
-    weightRatio(S::ratios, S::weights, S::Tuning::octaveSize);
+    sumNormalize (scribe.weights);
+    weightRatio  (scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
 
     //I need void version of the above for pre existing matrices;
 
-    updateSignalCalcs();
+    calcs.updateSignal (scribe, params);
 
-    updateMidiCalcs();
+    calcs.updateMidi   (scribe, params);
 
     SwitchMessage message{};
 
-    MidiParams midiParams = getMidiParams();
+    MidiParams midiParams = getMidiParams(calcs);
 
-    message = S::midiSwitch.update(midiParams);
+    message = scribe.midiSwitch.update(midiParams);
 
     
 
@@ -339,9 +299,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
 void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    
-    initialize();
-    pluginState = PluginState::ready;
+    pluginState = PluginState::waiting;
     
     buffer.clear();
 }

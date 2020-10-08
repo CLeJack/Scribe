@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 
-#include "ProcessData.h"
+#include "ModelInstances.h"
 #include "GUI.h"
 #include "GUIGlobals.h"
 #include "GUIMain.h"
@@ -124,17 +124,10 @@ public:
 
 private:
     //==============================================================================
-    void initialize();
-    void updateAudioParams();
-
 
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    void spectrumProcess(ScribeAudioProcessorEditor* editor);
-    void windowProcess(ScribeAudioProcessorEditor* editor);
-    void logProcess(ScribeAudioProcessorEditor* editor, const SwitchMessage& message, int frame);
-    void settingsProcess();
     
 
     std::vector<juce::MidiMessage> notes;

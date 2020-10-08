@@ -23,7 +23,7 @@ void GuiMidi::resized()
 
     REMOVE_FROM_ALL_SIDES(area, pad);
 
-    auto panelArea = area.removeFromLeft(area.getWidth() * 0.3f);
+    auto panelArea = area.removeFromLeft(area.getWidth() * 0.4f);
 
     panelArea.removeFromRight(pad);
 
@@ -40,19 +40,16 @@ void GuiMidi::paint(juce:: Graphics& g)
     auto area = getLocalBounds();
 
     area.removeFromLeft(sliderPanel.getWidth());
-
+    area.removeFromLeft(area.getWidth() * 0.05f);
     area.removeFromRight(area.getWidth() * 0.5f);
 
     int H = area.getHeight() / 4;
-
-    auto angleArea = area.removeFromTop(H);
     
     auto midiOnArea = area.removeFromTop(H);
     auto velOnArea = area.removeFromTop(H);
     
     auto retrigArea = area.removeFromTop(H);
 
-    SHOW_DESC_THEN_VAL("Attack Angle: ", juce::String(angle), angleArea);
     SHOW_DESC_THEN_VAL("Midi On: ", juce::String(midiOn), midiOnArea);
     SHOW_DESC_THEN_VAL("Vel On: ", juce::String(velOn), velOnArea);
 
@@ -60,7 +57,7 @@ void GuiMidi::paint(juce:: Graphics& g)
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MidiSliders::MidiSliders() : sliders(9), labels(9)
+MidiSliders::MidiSliders() : sliders(10), labels(10)
 {
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);

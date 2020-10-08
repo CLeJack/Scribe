@@ -115,21 +115,25 @@ inline int midiShift(int f0ind, const fvec& freqs, float refFreq, int octShift, 
     return out;
 }
 
-inline int midiVelocity(float maxVel, float minVel, float currentAngle, float maxAngle, float minAngle = 45) 
+inline int midiVelocity(float maxVel, float minVel, float dBShort, float dBLong, float velRatio) 
 {
 
-    if (maxAngle == minAngle) 
+    if (maxVel == minVel) 
     {
         return maxVel;
     }
 
-    float angle = std::max(currentAngle - minAngle, 0.0f);
-    float delta = std::max(maxAngle - minAngle, 1.0f);
-    float pct   = std::min(angle / delta, 1.0f);
+    if(dBShort < dBLong)
+    {
+        return (maxVel - minVel)/2;
+    }
 
-    int vel = pct * (maxVel - minVel) + minVel;
-    vel = vel > 127 ? 127 : vel;
-    vel = vel < 0 ? 0 : vel;
+    //(dBShort - dBLong) / dt = velRatio * (currentVel - minVel)/dt
+
+
+    int vel = (dBShort - dBLong) / velRatio + minVel;
+    vel = vel > maxVel ? maxVel : vel;
+    vel = vel < minVel ? minVel : vel;
 
     return vel;
 }

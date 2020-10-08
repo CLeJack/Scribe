@@ -48,7 +48,7 @@ void GuiSignal::resized()
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-SignalSliders::SignalSliders() : sliders(5), labels(5)
+SignalSliders::SignalSliders() : sliders(4), labels(4)
 {
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
