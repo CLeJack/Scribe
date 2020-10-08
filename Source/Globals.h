@@ -149,3 +149,30 @@ namespace AudioParams
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/*
+struct Range 
+{
+    int lowNote = 28;
+    int highNote = lowNote + 48;
+};
+
+struct Threshold
+{
+    float ratio;
+
+    float release;
+
+    float weight0;
+    float weight1;
+    float weight2;
+    float weight3;
+
+    float noise0;
+    float noise1;
+    float noise2;
+    float noise3;
+
+    float retrigStart;
+    float retrigStop;
+}
+*/

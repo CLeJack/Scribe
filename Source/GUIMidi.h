@@ -45,12 +45,21 @@ class GuiMidi : public juce::Component
 public:
     GuiMidi();
     void resized() override;
+    void paint(juce::Graphics& g);
 
 
     MidiSliders sliderPanel;
-    MidiBar angle;
-    MidiBar dB;
+    //MidiBar angle;
+    //MidiBar dB;
 
-    MidiData on;
-    MidiData off;
+    //MidiData on;
+    //MidiData off;
+
+    int delayedAmp = 0;
+    float angle = 0;
+
+    float midiOn = 0;
+    float velOn = 0;
+
+    float retrigger = 0;
 };

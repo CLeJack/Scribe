@@ -27,7 +27,7 @@ public:
     
     void updateSpectrum();
     void updateSignal();
-    void updateMidi();
+    void updateMidi(bool send);
     void updateSettings();
 
     void setSliders();

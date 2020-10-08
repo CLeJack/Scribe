@@ -11,12 +11,9 @@
 #include "GUIMidi.h"
 
 
-GuiMidi::GuiMidi() : angle(45, 90, 5), dB(-60, 0, 4)
+GuiMidi::GuiMidi()
 {
     addAndMakeVisible(sliderPanel);
-    addAndMakeVisible(on);
-    addAndMakeVisible(off);
-    addAndMakeVisible(angle);
 }
 
 void GuiMidi::resized() 
@@ -27,38 +24,43 @@ void GuiMidi::resized()
     REMOVE_FROM_ALL_SIDES(area, pad);
 
     auto panelArea = area.removeFromLeft(area.getWidth() * 0.3f);
-    
-    auto angleArea = area.removeFromTop(area.getHeight() * 0.5f);
-
-    auto dBArea = angleArea.removeFromRight(angleArea.getWidth() * 0.5f);
-
-    auto onArea = area.removeFromLeft(area.getWidth() * 0.5f);
-
-    auto offArea = area;
 
     panelArea.removeFromRight(pad);
 
-    angleArea.removeFromLeft(angleArea.getWidth() * 1.0f / 3.0f);
-    angleArea.removeFromRight(angleArea.getWidth() * 0.5f);
-
-    dBArea.removeFromLeft(dBArea.getWidth() * 1.0f / 3.0f);
-    dBArea.removeFromRight(dBArea.getWidth() * 0.5f);
-
-    REMOVE_FROM_ALL_SIDES(onArea, pad);
-    REMOVE_FROM_ALL_SIDES(offArea, pad);
-
     sliderPanel.setBounds(panelArea);
-    angle.setBounds(angleArea);
-    dB.setBounds(dBArea);
-    on.setBounds(onArea);
-    off.setBounds(offArea);
-
     
 }
 
+#define SHOW_DESC_THEN_VAL(desc, val, currentArea) {\
+g.drawText(desc, currentArea.removeFromLeft(currentArea.getWidth() * 0.5f), juce::Justification::centred);\
+g.drawText(val, currentArea, juce::Justification::centred);\
+}
+void GuiMidi::paint(juce:: Graphics& g) 
+{
+    auto area = getLocalBounds();
+
+    area.removeFromLeft(sliderPanel.getWidth());
+
+    area.removeFromRight(area.getWidth() * 0.5f);
+
+    int H = area.getHeight() / 4;
+
+    auto angleArea = area.removeFromTop(H);
+    
+    auto midiOnArea = area.removeFromTop(H);
+    auto velOnArea = area.removeFromTop(H);
+    
+    auto retrigArea = area.removeFromTop(H);
+
+    SHOW_DESC_THEN_VAL("Attack Angle: ", juce::String(angle), angleArea);
+    SHOW_DESC_THEN_VAL("Midi On: ", juce::String(midiOn), midiOnArea);
+    SHOW_DESC_THEN_VAL("Vel On: ", juce::String(velOn), velOnArea);
+
+    SHOW_DESC_THEN_VAL("Retrigger %: ", juce::String(retrigger), retrigArea);
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-MidiSliders::MidiSliders() : sliders(7), labels(7)
+MidiSliders::MidiSliders() : sliders(9), labels(9)
 {
 
     APPLY_FUNC_TO_ELEM(addAndMakeVisible, sliders);
@@ -74,13 +76,13 @@ void MidiSliders::resized()
     for (int i = 0; i < sliders.size(); i++)
     {
         auto rect = area.removeFromTop(H);
-        labels[i].setBounds(rect.removeFromBottom(rect.getHeight() * 0.30f));
+        labels[i].setBounds(rect.removeFromLeft(rect.getWidth() * 0.50f));
         sliders[i].setBounds(rect);
         sliders[i].setTextBoxStyle(
-            juce::Slider::TextEntryBoxPosition::TextBoxLeft,
+            juce::Slider::TextEntryBoxPosition::TextBoxBelow,
             true,
-            rect.getWidth() * 0.30f,
-            rect.getHeight() * 0.30f);
+            rect.getWidth(),
+            rect.getHeight() * 0.50f);
     }
 
 }

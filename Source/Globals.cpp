@@ -93,10 +93,10 @@ namespace AudioParams
         float noise2 = -40;
         float noise3 = -45;
 
-        float weight0 = 0.07f;
-        float weight1 = 0.1f;
-        float weight2 = 0.15f;
-        float weight3 = 0.17f;
+        float weight0 = 0.05f;
+        float weight1 = 0.05f;
+        float weight2 = 0.10f;
+        float weight3 = 0.15f;
 
         float retrigStart = 0.9f;
         float retrigStop = 1.0f;

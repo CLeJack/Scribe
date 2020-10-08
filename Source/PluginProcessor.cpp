@@ -321,7 +321,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
             editor->updateSignal();
             break;
         case GUIState::midi:
-            editor->updateMidi();
+            editor->updateMidi(message.send);
             break;
         case GUIState::settings:
             editor->updateSettings();

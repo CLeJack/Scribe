@@ -174,6 +174,21 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
         A::Shift::semitone = slider->getValue();
     }
 
+    else if (slider == &midi[6])
+    {
+        A::SmoothTime::midi = slider->getValue();
+    }
+
+    else if (slider == &midi[7])
+    {
+        A::Threshold::retrigStart = slider->getValue();
+    }
+
+    else if (slider == &midi[8])
+    {
+        A::Threshold::retrigStop = slider->getValue();
+    }
+
 
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,6 +249,9 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.labels[5].setText("Semi Shift", juce::NotificationType::dontSendNotification);
 
     guiMidi.sliderPanel.labels[6].setText("Midi Delay", juce::NotificationType::dontSendNotification);
+    
+    guiMidi.sliderPanel.labels[7].setText("Retrigger Start", juce::NotificationType::dontSendNotification);
+    guiMidi.sliderPanel.labels[8].setText("Retrigger Stop", juce::NotificationType::dontSendNotification);
 
 
     guiMidi.sliderPanel.sliders[0].setRange(0, 32, 1);
@@ -243,6 +261,8 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.sliders[4].setRange(-8, 8, 1);
     guiMidi.sliderPanel.sliders[5].setRange(-12, 12, 1);
     guiMidi.sliderPanel.sliders[6].setRange(0, 32, 1);
+    guiMidi.sliderPanel.sliders[7].setRange(0, 1, .05);
+    guiMidi.sliderPanel.sliders[8].setRange(0, 1, .05);
 
     guiMidi.sliderPanel.sliders[0].setValue(AudioParams::SmoothTime::amp);
     guiMidi.sliderPanel.sliders[1].setValue(AudioParams::Angle::amp);
@@ -251,6 +271,8 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.sliders[4].setValue(AudioParams::Shift::octave);
     guiMidi.sliderPanel.sliders[5].setValue(AudioParams::Shift::semitone);
     guiMidi.sliderPanel.sliders[6].setValue(AudioParams::SmoothTime::midi);
+    guiMidi.sliderPanel.sliders[7].setValue(AudioParams::Threshold::retrigStart);
+    guiMidi.sliderPanel.sliders[8].setValue(AudioParams::Threshold::retrigStop);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,6 +305,16 @@ void ScribeAudioProcessorEditor::updateSignal()
     guiSignal.thresholds.relativeHeights[3] = AudioParams::Threshold::noise3;
 }
 
-void ScribeAudioProcessorEditor::updateMidi() {}
+void ScribeAudioProcessorEditor::updateMidi(bool send) 
+{
+    if (send) 
+    {
+        guiMidi.angle = Calculations::Angle::amp;
+        guiMidi.midiOn = Calculations::Midi::index;
+        guiMidi.velOn = Calculations::Midi::velocity;
+    }
+    guiMidi.retrigger = Calculations::retrigger;
+    
+}
 
 void ScribeAudioProcessorEditor::updateSettings() {}
