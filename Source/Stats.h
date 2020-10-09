@@ -29,10 +29,10 @@ int minArg(const fvec& arr, int start);
 int minArg(const fvec& arr);
 
 
-fvec absMaxNormalize(const fvec& arr);
+fvec absMaxNormalize(const fvec& arr, int zero);
 void absMaxNormalize(fvec& arr);
 
-fvec sumNormalize(const fvec& arr);
+fvec sumNormalize(const fvec& arr, int zero);
 void sumNormalize(fvec& arr);
 
 float sum(const fvec& arr);
@@ -57,6 +57,8 @@ fvec CoMX2(const fvec& arr);
 
 
 fvec hadamardX(const fvec& arr1, const fvec& arr2);
+
+fvec add(const fvec& arr1, const fvec& arr2);
 
 //simple moving average without storage
 float SMA(float hist, float val, float size);

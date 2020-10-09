@@ -44,7 +44,7 @@ fvec dct(const cmatrix& matrix, const fvec& signal,
 fvec dct(const cmatrix& matrix, const fvec& signal)
 {   // can pass exMatrix with exWeights
 
-    int rowf = matrix.size() - 1;
+    int rowf = matrix.size();
     int indf = signal.size();
 
     return dct( matrix, signal, 0, rowf, 0, indf);

@@ -23,6 +23,12 @@ void Scribe::initialize(float srate, float blockSize)
 
     setComplexMatrix(matrix, frequencies, timeVector);
 
+    setSineMatrix(sumSineMatrix, matrix, timeVector, frequencies, sumNormalize );
+    setSineMatrix(maxSineMatrix,matrix, timeVector, frequencies, absMaxNormalize);
+
+    setOctErrMatrix1(sumOctErrMatrix1, matrix, timeVector, frequencies, sumNormalize);
+    setOctErrMatrix1(maxOctErrMatrix1, matrix, timeVector, frequencies, absMaxNormalize);
+
     history.reset(new FloatBuffer(audio.samples, 0.0f));
 
     isInitialized = true;

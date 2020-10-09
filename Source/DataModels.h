@@ -5,8 +5,10 @@
 #include "CircularBuffer.h"
 #include "Stats.h"
 #include "DCT.h"
+#include "Likelihood.h"
 #include "ProcessData.h"
 #include "MidiSwitch.h"
+
 
 /*
 * 
@@ -72,6 +74,12 @@ struct Scribe {
     fvec timeVector = fvec(audio.ds.samples, 0);
 
     cmatrix matrix = cmatrix(frequencies.size(), cvec(audio.ds.samples, std::complex<float>(0, 0)));
+
+    //sum normalization and max normalization
+    fmatrix sumSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    fmatrix sumOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    fmatrix maxOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
 
     std::unique_ptr<FloatBuffer> history;
 
