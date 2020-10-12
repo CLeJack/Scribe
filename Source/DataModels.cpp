@@ -24,10 +24,10 @@ void Scribe::initialize(float srate, float blockSize)
     setComplexMatrix(matrix, frequencies, timeVector);
 
     setSineMatrix(sumSineMatrix, matrix, timeVector, frequencies, sumNormalize );
-    setSineMatrix(maxSineMatrix,matrix, timeVector, frequencies, absMaxNormalize);
+    setSineMatrix(maxSineMatrix, matrix, timeVector, frequencies, absMaxNormalize);
 
-    setOctErrMatrix1(sumOctErrMatrix1, matrix, timeVector, frequencies, sumNormalize);
-    setOctErrMatrix1(maxOctErrMatrix1, matrix, timeVector, frequencies, absMaxNormalize);
+    //setOctErrMatrix1(sumOctErrMatrix1, matrix, timeVector, frequencies, sumNormalize);
+    //setOctErrMatrix1(maxOctErrMatrix1, matrix, timeVector, frequencies, absMaxNormalize);
 
     history.reset(new FloatBuffer(audio.samples, 0.0f));
 
@@ -43,10 +43,39 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
     return isInitialized;
 }
 
-void Calculations::updateRange(const Range& params)
+void Scribe::updateWeights(int lowNote, int highNote)
 {
-    range.lowNote = params.lowNote;
-    range.highNote = range.lowNote + 48; //4 octaves
+    weights = dct(matrix, historyDS,
+            lowNote, highNote, 
+            audio.ds.signalStart, historyDS.size());
+
+        maxWeights = absMaxNormalize(weights, 0);
+        sumWeights = sumNormalize(weights, 0);
+
+        fmatrix freqMatrix = freqCertaintyMatrix(maxWeights, maxSineMatrix,
+        lowNote, highNote, 
+        0, weights.size());
+
+        fvec certainty = freqCertaintyVector(sumWeights, freqMatrix, 
+        lowNote, highNote,
+         0, weights.size());
+}
+
+void Scribe::updateCertaintyPeaks(float certaintyThreshold)
+{
+    fvec unitPeaks = getPeaks(certainty);
+
+    for (int i = 0; i < peaks.size() ; i++)
+    {
+        peaks[i] = unitPeaks[i] == 1 ? certainty[i] : 0;
+    }
+}
+
+
+void Calculations::updateRange(const Scribe& scribe, const AudioParams& params)
+{
+    range.lowNote = params.range.lowNote;
+    range.highNote = range.lowNote + 4 * scribe.tuning.octaveSize;
 }
 
 
@@ -54,18 +83,7 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 {
 
     //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
-    fvec comy2 = CoMY2(scribe.historyDS);
-
-    amp.val = comy2[0];
-    amp.half1 = 0; // oldest half of the signal
-    amp.half2 = comy2[1]; // newest half
-
-    //fundamental index chosen by the greatest peak in frequency spectrum
-    fundamental.index = maxArg(scribe.weights);
-    fundamental.ratio = scribe.ratios[fundamental.index];
-
-    targets.weight = scribe.weights[fundamental.index];
-    targets.retrigger = amp.half2 / amp.val; //compare the full signal amplitude with the earliest half
+    amp.val = CoMY(scribe.historyDS);
 
     amp.dB = int16ToDb(amp.val);
     amp.dB = (amp.dB < -90) || std::isnan(amp.dB) ? -90 : amp.dB;
@@ -77,70 +95,19 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     delay.dBShort = SMA(delay.dBShort, amp.dB, blocks.dBShort);
     delay.dBLong = SMA(delay.dBLong, amp.dB, blocks.dBLong);
 
-    //do velocity calc here
-
-
-    // note Ind undergoes an octave correction if necessary;
-    // weight data can be distributed between 1st, 2nd and 3rd harmonics in some instances
-    // this is the only way I can see to fix this until I implement statistical methods
-    note.index = fundamental.index;
-    note.ratio = fundamental.ratio;
-    if (fundamental.ratio < params.threshold.ratio
-        && fundamental.index >= scribe.tuning.octaveSize)
-    {
-        note.index -= scribe.tuning.octaveSize;
-        note.ratio = scribe.ratios[note.index];
-    }
-
     //Threshold updates
-    int loOct = range.lowNote / scribe.tuning.octaveSize;
-    int currentOct = fundamental.index / scribe.tuning.octaveSize;
-
-    switch (currentOct - loOct)
-    {
-    case 0:
-        threshold.weight = params.threshold.weight0;
-        threshold.noise = params.threshold.noise0;
-        break;
-    case 1:
-        threshold.weight = params.threshold.weight1;
-        threshold.noise = params.threshold.noise1;
-        break;
-    case 2:
-        threshold.weight = params.threshold.weight2;
-        threshold.noise = params.threshold.noise2;
-        break;
-    case 3:
-        threshold.weight = params.threshold.weight3;
-        threshold.noise = params.threshold.noise3;
-        break;
-    default:
-        threshold.weight = params.threshold.weight3;
-        threshold.noise = params.threshold.noise3;
-    }
-
-    threshold.release = params.threshold.release;
+    threshold.release     = params.threshold.release;
     threshold.retrigStart = params.threshold.retrigStart;
-    threshold.retrigStop = params.threshold.retrigStop;
+    threshold.retrigStop  = params.threshold.retrigStop;
+    threshold.certainty   = params.threshold.certainty;
 
+    shift.octave   = params.shift.octave;
+    shift.semitone = params.shift.semitone;
 
-    fundamental.octave /= scribe.tuning.octaveSize;
-    fundamental.pitch %= scribe.tuning.octaveSize;
+    velocity.max   = params.velocity.max;
+    velocity.min   = params.velocity.min;
+    velocity.maxdB = params.velocity.maxdB;
 
-    note.octave /= scribe.tuning.octaveSize;
-    note.pitch %= scribe.tuning.octaveSize;
-}
-
-
-void Calculations::updateMidi(const Scribe& scribe, const AudioParams& params)
-{
-    int ind = note.index;
-    ind = targets.weight < threshold.weight ? 0 : ind;
-    ind = delay.dBShort < threshold.noise ? 0 : ind;
-    ind = ind < 0 ? 0 : ind;
-
-    midi.index = midiShift(ind, scribe.frequencies, scribe.tuning.refFreq, params.shift.octave, params.shift.semitone);
-    midi.velocity = midiVelocity(params.velocity.max, params.velocity.min, delay.dBShort, delay.dBLong, params.velocity.ratio);
 }
 
 
@@ -150,22 +117,51 @@ MidiParams getMidiParams(const Calculations& calcs)
     auto output = MidiParams();
 
     //All of these values should be updated in Calculations::updateSignalCalcs()
+    //This is redundant, but it ensures that every value has gone through some
+    //sort of processing--that I'm not just pulling from a default;
 
-    output.weightVal = calcs.targets.weight;
-    output.weightThresh = calcs.threshold.weight; 
+    //~~~~~~~~~~~~~~~~~~~
+    output.certaintyThresh = calcs.threshold.certainty;
+    output.releaseThresh   = calcs.threshold.release;
 
-    output.midiNum = calcs.midi.index;
-    output.delaydB = calcs.delay.dBShort;
-    output.noiseThresh = calcs.threshold.noise;
-    output.releaseThresh = calcs.threshold.release;
-
-    output.retrigVal = calcs.targets.retrigger;
     output.retrigStart = calcs.threshold.retrigStart;
     output.retrigStop = calcs.threshold.retrigStop;
+    
+    output.refdB = calcs.amp.dB;
+    
+    output.smoothingBlocks = calcs.blocks.midi;
 
-    output.velocityVal = calcs.midi.velocity;
+    output.octShift  = calcs.shift.octave;
+    output.semiShift = calcs.shift.octave;
 
-    output.smoothFactor = calcs.blocks.midi;
+    output.maxdB  = calcs.velocity.maxdB;
+    output.maxVel = calcs.velocity.max;
+    output.minVel = calcs.velocity.min;
 
     return output;
+}
+
+
+
+void updateMidi(Scribe& scribe, const Calculations& calcs, const MidiParams& midiParams)
+{
+
+    for(int i = 0; i < scribe.midiPanel.size(); i++)
+    {
+        //updates lowestNote for midiswitch if there has been a change
+        scribe.midiPanel[i].updateLowNote(calcs.range.lowNote, 
+                                          scribe.frequencies, scribe.tuning.refFreq);
+
+        
+        if(scribe.peaks[i] == 1 && scribe.midiPanel[i].isOn == false)
+        {
+            scribe.midiPanel[i].turnOn(midiParams, scribe.maxWeights);
+        }
+
+        //updates dB only at the moment
+        scribe.midiPanel[i].update(midiParams, scribe.maxWeights);
+
+        //turnoff behaviors happens internal to midiswitch and sets a flag
+        //midi off behavior will happen in the process block
+    }
 }

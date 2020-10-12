@@ -11,10 +11,8 @@ void setSineMatrix(fmatrix& sineMat, const cmatrix& matrix, const fvec& timeVect
 void setOctErrMatrix1(fmatrix& errMat, const cmatrix& matrix, const fvec& timeVector, 
     const fvec& freqs, void (*normFunc) (fvec&), int octSize = 12);
 
-fvec weightErr(fvec& weights, const fmatrix& matrix, 
-int rowi, int rowf, int indi, int indf, float (*statFunc) (const fvec&));
+fmatrix freqCertaintyMatrix(const fvec& maxWeights, const fmatrix& maxMatrix, 
+int rowi, int rowf, int indi, int indf);
 
-fvec pctErr(fvec& weights, const fmatrix& matrix, 
-int rowi, int rowf, int indi, int indf, float (*statFunc) (const fvec&));
-
-fvec normalizeErr(fvec & errs, const fmatrix& matrix);
+fvec freqCertaintyVector(const fvec& sumWeights, const fmatrix& freqMatrix,
+int rowi, int rowf, int indi, int indf);

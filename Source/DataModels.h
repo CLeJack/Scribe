@@ -61,6 +61,10 @@ struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
+    void updateWeights(int lowNote, int highNote);
+    void updateCertaintyPeaks(float certaintyThreshold);
+    
+
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
 
     Tuning tuning;
@@ -69,7 +73,10 @@ struct Scribe {
     fvec frequencies = fvec(1 + tuning.highExp - tuning.lowExp, 0);
 
     fvec weights = fvec(frequencies.size(), 0);
-    fvec ratios = fvec(frequencies.size(), 0);
+    fvec maxWeights = fvec(frequencies.size(), 0);
+    fvec sumWeights = fvec(frequencies.size(), 0);
+    fvec certainty = fvec(frequencies.size(), 0);
+    fvec peaks = fvec(frequencies.size(), 0);
 
     fvec timeVector = fvec(audio.ds.samples, 0);
 
@@ -78,14 +85,15 @@ struct Scribe {
     //sum normalization and max normalization
     fmatrix sumSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
     fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
-    fmatrix sumOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
-    fmatrix maxOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    //fmatrix sumOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    //fmatrix maxOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
 
     std::unique_ptr<FloatBuffer> history;
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
 
-    MidiSwitch midiSwitch = MidiSwitch();
+    std::vector<MidiSwitch> midiPanel = std::vector<MidiSwitch>(tuning.octaveSize*4, MidiSwitch(0));
+
 };
 
 
@@ -103,15 +111,7 @@ struct Threshold
 
     float release = -60;
 
-    float weight0 = 0.05f;
-    float weight1 = 0.05f;
-    float weight2 = 0.10f;
-    float weight3 = 0.15f;
-
-    float noise0 = -35;
-    float noise1 = -40;
-    float noise2 = -45;
-    float noise3 = -50;
+    float certainty = 0.7f;
 
     float retrigStart = 0.9f;
     float retrigStop  = 1.0f;
@@ -142,7 +142,7 @@ struct Velocity
     int min = 50;
     int max = 127;
 
-    float ratio = .15;
+    float maxdB = 0;
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,8 +166,7 @@ struct RangeResults
 
 struct ThresholdResults
 {
-    float weight = 0;
-    float noise  = 0;
+    float certainty = 0;
 
     float release   = 0;
     float retrigger = 0;
@@ -211,21 +210,13 @@ struct Blocks
     float dBLong   = 1;
 };
 
-
-
-struct Targets 
-{
-    float weight    = 0;
-    float retrigger = 0;
-};
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Calculations
 {
     //these functions should be called in order
-    void updateRange  (const Range& params);
+    void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
-    void updateMidi   (const Scribe& scribe, const AudioParams& params);
+
     AudioParams params;
 
     RangeResults range;
@@ -234,14 +225,12 @@ struct Calculations
     Amp amp;
     Delay delay;
     Blocks blocks;
-    
-    Note fundamental;
-    Note note;
-    Midi midi;
 
-    Targets targets;
+    Shift shift;
+    Velocity velocity;
 
 };
 
 MidiParams getMidiParams(const Calculations& calcs);
 
+void updateMidi(Scribe& scribe, const Calculations& calcs, const MidiParams& midiParams);

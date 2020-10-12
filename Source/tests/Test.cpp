@@ -21,9 +21,9 @@ int main()
 
     printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
     printMatrix(scribe.sumSineMatrix, "output/_0_sumsinematrix.csv",0);
-    printMatrix(scribe.sumOctErrMatrix1, "output/_0_sumoctErrMatrix.csv",0);
-    printMatrix(scribe.sumSineMatrix, "output/_0_maxsinematrix.csv",0);
-    printMatrix(scribe.sumOctErrMatrix1, "output/_0_maxoctErrMatrix.csv",0);
+    //printMatrix(scribe.sumOctErrMatrix1, "output/_0_sumoctErrMatrix.csv",0);
+    printMatrix(scribe.maxSineMatrix, "output/_0_maxsinematrix.csv",0);
+    //printMatrix(scribe.maxOctErrMatrix1, "output/_0_maxoctErrMatrix.csv",0);
 
     printColumn(signal0, "output/_1_signal.csv");
 
@@ -51,33 +51,46 @@ int main()
             scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
         }
 
-        
+        calcs.updateRange(scribe, params);
 
+        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote);
 
-        fvec weights = dct(scribe.matrix, scribe.historyDS,
-            0, scribe.frequencies.size(), 
-            scribe.audio.ds.signalStart, scribe.historyDS.size());
+        calcs.updateSignal(scribe, params);
 
-        fvec maxNormWeights = absMaxNormalize(weights, 0);
-        fvec sumNormWeights = sumNormalize(weights, 0);
+        scribe.updateCertaintyPeaks(params.threshold.certainty);
 
-        //fvec errs = weightErr(scribe.weights, scribe.sineMatrix);
+        MidiParams midiParams = getMidiParams(calcs);
+        updateMidi(scribe, calcs, midiParams);
 
-        //errs = normalizeErr(errs, scribe.sineMatrix);
+        int f0 = maxArg(scribe.certainty);
         
 
         
 #if PRINT == 1
-        fvec output = {0};
+        fvec output = {(float)f0,
+        (float)scribe.midiPanel[f0].index,
+        (float)scribe.midiPanel[f0].lowestNote,
+        (float)scribe.midiPanel[f0].isOn,
+        (float)scribe.midiPanel[f0].midiNum,
+        (float)scribe.midiPanel[f0].onNote,
+        (float)scribe.midiPanel[f0].onVel,
+
+        (float)scribe.midiPanel[f0].needsRelease(midiParams),
+        
+        (float)scribe.midiPanel[f0].shortdB,
+        (float)scribe.midiPanel[f0].longdB,
+        
+        (float)scribe.midiPanel[f0].retrigPct
+        };
             
 
         //printRows( trueSignal, "_2_history.csv");
         printRows( scribe.historyDS, "output/_2_historyDS.csv");
-        printRows( weights, "output/_2_weights.csv");
-        printRows(maxNormWeights, "output/_2_maxNormW.csv");
-        printRows(sumNormWeights, "output/_2_sumNormW.csv");
-        //printRows( errs, "output/_2_errs.csv");
-        //printRows(output, "output/_2_value_output.csv");
+        printRows( scribe.weights, "output/_2_weights.csv");
+        printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
+        printRows( scribe.sumWeights, "output/_2_sumNormW.csv");
+        printRows( scribe.certainty, "output/_2_certainty.csv");
+        printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2
 
