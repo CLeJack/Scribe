@@ -429,7 +429,8 @@ float SMA(float hist, float val, float size)
 
     log(0) introduces infinities, but rounding error shouldn't be an issue.
     */
-    return hist - (hist / size) + (val / size);
+   float frac = 1.0f/size;
+    return hist * (1 - frac) + (val * frac);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

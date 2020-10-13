@@ -13,7 +13,7 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*srate);
+    fvec signal0 = importCsv("input/_test_amtri.csv", 2.5*srate);
 
     #if PRINT == 1
     printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -53,43 +53,52 @@ int main()
 
         calcs.updateRange(scribe, params);
 
-        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote);
-
         calcs.updateSignal(scribe, params);
+
+        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi);
 
         scribe.updateCertaintyPeaks(params.threshold.certainty);
 
         MidiParams midiParams = getMidiParams(calcs);
-        updateMidi(scribe, calcs, midiParams);
 
-        int f0 = maxArg(scribe.certainty);
+        updateMidi(scribe, midiParams);
+
+        //int f0 = maxArg(scribe.certainty);
+        int f0 = 46;
+        fvec panel(scribe.midiPanel.size(), 0 );
+        for(int i = 0; i < scribe.midiPanel.size(); i++)
+        {
+            panel[i] = scribe.midiPanel[i].isOn;
+        }
         
 
         
 #if PRINT == 1
-        fvec output = {(float)f0,
-        (float)scribe.midiPanel[f0].index,
-        (float)scribe.midiPanel[f0].lowestNote,
-        (float)scribe.midiPanel[f0].isOn,
-        (float)scribe.midiPanel[f0].midiNum,
-        (float)scribe.midiPanel[f0].onNote,
-        (float)scribe.midiPanel[f0].onVel,
+        fvec output = {
+            (float)scribe.certainty[f0],
+            (float)f0,
+            (float)scribe.midiPanel[f0].index,
+            (float)scribe.midiPanel[f0].isOn,
+            (float)scribe.midiPanel[f0].midiNum,
+            (float)scribe.midiPanel[f0].onNote,
+            (float)scribe.midiPanel[f0].onVel,
 
-        (float)scribe.midiPanel[f0].needsRelease(midiParams),
-        
-        (float)scribe.midiPanel[f0].shortdB,
-        (float)scribe.midiPanel[f0].longdB,
-        
-        (float)scribe.midiPanel[f0].retrigPct
+            (float)scribe.midiPanel[f0].needsRelease(midiParams),
+            
+            (float)midiParams.refdB,
+            (float)scribe.midiPanel[f0].currentdB,
+            
+            (float)scribe.midiPanel[f0].retrigPct
         };
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( scribe.historyDS, "output/_2_historyDS.csv");
-        printRows( scribe.weights, "output/_2_weights.csv");
+        //printRows( scribe.historyDS, "output/_2_historyDS.csv");
+        //printRows( scribe.weights, "output/_2_weights.csv");
         printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
-        printRows( scribe.sumWeights, "output/_2_sumNormW.csv");
-        printRows( scribe.certainty, "output/_2_certainty.csv");
+        //printRows( scribe.sumWeights, "output/_2_sumNormW.csv");
+        printRows( scribe.maxWHistory, "output/_2_maxWHist.csv");
+        //printRows( panel, "output/_2_panel.csv");
         printRows(output, "output/_2_value_output.csv");
 
 #elif PRINT == 2

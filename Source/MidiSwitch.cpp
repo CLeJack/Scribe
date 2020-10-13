@@ -1,46 +1,46 @@
 #include "MidiSwitch.h"
 
+MidiSwitch::MidiSwitch() {}
 
-MidiSwitch::MidiSwitch(int index) : index(index) {}
-
-void MidiSwitch::turnOn(const MidiParams& params, const fvec& maxWeights)
+MidiSwitch::MidiSwitch(int index, float freq, float refFreq) 
 {
-    shortdB = maxWeights[index+lowestNote] * params.refdB;
-    longdB = shortdB;
+    this->index = index;
+    this->midiNum = getMidiNumber(freq, refFreq);
+}
 
+void MidiSwitch::turnOn(const MidiParams& params, const fvec& maxWeights, const fvec& certainty)
+{
+    currentdB = weightTodB(maxWeights[index], params.refdB);
+    this->certainty = certainty[index];
     isOn = true;
 
     onNote = midiShift(params);
     onVel = calculateVelocity(params);
 }
 
-void MidiSwitch::update(const MidiParams& params, const fvec& maxWeights)
+void MidiSwitch::update(const MidiParams& params, const fvec& maxWeights, const fvec& certainty)
 {
-    float dB = maxWeights[index+lowestNote] * params.refdB;
-    shortdB = SMA(shortdB, dB, params.smoothingBlocks);
-    longdB = SMA(shortdB, dB, params.smoothingBlocks * 2);
+    //I'm not liking this offset--look into alternative methods later.
+    currentdB = weightTodB(maxWeights[index], params.refdB);
+    this->certainty = certainty[index];
 }
 
 bool MidiSwitch::needsRelease(const MidiParams& params)
 {
-    retrigPct = shortdB/longdB;
+
     bool output = false;
-    if( isOn && (retrigPct < params.retrigStart || params.refdB < params.releaseThresh) )
+    if(isOn)
     {
-        output = true;
-        isOn = false;
+        if( currentdB < params.releaseThresh)
+        {
+            output = true;
+            isOn = false;
+        }
+
     }
+    
 
     return output;
-}
-
-void MidiSwitch::updateLowNote(int lowNote, const fvec& freqs, float refFreq)
-{
-    if(lowestNote != lowNote)
-    {
-        lowestNote = lowNote;
-        midiNum = getMidiNumber(freqs[index + lowestNote], refFreq);
-    }
 }
 
 int MidiSwitch::midiShift(const MidiParams& params)
@@ -66,12 +66,22 @@ int MidiSwitch::midiShift(const MidiParams& params)
 int MidiSwitch::calculateVelocity(const MidiParams& params) 
 {
 
-    float pct = (params.refdB - params.releaseThresh) 
-                / (params.maxdB - params.releaseThresh);
+    //switch this back to previous method with rolling values
+    float pct = std::abs(
+        (params.refdB - params.releaseThresh) 
+        / (params.maxdB - params.releaseThresh)
+        );
 
     int vel = params.minVel + pct * (params.maxVel - params.minVel);
     vel = vel > params.maxVel ? params.maxVel : vel;
     vel = vel < params.minVel ? params.minVel : vel;
 
     return vel;
+}
+
+MidiSwitch& MidiSwitch::operator=(MidiSwitch other)
+{
+    index = other.index;
+    midiNum = other.midiNum;
+    return *this;
 }

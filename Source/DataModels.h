@@ -61,7 +61,7 @@ struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
-    void updateWeights(int lowNote, int highNote);
+    void updateWeights(int lowNote, int highNote, int midiBlocks);
     void updateCertaintyPeaks(float certaintyThreshold);
     
 
@@ -74,6 +74,7 @@ struct Scribe {
 
     fvec weights = fvec(frequencies.size(), 0);
     fvec maxWeights = fvec(frequencies.size(), 0);
+    fvec maxWHistory = fvec(frequencies.size(), 0);
     fvec sumWeights = fvec(frequencies.size(), 0);
     fvec certainty = fvec(frequencies.size(), 0);
     fvec peaks = fvec(frequencies.size(), 0);
@@ -92,7 +93,7 @@ struct Scribe {
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
 
-    std::vector<MidiSwitch> midiPanel = std::vector<MidiSwitch>(tuning.octaveSize*4, MidiSwitch(0));
+    std::vector<MidiSwitch> midiPanel = std::vector<MidiSwitch>(frequencies.size(), MidiSwitch());
 
 };
 
@@ -126,7 +127,7 @@ struct Scale
 struct SmoothTime //corresponds with Calculation Delay 
 {
     //milliseconds
-    float midi     = 11;
+    float midi     = 25;
     float dBShort  = 11; //shorter smoothing time
     float dBLong   = dBShort * 2; //longer smoothing time
 };
@@ -233,4 +234,4 @@ struct Calculations
 
 MidiParams getMidiParams(const Calculations& calcs);
 
-void updateMidi(Scribe& scribe, const Calculations& calcs, const MidiParams& midiParams);
+void updateMidi(Scribe& scribe, const MidiParams& midiParams);

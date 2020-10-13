@@ -29,6 +29,11 @@ void Scribe::initialize(float srate, float blockSize)
     //setOctErrMatrix1(sumOctErrMatrix1, matrix, timeVector, frequencies, sumNormalize);
     //setOctErrMatrix1(maxOctErrMatrix1, matrix, timeVector, frequencies, absMaxNormalize);
 
+    for(int i = 0; i < midiPanel.size(); i++)
+    {
+        midiPanel[i] = MidiSwitch(i, frequencies[i], tuning.refFreq);
+    }
+
     history.reset(new FloatBuffer(audio.samples, 0.0f));
 
     isInitialized = true;
@@ -43,22 +48,30 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
     return isInitialized;
 }
 
-void Scribe::updateWeights(int lowNote, int highNote)
+void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks)
 {
-    weights = dct(matrix, historyDS,
-            lowNote, highNote, 
-            audio.ds.signalStart, historyDS.size());
+    weights = dct(
+        matrix, historyDS,
+        lowNote, highNote, 
+        audio.ds.signalStart, historyDS.size());
 
-        maxWeights = absMaxNormalize(weights, 0);
-        sumWeights = sumNormalize(weights, 0);
+    maxWeights = absMaxNormalize(weights, 0);
+    sumWeights = sumNormalize(weights, 0);
 
-        fmatrix freqMatrix = freqCertaintyMatrix(maxWeights, maxSineMatrix,
+    fmatrix freqMatrix = freqCertaintyMatrix(
+        maxWeights, maxSineMatrix,
         lowNote, highNote, 
         0, weights.size());
 
-        fvec certainty = freqCertaintyVector(sumWeights, freqMatrix, 
+    certainty = freqCertaintyVector(
+        sumWeights, freqMatrix, 
         lowNote, highNote,
-         0, weights.size());
+        0, weights.size());
+
+    for(int i = 0; i < maxWeights.size(); i++)
+    {
+        maxWHistory[i] = SMA(maxWHistory[i], maxWeights[i], midiBlocks);   
+    }
 }
 
 void Scribe::updateCertaintyPeaks(float certaintyThreshold)
@@ -138,28 +151,29 @@ MidiParams getMidiParams(const Calculations& calcs)
     output.maxVel = calcs.velocity.max;
     output.minVel = calcs.velocity.min;
 
+    output.lowNote = calcs.range.lowNote;
+    output.highNote = calcs.range.highNote;
+
     return output;
 }
 
 
 
-void updateMidi(Scribe& scribe, const Calculations& calcs, const MidiParams& midiParams)
+void updateMidi(Scribe& scribe, const MidiParams& midiParams)
 {
 
-    for(int i = 0; i < scribe.midiPanel.size(); i++)
+    for(int i = midiParams.lowNote; i < midiParams.highNote; i++)
     {
-        //updates lowestNote for midiswitch if there has been a change
-        scribe.midiPanel[i].updateLowNote(calcs.range.lowNote, 
-                                          scribe.frequencies, scribe.tuning.refFreq);
-
-        
-        if(scribe.peaks[i] == 1 && scribe.midiPanel[i].isOn == false)
+        //by restricting the midi notes to a range,
+        //I will need to handling turning off all midiswitches externally.
+        //if the range is changed while a note is ringing, it won't be part of this check
+        if(scribe.peaks[i] > midiParams.certaintyThresh && scribe.midiPanel[i].isOn == false)
         {
-            scribe.midiPanel[i].turnOn(midiParams, scribe.maxWeights);
+            scribe.midiPanel[i].turnOn(midiParams, scribe.maxWeights, scribe.certainty);
         }
 
-        //updates dB only at the moment
-        scribe.midiPanel[i].update(midiParams, scribe.maxWeights);
+        //updates dB & certainty only at the moment
+        scribe.midiPanel[i].update(midiParams, scribe.maxWeights, scribe.certainty);
 
         //turnoff behaviors happens internal to midiswitch and sets a flag
         //midi off behavior will happen in the process block

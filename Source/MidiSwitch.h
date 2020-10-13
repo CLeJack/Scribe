@@ -25,41 +25,49 @@ struct MidiParams
     float maxdB = 0;
     int maxVel = 0;
     int minVel = 0;
+
+    int lowNote = 0;
+    int highNote = 0;
 };
 
 struct MidiSwitch
 {
+    MidiSwitch();
+    MidiSwitch(int index, float freq, float refFreq);
 
-    MidiSwitch(int index);
+    void turnOn  (const MidiParams& params, const fvec& maxWeights, const fvec& certainty);
 
-    void turnOn  (const MidiParams& params, const fvec& maxWeights);
-
-    void update(const MidiParams& params, const fvec& weights);
+    void update(const MidiParams& params, const fvec& maxWeights, const fvec& certainty);
     bool needsRelease (const MidiParams& params);
 
-    void updateLowNote(int lowNote, const fvec& freqs, float refFreq);
     int calculateVelocity(const MidiParams& params);
     int midiShift(const MidiParams& params);
+    
 
-    static int getMidiNumber(float freq, float refFreq)
+    int getMidiNumber(float freq, float refFreq)
     {
         return int(0.5f + 69 + 12 * std::log2(freq / refFreq));
     }
 
+    MidiSwitch& operator=(MidiSwitch other);
+
     int index = 0;
-
-    int lowestNote = 0;
-
     int midiNum = 0;
 
-    float shortdB = 0;
-    float longdB = 0;
+
+    float currentdB = -90;
+    float certainty = 0;
     
     bool isOn = false;
 
     float retrigPct = 0;
 
-    int onVel;
-    int onNote;
+    int onVel = 0;
+    int onNote = 0;
 };
+
+inline float weightTodB(float weight, float refdB, float floor = -90)
+{
+    return floor + weight * (refdB - floor);
+}
 
