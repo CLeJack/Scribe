@@ -45,6 +45,18 @@ void printRows(const ivec& arr, std::string title)
     file.close();
 }
 
+void printRows(const std::vector<bool>& arr, std::string title)
+{
+    std::ofstream file;
+    file.open(title, std::fstream::in | std::fstream::out | std::fstream::app);
+    for(int i = 0; i < arr.size(); i++)
+    {
+        file << arr[i]<<",";
+    }
+    file<<"\n";
+    file.close();
+}
+
 void printMatrix(fmatrix& mat, std::string title, int id)
 {
     std::ofstream file;

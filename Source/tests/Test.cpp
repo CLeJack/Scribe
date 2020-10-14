@@ -55,51 +55,33 @@ int main()
 
         calcs.updateSignal(scribe, params);
 
-        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi);
+        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi, calcs.amp.dB);
 
-        scribe.updateCertaintyPeaks(params.threshold.certainty);
+        scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
-        MidiParams midiParams = getMidiParams(calcs);
 
-        updateMidi(scribe, midiParams);
-
-        //int f0 = maxArg(scribe.certainty);
-        int f0 = 46;
-        fvec panel(scribe.midiPanel.size(), 0 );
-        for(int i = 0; i < scribe.midiPanel.size(); i++)
+        for(int i = 0; i < scribe.needsRelease.size(); i++)
         {
-            panel[i] = scribe.midiPanel[i].isOn;
+            if(scribe.needsRelease[i])
+            {
+                scribe.turnOffMidi(i);
+            }
         }
         
 
         
 #if PRINT == 1
-        fvec output = {
-            (float)scribe.certainty[f0],
-            (float)f0,
-            (float)scribe.midiPanel[f0].index,
-            (float)scribe.midiPanel[f0].isOn,
-            (float)scribe.midiPanel[f0].midiNum,
-            (float)scribe.midiPanel[f0].onNote,
-            (float)scribe.midiPanel[f0].onVel,
-
-            (float)scribe.midiPanel[f0].needsRelease(midiParams),
-            
-            (float)midiParams.refdB,
-            (float)scribe.midiPanel[f0].currentdB,
-            
-            (float)scribe.midiPanel[f0].retrigPct
-        };
+        fvec output = {};
             
 
         //printRows( trueSignal, "_2_history.csv");
         //printRows( scribe.historyDS, "output/_2_historyDS.csv");
         //printRows( scribe.weights, "output/_2_weights.csv");
         printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
-        //printRows( scribe.sumWeights, "output/_2_sumNormW.csv");
         printRows( scribe.maxWHistory, "output/_2_maxWHist.csv");
-        //printRows( panel, "output/_2_panel.csv");
+        printRows( scribe.onNotes, "output/_2_onNotes.csv");
         printRows(output, "output/_2_value_output.csv");
+        //
 
 #elif PRINT == 2
 

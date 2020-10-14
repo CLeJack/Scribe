@@ -12,14 +12,84 @@
 
 /*
 * 
+0. Shared Structs
 1. Scribe Model
 2. AudioParam Model
 3. Calculations Model
 
 */
 
-// 1. Scribe program data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// 0.Shared Structs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+struct Range 
+{
+    int lowNote  = 28;
+    int highNote = lowNote + 48;
+};
+
+struct Threshold
+{
+
+    float release = -60;
+    float noise   = -60;
+
+    float certainty = 0.7f;
+
+    float retrigStart = 0.9f;
+    float retrigStop  = 1.0f;
+};
+
+struct Scale
+{
+    float noise  = -5;
+    float weight = 0.5f;
+};
+
+struct SmoothTime //corresponds with Calculation Delay 
+{
+    //milliseconds
+    float midi     = 25;
+    float dBShort  = 11; //shorter smoothing time
+    float dBLong   = dBShort * 2; //longer smoothing time
+};
+
+struct Shift
+{
+    int octave   = 0;
+    int semitone = 0;
+};
+
+struct Velocity
+{
+    int min = 50;
+    int max = 127;
+
+    float maxdB = -20;
+};
+
+//calculation specific
+struct Amp
+{
+    float val   = 0;
+    float half1 = 0;
+    float half2 = 0;
+    float dB    = 0;
+};
+
+struct Delay
+{
+    float dBShort = -90;
+    float dBLong  = -90;
+};
+
+struct Blocks
+{
+    float midi = 1;
+    float dBShort  = 1;
+    float dBLong   = 1;
+};
+
+//scribe specific
 struct Tuning
 {
     const float refFreq = 440; //(Hz) concert tuning
@@ -57,13 +127,18 @@ struct Audio
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~
+
+// 1. Scribe program data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
-    void updateWeights(int lowNote, int highNote, int midiBlocks);
-    void updateCertaintyPeaks(float certaintyThreshold);
-    
+    void updateWeights(int lowNote, int highNote, int midiBlocks, float dB);
+    void updateMidiInfo(
+        const Threshold& thresh, const Amp& amp, const Velocity& vel, 
+        const Range& range, const Shift& shift);
+
+    void turnOffMidi(int i);
 
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
 
@@ -71,13 +146,19 @@ struct Scribe {
     Audio audio;
 
     fvec frequencies = fvec(1 + tuning.highExp - tuning.lowExp, 0);
+    ivec midiNumbers = ivec(frequencies.size(), 0);
 
     fvec weights = fvec(frequencies.size(), 0);
     fvec maxWeights = fvec(frequencies.size(), 0);
     fvec maxWHistory = fvec(frequencies.size(), 0);
-    fvec sumWeights = fvec(frequencies.size(), 0);
-    fvec certainty = fvec(frequencies.size(), 0);
+    fvec notedB = fvec(frequencies.size(), 0);
     fvec peaks = fvec(frequencies.size(), 0);
+
+    ivec finalNote = ivec(frequencies.size(), 0);
+    ivec noteVel = ivec(frequencies.size(), 0);
+    std::vector<bool> onNotes = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> needsRelease = std::vector<bool>(frequencies.size(), false);
+    
 
     fvec timeVector = fvec(audio.ds.samples, 0);
 
@@ -86,65 +167,18 @@ struct Scribe {
     //sum normalization and max normalization
     fmatrix sumSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
     fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
-    //fmatrix sumOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
-    //fmatrix maxOctErrMatrix1 = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+
 
     std::unique_ptr<FloatBuffer> history;
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
-
-    std::vector<MidiSwitch> midiPanel = std::vector<MidiSwitch>(frequencies.size(), MidiSwitch());
 
 };
 
 
 
 // 2. AudioParam data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-struct Range 
-{
-    int lowNote  = 28;
-    int highNote = lowNote + 48;
-};
 
-struct Threshold
-{
-    float ratio = 3;
-
-    float release = -60;
-
-    float certainty = 0.7f;
-
-    float retrigStart = 0.9f;
-    float retrigStop  = 1.0f;
-};
-
-struct Scale
-{
-    float noise  = -5;
-    float weight = 0.5f;
-};
-
-struct SmoothTime //corresponds with Calculation Delay 
-{
-    //milliseconds
-    float midi     = 25;
-    float dBShort  = 11; //shorter smoothing time
-    float dBLong   = dBShort * 2; //longer smoothing time
-};
-
-struct Shift
-{
-    int octave   = 0;
-    int semitone = 0;
-};
-
-struct Velocity
-{
-    int min = 50;
-    int max = 127;
-
-    float maxdB = 0;
-};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~
 struct AudioParams
@@ -159,57 +193,6 @@ struct AudioParams
 
 // 3. Calculations Data Model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-struct RangeResults
-{
-    int lowNote  = 0;
-    int highNote = 0;
-};
-
-struct ThresholdResults
-{
-    float certainty = 0;
-
-    float release   = 0;
-    float retrigger = 0;
-
-    float retrigStart = 0;
-    float retrigStop  = 0;
-};
-
-struct Note
-{
-    int index   = 0;
-    int octave  = 0;
-    int pitch   = 0;
-    float ratio = 0;
-};
-
-struct Midi
-{
-    int index    = 0;
-    int velocity = 0;
-};
-
-struct Amp
-{
-    float val   = 0;
-    float half1 = 0;
-    float half2 = 0;
-    float dB    = 0;
-};
-
-struct Delay
-{
-    float dBShort = -90;
-    float dBLong  = -90;
-};
-
-struct Blocks
-{
-    float midi = 1;
-    float dBShort  = 1;
-    float dBLong   = 1;
-};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Calculations
@@ -217,11 +200,12 @@ struct Calculations
     //these functions should be called in order
     void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
+    
 
     AudioParams params;
 
-    RangeResults range;
-    ThresholdResults threshold;
+    Range range;
+    Threshold threshold;
 
     Amp amp;
     Delay delay;
@@ -234,4 +218,39 @@ struct Calculations
 
 MidiParams getMidiParams(const Calculations& calcs);
 
-void updateMidi(Scribe& scribe, const MidiParams& midiParams);
+
+inline int getMidiNumber(float freq, float refFreq)
+{
+    return int(0.5f + 69 + 12 * std::log2(freq / refFreq));
+}
+
+inline int midiShift(const Shift& shift, int midiNum)
+{
+    int midi = midiNum;
+    int oct = shift.octave + midi/12;
+    int pitch = (midi%12) + shift.semitone;
+
+    int out = 12*oct + pitch;
+
+    if(out < 0 || out > 127)
+    {
+        return 0;
+    }
+    
+    return out;
+}
+
+
+
+inline int getVelocity(const Velocity& vel, float dB, float dBFloor) 
+{
+
+    //switch this back to previous method with rolling values
+    float pct = std::abs((dB - dBFloor) / (vel.maxdB - dBFloor));
+
+    int output = vel.min + pct * (vel.max - vel.min);
+    output = output > vel.max ? vel.max : output;
+    output = output < vel.min ? vel.min : output;
+
+    return output;
+}

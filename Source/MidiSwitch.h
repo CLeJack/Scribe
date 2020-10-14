@@ -44,10 +44,7 @@ struct MidiSwitch
     int midiShift(const MidiParams& params);
     
 
-    int getMidiNumber(float freq, float refFreq)
-    {
-        return int(0.5f + 69 + 12 * std::log2(freq / refFreq));
-    }
+    
 
     MidiSwitch& operator=(MidiSwitch other);
 
