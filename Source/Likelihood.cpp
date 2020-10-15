@@ -87,6 +87,46 @@ int rowi, int rowf, int indi, int indf)
     return output;
 }
 
+fmatrix chordCertaintyMatrix(int fundamental, int octaveSize,
+                             const fvec& maxWeights, const fmatrix& maxMatrix,
+                             int indi, int indf)
+{
+
+    fmatrix output(maxMatrix.size(), fvec(maxWeights.size(), 0));
+
+    int rowi = fundamental;
+    int rowf = maxWeights.size();
+    int scale = 0;
+
+    
+    for(int row = rowi; row < rowf; row++)
+    {   
+        
+        for(int sample = indi; sample < indf; sample++)
+        {   
+
+            output[row][sample] = maxMatrix[row][sample] + maxMatrix[fundamental][sample];
+        }
+
+        scale = 1/maxValue(maxMatrix[row]);
+
+        for(int sample = indi; sample < indf; sample++)
+        {   
+
+            output[row][sample] = maxMatrix[row][sample] * scale;
+        }
+
+        for(int sample = indi; sample < indf; sample++)
+        {   
+
+            output[row][sample] = 1 - std::abs(maxWeights[sample] - output[row][sample]);            
+        }
+
+    }
+
+    return output;
+}
+
 
 fvec freqCertaintyVector(const fvec& sumWeights, const fmatrix& freqMatrix,
 int rowi, int rowf, int indi, int indf)
@@ -113,7 +153,7 @@ int rowi, int rowf, int indi, int indf)
             will be near 1, and the product of sumWeights will be 1.
 
             the sum of weighted values divided by the sum of original values 
-            will give a final certainty, since I know the original value sums to 1, 
+            will give a final certainty since I know the original value sums to 1, 
             and the weighted values are between 0 and 1.
 
             */

@@ -54,10 +54,10 @@ int main()
         calcs.updateSignal(scribe, params);
 
         scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi, 
-                             calcs.amp.dB, calcs.fundamental);
+                             calcs.amp, calcs.threshold);
 
         scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
-                              calcs.range, calcs.shift, calcs.fundamental);
+                              calcs.range, calcs.shift);
 
         calcs.updateFundamental(scribe);
 
@@ -79,8 +79,8 @@ int main()
         
 #if PRINT == 1
         fvec output = {
-            (float)calcs.fundamental.index,
-            (float)calcs.fundamental.history,
+            (float)scribe.fundamental.index,
+            (float)scribe.fundamental.history,
             calcs.delay.dBShort,
             calcs.delay.dBLong,
             calcs.amp.factor,
@@ -94,7 +94,8 @@ int main()
         //printRows( scribe.weights, "output/_2_weights.csv");
         //printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
         printRows( scribe.weightHistory, "output/_2_maxWHist.csv");
-        printRows( scribe.onNotes, "output/_2_onNotes.csv");
+        printRows( scribe.chordHistory, "output/_2_chordWHist.csv");
+        //printRows( scribe.onNotes, "output/_2_onNotes.csv");
         printRows(output, "output/_2_value_output.csv");
         //
 

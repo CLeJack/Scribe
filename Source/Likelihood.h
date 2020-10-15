@@ -16,3 +16,7 @@ int rowi, int rowf, int indi, int indf);
 
 fvec freqCertaintyVector(const fvec& sumWeights, const fmatrix& freqMatrix,
 int rowi, int rowf, int indi, int indf);
+
+fmatrix chordCertaintyMatrix(int fundamental, int octaveSize,
+                             const fvec& maxWeights, const fmatrix& maxMatrix,
+                             int indi, int indf);

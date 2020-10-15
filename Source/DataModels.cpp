@@ -81,6 +81,21 @@ void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, const Amp&
         peaks[fundamental.index] = 1;
     }
 
+    fmatrix chordMatrix = chordCertaintyMatrix(
+        fundamental.index, tuning.octaveSize, 
+        maxWeights, maxSineMatrix, 
+        0, weights.size());
+    
+    chordCertainty = freqCertaintyVector(
+        sumWeights, chordMatrix, 
+        lowNote, highNote, 
+        0, weights.size());
+    
+    for(int i = 0; i < maxWeights.size(); i++)
+    {
+        chordHistory[i] = SMA(chordHistory[i], chordCertainty[i], midiBlocks);
+    }
+
 }
 
 void Scribe::updateMidiInfo(

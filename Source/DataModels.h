@@ -166,14 +166,16 @@ struct Scribe {
     fvec frequencies = fvec(1 + tuning.highExp - tuning.lowExp, 0);
     ivec midiNumbers = ivec(frequencies.size(), 0);
 
-    fvec weights = fvec(frequencies.size(), 0);
-    fvec maxWeights = fvec(frequencies.size(), 0);
-    fvec sumWeights = fvec(frequencies.size(), 0);
-    fvec certainty = fvec(frequencies.size(), 0);
-    fvec weightHistory = fvec(frequencies.size(), 0);
-    fvec peaks = fvec(frequencies.size(), 0);
-    fvec notedB = fvec(frequencies.size(), -90);
-    ivec finalNote = ivec(frequencies.size(), 0);
+    fvec weights        = fvec(frequencies.size(), 0);
+    fvec maxWeights     = fvec(frequencies.size(), 0);
+    fvec sumWeights     = fvec(frequencies.size(), 0);
+    fvec certainty      = fvec(frequencies.size(), 0);
+    fvec weightHistory  = fvec(frequencies.size(), 0);
+    fvec chordCertainty = fvec(frequencies.size(), 0);
+    fvec chordHistory   = fvec(frequencies.size(), 0);
+    fvec peaks          = fvec(frequencies.size(), 0);
+    fvec notedB         = fvec(frequencies.size(), -90);
+    ivec finalNote      = ivec(frequencies.size(), 0);
     
     std::vector<bool> needsTrigger = std::vector<bool>(frequencies.size(), false);
     std::vector<bool> onNotes = std::vector<bool>(frequencies.size(), false);
