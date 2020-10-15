@@ -68,58 +68,7 @@ public:
     
     //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    juce::AudioParameterInt* ratioP;
-    juce::AudioParameterInt* lowNoteP;
-
-    juce::AudioParameterInt* noiseP;
-    juce::AudioParameterInt* noiseScaleP;
-
-    juce::AudioParameterInt* releaseP;
-
-    juce::AudioParameterInt* weightP;
-    juce::AudioParameterInt* weightScaleP;
-
-    juce::AudioParameterInt* trigStartP;
-    juce::AudioParameterInt* retrigStartP;
-    juce::AudioParameterInt* retrigStopP;
-
-    juce::AudioParameterInt* midiSmoothP;
-    juce::AudioParameterInt* ampSmoothP;
-    juce::AudioParameterInt* dBSmoothP;
-
-    juce::AudioParameterInt* octaveP;
-    juce::AudioParameterInt* semitoneP;
-
-    juce::AudioParameterFloat* maxAngleP;
-    juce::AudioParameterInt* velMinP;
-    juce::AudioParameterInt* velMaxP;
-
-    juce::AudioParameterInt* channelInP;
-
-    /*
-    inline int getRatioP() { return *ratioP; }
-    inline int getLowNoteP() { return *lowNoteP; }
-
-    inline float getNoiseP() { return (float)*noiseP; }
-    inline float getReleaseP() { return (float)*releaseP; }
-
-    inline float getWeightP() { return (float)*weightP / 1000.0f; }
-
-    inline float getRetrigStartP() { return (float)*retrigStartP / 100.0f; }
-    inline float getRetrigStopP() { return (float)*retrigStopP / 100.0f; }
-    inline int getMidiSmoothP() { return *midiSmoothP; }
-    inline int getAmpSmoothP() { return *ampSmoothP; }
-    inline int getdBSmoothP() { return *dBSmoothP; }
-
-    inline int getOctaveP() { return *octaveP; }
-    inline int getSemitoneP() { return *semitoneP; }
-
-    inline float getMaxAngleP() { return *maxAngleP; }
-    inline int getVelMinP() { return *velMinP; }
-    inline int getVelMaxP() { return *velMaxP; }
-    inline int getChannelInP() { return *channelInP; }
-
-    */
+    
 
 
 private:
@@ -128,6 +77,7 @@ private:
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void processMidi(juce::MidiBuffer& midiMessages);
     
 
     std::vector<juce::MidiMessage> notes;

@@ -23,8 +23,8 @@ void setOctErrMatrix1(fmatrix& errMat, const cmatrix& matrix, const fvec& timeVe
     fvec signal2;
     fvec sigSum;
 
-    float amp1 = 0.5f;
-    float amp2 = 1.0f;
+    float amp1 = 1.0f;
+    float amp2 = 0.5f;
 
     for(int row = 0; row < errMat.size(); row++)
     {

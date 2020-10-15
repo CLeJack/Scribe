@@ -31,11 +31,12 @@ struct Threshold
 {
 
     float release = -60;
-    float noise   = -60;
+    float noise   = -50;
 
     float certainty = 0.7f;
 
-    float retrigStart = 0.9f;
+    float trigger = 0.75f;
+    float retrig = 0.95f;
     float retrigStop  = 1.0f;
 };
 
@@ -49,8 +50,8 @@ struct SmoothTime //corresponds with Calculation Delay
 {
     //milliseconds
     float midi     = 25;
-    float dBShort  = 11; //shorter smoothing time
-    float dBLong   = dBShort * 2; //longer smoothing time
+    float dBShort  = 5; //shorter smoothing time
+    float dBLong   = 25; //longer smoothing time
 };
 
 struct Shift
@@ -68,12 +69,16 @@ struct Velocity
 };
 
 //calculation specific
+
+enum class TriggerState { trigger, retriggering, stable };
+
 struct Amp
 {
     float val   = 0;
     float half1 = 0;
     float half2 = 0;
     float dB    = 0;
+    float factor = 0;
 };
 
 struct Delay
@@ -88,6 +93,17 @@ struct Blocks
     float dBShort  = 1;
     float dBLong   = 1;
 };
+
+struct Note
+{
+    float index   = 0;
+    float octave  = 0;
+    float pitch   = 0;
+    float ratio   = 0;
+    float history = 0;
+};
+
+
 
 //scribe specific
 struct Tuning
@@ -123,6 +139,7 @@ struct Audio
 
     float srate = 44100;
     int blockSize = 128;
+    float mindB = -90;
     DownSample ds;
 };
 
@@ -133,11 +150,12 @@ struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
-    void updateWeights(int lowNote, int highNote, int midiBlocks, float dB);
+    void updateWeights(int lowNote, int highNote, int midiBlocks, const Amp& amp, const Threshold& thresh);
     void updateMidiInfo(
         const Threshold& thresh, const Amp& amp, const Velocity& vel, 
         const Range& range, const Shift& shift);
 
+    void turnOnMidi(int i);
     void turnOffMidi(int i);
 
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
@@ -150,22 +168,25 @@ struct Scribe {
 
     fvec weights = fvec(frequencies.size(), 0);
     fvec maxWeights = fvec(frequencies.size(), 0);
-    fvec maxWHistory = fvec(frequencies.size(), 0);
-    fvec notedB = fvec(frequencies.size(), 0);
+    fvec sumWeights = fvec(frequencies.size(), 0);
+    fvec certainty = fvec(frequencies.size(), 0);
+    fvec weightHistory = fvec(frequencies.size(), 0);
     fvec peaks = fvec(frequencies.size(), 0);
-
+    fvec notedB = fvec(frequencies.size(), -90);
     ivec finalNote = ivec(frequencies.size(), 0);
-    ivec noteVel = ivec(frequencies.size(), 0);
+    
+    std::vector<bool> needsTrigger = std::vector<bool>(frequencies.size(), false);
     std::vector<bool> onNotes = std::vector<bool>(frequencies.size(), false);
     std::vector<bool> needsRelease = std::vector<bool>(frequencies.size(), false);
     
+    Note fundamental;
 
     fvec timeVector = fvec(audio.ds.samples, 0);
 
     cmatrix matrix = cmatrix(frequencies.size(), cvec(audio.ds.samples, std::complex<float>(0, 0)));
 
     //sum normalization and max normalization
-    fmatrix sumSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    fmatrix maxOctMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
     fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
 
 
@@ -200,6 +221,7 @@ struct Calculations
     //these functions should be called in order
     void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
+    void updateFundamental (const Scribe& scribe);
     
 
     AudioParams params;
@@ -214,9 +236,9 @@ struct Calculations
     Shift shift;
     Velocity velocity;
 
-};
+    Note fundamental;
 
-MidiParams getMidiParams(const Calculations& calcs);
+};
 
 
 inline int getMidiNumber(float freq, float refFreq)

@@ -28,7 +28,7 @@ void Scribe::initialize(float srate, float blockSize)
 
     setComplexMatrix(matrix, frequencies, timeVector);
 
-    setSineMatrix(sumSineMatrix, matrix, timeVector, frequencies, sumNormalize );
+    setOctErrMatrix1(maxOctMatrix, matrix, timeVector, frequencies, absMaxNormalize );
     setSineMatrix(maxSineMatrix, matrix, timeVector, frequencies, absMaxNormalize);
 
     history.reset(new FloatBuffer(audio.samples, 0.0f));
@@ -45,7 +45,7 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
     return isInitialized;
 }
 
-void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, float dB)
+void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, const Amp& amp, const Threshold& thresh)
 {
     weights = dct(
         matrix, historyDS,
@@ -53,37 +53,76 @@ void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, float dB)
         audio.ds.signalStart, historyDS.size());
 
     maxWeights = absMaxNormalize(weights, 0);
+    sumWeights = sumNormalize(weights, 0);
+
+    fmatrix freqMatrix = freqCertaintyMatrix(
+        maxWeights, maxOctMatrix,
+        lowNote, highNote,
+        0, weights.size());
+
+    certainty = freqCertaintyVector(
+        sumWeights, freqMatrix,
+        lowNote, highNote,
+        0, weights.size());
+
+    
 
     for(int i = 0; i < maxWeights.size(); i++)
     {
-        maxWHistory[i] = SMA(maxWHistory[i], maxWeights[i], midiBlocks);
-        notedB[i] = maxWHistory[i] * (dB + 90) - 90; //90 = good approx to 0 for dB scale
+        weightHistory[i] = SMA(weightHistory[i], certainty[i], midiBlocks);
     }
 
-    peaks = getPeaks(maxWHistory);
+    //peaks = getPeaks(weightHistory);
+    peaks = fvec(weightHistory.size(), 0);
+    if (amp.dB > thresh.noise) 
+    {
+        fundamental.history = fundamental.index;
+        fundamental.index = maxArg(weightHistory);
+        peaks[fundamental.index] = 1;
+    }
+
 }
 
 void Scribe::updateMidiInfo(
     const Threshold& thresh, const Amp& amp, const Velocity& vel, 
     const Range& range, const Shift& shift)
 {
-    for(int i = 0; i < onNotes.size(); i++)
+    for(int i = 0; i < needsTrigger.size(); i++)
     {
-        if(maxWHistory[i] > thresh.certainty && peaks[i] == 1)
+        //if(weightHistory[i] > thresh.certainty && peaks[i] == 1 && onNotes[i] == false)
+        if (peaks[i] == 1 && onNotes[i] == false)
         {
-            onNotes[i] = true;
-            noteVel[i] = getVelocity(vel, amp.dB, thresh.release);
+            needsTrigger[i] = true;
+            
             finalNote[i] = midiShift(shift, midiNumbers[i]);
         }
 
-        if(onNotes[i] == true && 
-        (notedB[i] < thresh.release 
-        || i < range.lowNote 
-        || i >= range.highNote)
-        || maxWHistory[i] < thresh.certainty )
+        if(onNotes[i] == true )
         {
-            needsRelease[i] = true;
-        }
+            if(amp.dB < thresh.release 
+                || i < range.lowNote 
+                || i >= range.highNote
+                || amp.factor < thresh.retrig && needsTrigger[i] == false
+                 )
+            {
+                needsRelease[i] = true;
+            }
+
+            if(i == fundamental.history && fundamental.index != fundamental.history)
+            {
+                needsRelease[fundamental.history] = true;
+            }
+        } 
+        
+    }
+}
+
+void Scribe::turnOnMidi(int i) 
+{
+    if (needsTrigger[i]) 
+    {
+        onNotes[i] = true;
+        needsTrigger[i] = false;
     }
 }
 
@@ -94,7 +133,7 @@ void Scribe::turnOffMidi(int i)
     {
         needsRelease[i] = false;
         onNotes[i] = false;
-        noteVel[i] = 0;
+        needsTrigger[i] = false;
         finalNote[i] = midiNumbers[i];
     }
 }
@@ -116,7 +155,7 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     amp.val = CoMY(scribe.historyDS);
 
     amp.dB = int16ToDb(amp.val);
-    amp.dB = (amp.dB < -90) || std::isnan(amp.dB) ? -90 : amp.dB;
+    amp.dB = (amp.dB < scribe.audio.mindB) || std::isnan(amp.dB) ? scribe.audio.mindB : amp.dB;
 
     blocks.dBShort = secToBlocks (params.smoothTime.dBShort, scribe.audio.srate, scribe.audio.blockSize);
     blocks.dBLong = secToBlocks (params.smoothTime.dBLong, scribe.audio.srate, scribe.audio.blockSize);
@@ -125,10 +164,13 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     delay.dBShort = SMA(delay.dBShort, amp.dB, blocks.dBShort);
     delay.dBLong = SMA(delay.dBLong, amp.dB, blocks.dBLong);
 
+    amp.factor = delay.dBShort/delay.dBLong;
+    
+
     //Threshold updates
     threshold.release     = params.threshold.release;
-    threshold.retrigStart = params.threshold.retrigStart;
-    threshold.retrigStop  = params.threshold.retrigStop;
+    threshold.trigger     = params.threshold.trigger;
+    threshold.retrig      = params.threshold.retrig;
     threshold.certainty   = params.threshold.certainty;
 
     shift.octave   = params.shift.octave;
@@ -141,35 +183,23 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 }
 
 
-MidiParams getMidiParams(const Calculations& calcs)
+void Calculations::updateFundamental(const Scribe& scribe)
 {
 
-    auto output = MidiParams();
+    if(amp.factor < threshold.retrig && amp.dB > threshold.noise)
+    {
+        fundamental.history = fundamental.index;
+        fundamental.index = maxArg(scribe.weightHistory); 
+    }
 
-    //All of these values should be updated in Calculations::updateSignalCalcs()
-    //This is redundant, but it ensures that every value has gone through some
-    //sort of processing--that I'm not just pulling from a default;
+    if(amp.factor > threshold.retrig && fundamental.history != fundamental.index)
+    {
+        fundamental.history = fundamental.index;
+    }
 
-    //~~~~~~~~~~~~~~~~~~~
-    output.certaintyThresh = calcs.threshold.certainty;
-    output.releaseThresh   = calcs.threshold.release;
-
-    output.retrigStart = calcs.threshold.retrigStart;
-    output.retrigStop = calcs.threshold.retrigStop;
-    
-    output.refdB = calcs.amp.dB;
-    
-    output.smoothingBlocks = calcs.blocks.midi;
-
-    output.octShift  = calcs.shift.octave;
-    output.semiShift = calcs.shift.octave;
-
-    output.maxdB  = calcs.velocity.maxdB;
-    output.maxVel = calcs.velocity.max;
-    output.minVel = calcs.velocity.min;
-
-    output.lowNote = calcs.range.lowNote;
-    output.highNote = calcs.range.highNote;
-
-    return output;
+    if(amp.dB < threshold.release)
+    {
+        fundamental.index = 0;
+        fundamental.history = 0;
+    }
 }

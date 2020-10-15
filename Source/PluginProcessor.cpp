@@ -206,10 +206,6 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::MidiMessage note;
-
-    //updateAudioParams(); //handled by gui now
-
     //add the block to history
     auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
@@ -226,46 +222,26 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     }
 
 
-    calcs.updateRange (params.range);
+    calcs.updateRange(scribe, params);
 
-    //discrete customized transform (dct) using a portion of frequency and signal
-    dct (scribe.weights,
-        scribe.matrix,                                         //dft using this matrix
-        scribe.historyDS,                                      //on this signal
-        calcs.range.lowNote, calcs.range.highNote,             //for these rows
-        scribe.audio.ds.signalStart, scribe.historyDS.size()); //and these columns
+    calcs.updateSignal(scribe, params);
 
-    sumNormalize (scribe.weights);
-    weightRatio  (scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
+    scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi, calcs.amp, calcs.threshold);
 
-    //I need void version of the above for pre existing matrices;
+    scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
-    calcs.updateSignal (scribe, params);
+    calcs.updateFundamental(scribe);
 
-    calcs.updateMidi   (scribe, params);
+    processMidi(midiMessages);
 
-    SwitchMessage message{};
-
-    MidiParams midiParams = getMidiParams(calcs);
-
-    message = scribe.midiSwitch.update(midiParams);
 
     
-
-    if (message.send)
-    {
-        note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
-        midiMessages.addEvent(note, 0);
-
-        note = juce::MidiMessage::noteOn(1, message.on, (juce::uint8)message.onVel);
-        midiMessages.addEvent(note, 1);
-    }
+    
 
     //don't forget to update this to be srate specific
     // 11 was with 44100 hz in mind and is approximately 30 fps
     frameCounter = (frameCounter + 1) % 11; 
 
-    frameCounter = message.send ? 0 : frameCounter;
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
     
     if (frameCounter == 0 && editor != nullptr) 
@@ -281,7 +257,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
             editor->updateSignal();
             break;
         case GUIState::midi:
-            editor->updateMidi(message.send);
+            //editor->updateMidi(message.send);
             break;
         case GUIState::settings:
             editor->updateSettings();
@@ -295,6 +271,29 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     
 
     buffer.clear();
+}
+
+void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
+{
+    juce::MidiMessage note;
+
+    for (int i = 0; i < scribe.onNotes.size(); i++) 
+    {
+        if (scribe.needsTrigger[i]) 
+        {
+            note = juce::MidiMessage::noteOn(1, scribe.finalNote[i], (juce::uint8) 100);
+            midiMessages.addEvent(note, 0);
+            scribe.turnOnMidi(i);
+        }
+
+        //calc dB check is itentional redundancy; this should turn off all notes if they are on when the amplitude is too low
+        if (scribe.needsRelease[i]) 
+        {
+            note = juce::MidiMessage::noteOff(1, scribe.finalNote[i], (juce::uint8)0);
+            midiMessages.addEvent(note, 0);
+            scribe.turnOffMidi(i);
+        }
+    }
 }
 
 void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

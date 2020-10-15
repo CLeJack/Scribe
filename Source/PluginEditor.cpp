@@ -98,47 +98,12 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     auto &signal = guiSignal.sliderPanel.sliders;
     auto &midi = guiMidi.sliderPanel.sliders;
 
-    if (slider == &spectrum[0]) 
-    {
-        params.threshold.weight0 = slider->getValue();
-    }
-    else if (slider == &spectrum[1])
-    {
-        params.threshold.weight1 = slider->getValue();
-    }
-    else if (slider == &spectrum[2])
-    {
-        params.threshold.weight2 = slider->getValue();
-    }
-    else if (slider == &spectrum[3])
-    {
-        params.threshold.weight3 = slider->getValue();
-    }
-    else if (slider == &spectrum[4])
+    
+    if (slider == &spectrum[4])
     {
         params.range.lowNote = slider->getValue();
     }
-    else if (slider == &spectrum[5])
-    {
-        params.threshold.ratio = slider->getValue();
-    }
-
-    else if (slider == &signal[0])
-    {
-        params.threshold.noise0 = slider->getValue();
-    }
-    else if (slider == &signal[1])
-    {
-        params.threshold.noise1 = slider->getValue();
-    }
-    else if (slider == &signal[2])
-    {
-        params.threshold.noise2 = slider->getValue();
-    }
-    else if (slider == &signal[3])
-    {
-        params.threshold.noise3 = slider->getValue();
-    }
+    
 
     else if (slider == &midi[0])
     {
@@ -148,11 +113,7 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     {
         params.smoothTime.dBLong = slider->getValue();
     }
-    else if (slider == &midi[2])
-    {
-        params.velocity.ratio = slider->getValue();
-    }
-
+ 
     else if (slider == &midi[3])
     {
         params.velocity.min = slider->getValue();
@@ -180,7 +141,7 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 
     else if (slider == &midi[8])
     {
-        params.threshold.retrigStart = slider->getValue();
+        params.threshold.retrig = slider->getValue();
     }
 
     else if (slider == &midi[9])
@@ -210,12 +171,12 @@ void ScribeAudioProcessorEditor::setSliders()
     guiSpectrum.sliderPanel.sliders[4].setRange(12, 28, 1);
     guiSpectrum.sliderPanel.sliders[5].setRange(0, 10, 1);
 
-    guiSpectrum.sliderPanel.sliders[0].setValue(params.threshold.weight0);
-    guiSpectrum.sliderPanel.sliders[1].setValue(params.threshold.weight1);
-    guiSpectrum.sliderPanel.sliders[2].setValue(params.threshold.weight2);
-    guiSpectrum.sliderPanel.sliders[3].setValue(params.threshold.weight3);
+    //guiSpectrum.sliderPanel.sliders[0].setValue(params.threshold.weight0);
+    //guiSpectrum.sliderPanel.sliders[1].setValue(params.threshold.weight1);
+    //guiSpectrum.sliderPanel.sliders[2].setValue(params.threshold.weight2);
+    //guiSpectrum.sliderPanel.sliders[3].setValue(params.threshold.weight3);
     guiSpectrum.sliderPanel.sliders[4].setValue(params.range.lowNote);
-    guiSpectrum.sliderPanel.sliders[5].setValue(params.threshold.ratio);
+    //guiSpectrum.sliderPanel.sliders[5].setValue(params.threshold.ratio);
 
 
     //signal panel
@@ -229,10 +190,10 @@ void ScribeAudioProcessorEditor::setSliders()
     guiSignal.sliderPanel.sliders[2].setRange(-60, 0, 1);
     guiSignal.sliderPanel.sliders[3].setRange(-60, 0, 1);
 
-    guiSignal.sliderPanel.sliders[0].setValue(params.threshold.noise0);
-    guiSignal.sliderPanel.sliders[1].setValue(params.threshold.noise1);
-    guiSignal.sliderPanel.sliders[2].setValue(params.threshold.noise2);
-    guiSignal.sliderPanel.sliders[3].setValue(params.threshold.noise3);
+    //guiSignal.sliderPanel.sliders[0].setValue(params.threshold.noise0);
+    //guiSignal.sliderPanel.sliders[1].setValue(params.threshold.noise1);
+    //guiSignal.sliderPanel.sliders[2].setValue(params.threshold.noise2);
+    //guiSignal.sliderPanel.sliders[3].setValue(params.threshold.noise3);
 
 
     //midi panel
@@ -270,7 +231,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMidi.sliderPanel.sliders[0].setValue(params.smoothTime.dBShort);
     guiMidi.sliderPanel.sliders[1].setValue(params.smoothTime.dBLong);
     
-    guiMidi.sliderPanel.sliders[2].setValue(params.velocity.ratio);
+    //guiMidi.sliderPanel.sliders[2].setValue(params.velocity.ratio);
     guiMidi.sliderPanel.sliders[3].setValue(params.velocity.min);
     guiMidi.sliderPanel.sliders[4].setValue(params.velocity.max);
     
@@ -279,7 +240,7 @@ void ScribeAudioProcessorEditor::setSliders()
     
     guiMidi.sliderPanel.sliders[7].setValue(params.smoothTime.midi);
     
-    guiMidi.sliderPanel.sliders[8].setValue(params.threshold.retrigStart);
+    guiMidi.sliderPanel.sliders[8].setValue(params.threshold.retrig);
     guiMidi.sliderPanel.sliders[9].setValue(params.threshold.retrigStop);
     
 }
@@ -290,13 +251,10 @@ void ScribeAudioProcessorEditor::updateSpectrum()
 {
     for (int i = 0; i < scribe.weights.size(); i++)
     {
-        guiSpectrum.bars.weights[i] = scribe.weights[i];
+        guiSpectrum.bars.weights[i] = scribe.weightHistory[i];
     }
 
-    guiSpectrum.thresholds.relativeHeights[0] = params.threshold.weight0;
-    guiSpectrum.thresholds.relativeHeights[1] = params.threshold.weight1;
-    guiSpectrum.thresholds.relativeHeights[2] = params.threshold.weight2;
-    guiSpectrum.thresholds.relativeHeights[3] = params.threshold.weight3;
+
 }
 
 void ScribeAudioProcessorEditor::updateSignal()
@@ -308,20 +266,14 @@ void ScribeAudioProcessorEditor::updateSignal()
 
     guiSignal.meter.dBBuffer.push(calcs.amp.dB);
 
-    guiSignal.thresholds.relativeHeights[0] = params.threshold.noise0;
-    guiSignal.thresholds.relativeHeights[1] = params.threshold.noise1;
-    guiSignal.thresholds.relativeHeights[2] = params.threshold.noise2;
-    guiSignal.thresholds.relativeHeights[3] = params.threshold.noise3;
 }
 
 void ScribeAudioProcessorEditor::updateMidi(bool send) 
 {
     if (send) 
     {
-        guiMidi.midiOn = calcs.midi.index;
-        guiMidi.velOn = calcs.midi.velocity;
+
     }
-    guiMidi.retrigger = calcs.targets.retrigger;
     
 }
 
