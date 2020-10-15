@@ -1,8 +1,11 @@
 #pragma once
 #include "Head.h"
 
-
+float mean(const fvec& arr, int start, int end);
+float mean(const fvec& arr, int start);
 float mean(const fvec& arr);
+
+float positiveMean(const fvec& arr, int start, int end);
 
 float rms(const fvec& arr, int start, int end);
 float rms(const fvec& arr, int start);

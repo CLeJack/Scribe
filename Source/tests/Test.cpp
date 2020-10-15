@@ -13,7 +13,7 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_ab4seq.csv", 2.5*srate);
+    fvec signal0 = importCsv("input/_test_amtri.csv", 2.5*srate);
 
     #if PRINT == 1
     printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -59,7 +59,7 @@ int main()
         scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
                               calcs.range, calcs.shift);
 
-        calcs.updateFundamental(scribe);
+
 
 
 
@@ -67,7 +67,7 @@ int main()
         {
             if(scribe.needsTrigger[i])
             {
-                scribe.turnOnMidi(i);
+                scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
             }
             if(scribe.needsRelease[i])
             {
@@ -83,10 +83,24 @@ int main()
             (float)scribe.fundamental.history,
             calcs.delay.dBShort,
             calcs.delay.dBLong,
-            calcs.amp.factor,
             calcs.threshold.noise,
+            999,
+            calcs.amp.dB,
             calcs.threshold.release,
-            maxValue(scribe.certainty)};
+            999,
+            (float)calcs.range.lowNote,
+            (float)calcs.range.highNote,
+            999,
+            calcs.amp.retrig,
+            calcs.threshold.retrig,
+            scribe.needsTrigger[scribe.fundamental.index],
+            999,
+            float(scribe.fundamental.history != scribe.fundamental.index),
+            //scribe.chordHistory[scribe.fundamental.index],
+            scribe.weightHistory[scribe.fundamental.index],
+            calcs.threshold.chordPct,
+            scribe.peakFloor,
+            };
             
 
         //printRows( trueSignal, "_2_history.csv");
@@ -94,8 +108,10 @@ int main()
         //printRows( scribe.weights, "output/_2_weights.csv");
         //printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
         printRows( scribe.weightHistory, "output/_2_maxWHist.csv");
-        printRows( scribe.chordHistory, "output/_2_chordWHist.csv");
-        //printRows( scribe.onNotes, "output/_2_onNotes.csv");
+        //printRows( scribe.chordHistory, "output/_2_chordHist.csv");
+        printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
+        printRows( scribe.peaks, "output/_2_peaks.csv");
+        printRows( scribe.onNotes, "output/_2_onNotes.csv");
         printRows(output, "output/_2_value_output.csv");
         //
 

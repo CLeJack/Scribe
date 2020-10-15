@@ -1,17 +1,41 @@
 #include "Stats.h"
 
 //Basic Stats~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-float mean(const fvec& arr)
+
+float mean(const fvec& arr, int start, int end)
 {
     float output = 0;
-    for(int i= 0; i < arr.size(); i++)
+    for(int i= start; i < end; i++)
     {
         output += arr[i];
     }
 
-    return output/arr.size();
+    return output/(float)arr.size();
 }
 
+float mean(const fvec& arr, int start)
+{
+    return mean(arr, start, arr.size());
+}
+
+float mean(const fvec& arr)
+{
+    return mean(arr, 0, arr.size());
+}
+
+
+float positiveMean(const fvec& arr, int start, int end)
+{
+    float output = 0;
+    float count = 1;
+    for(int i= start; i < end; i++)
+    {
+        output += arr[i];
+        count += 1;
+    }
+
+    return output/count;
+}
 //~~Root mean Squared ~~~~~~~~~~~~~~~~~~~~~~~
 float rms(const fvec& arr, int start, int end)
 {

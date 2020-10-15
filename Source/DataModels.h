@@ -34,6 +34,7 @@ struct Threshold
     float noise   = -50;
 
     float certainty = 0.7f;
+    float chordPct = 0.9f;
 
     float trigger = 0.75f;
     float retrig = 0.95f;
@@ -78,7 +79,7 @@ struct Amp
     float half1 = 0;
     float half2 = 0;
     float dB    = 0;
-    float factor = 0;
+    float retrig = 0;
 };
 
 struct Delay
@@ -155,7 +156,7 @@ struct Scribe {
         const Threshold& thresh, const Amp& amp, const Velocity& vel, 
         const Range& range, const Shift& shift);
 
-    void turnOnMidi(int i);
+    void turnOnMidi(int i, const Amp& amp, const Threshold& thresh);
     void turnOffMidi(int i);
 
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
@@ -174,6 +175,7 @@ struct Scribe {
     fvec chordCertainty = fvec(frequencies.size(), 0);
     fvec chordHistory   = fvec(frequencies.size(), 0);
     fvec peaks          = fvec(frequencies.size(), 0);
+    fvec peaksHistory   = fvec(frequencies.size(), 0);
     fvec notedB         = fvec(frequencies.size(), -90);
     ivec finalNote      = ivec(frequencies.size(), 0);
     
@@ -182,6 +184,8 @@ struct Scribe {
     std::vector<bool> needsRelease = std::vector<bool>(frequencies.size(), false);
     
     Note fundamental;
+    float chordAvg = 0;
+    float peakFloor = 0;
 
     fvec timeVector = fvec(audio.ds.samples, 0);
 
