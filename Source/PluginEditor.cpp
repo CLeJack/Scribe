@@ -251,7 +251,7 @@ void ScribeAudioProcessorEditor::updateSpectrum()
 {
     for (int i = 0; i < scribe.weights.size(); i++)
     {
-        guiSpectrum.bars.weights[i] = scribe.weightHistory[i];
+        guiSpectrum.bars.weights[i] = scribe.fundamentalHistory[i];
     }
 
 

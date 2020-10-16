@@ -45,33 +45,9 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
     return isInitialized;
 }
 
+/*
 void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, const Amp& amp, const Threshold& thresh)
 {
-    weights = dct(
-        matrix, historyDS,
-        lowNote, highNote, 
-        audio.ds.signalStart, historyDS.size());
-
-    maxWeights = absMaxNormalize(weights, 0);
-    sumWeights = sumNormalize(weights, 0);
-
-    fmatrix freqMatrix = freqCertaintyMatrix(
-        maxWeights, maxOctMatrix,
-        lowNote, highNote,
-        0, weights.size());
-
-    certainty = freqCertaintyVector(
-        sumWeights, freqMatrix,
-        lowNote, highNote,
-        0, weights.size());
-
-    
-
-    for(int i = lowNote; i < highNote; i++)
-    {
-        weightHistory[i] = SMA(weightHistory[i], certainty[i], midiBlocks);
-    }
-
 
     
     
@@ -91,87 +67,128 @@ void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, const Amp&
         chordHistory[i] = SMA(chordHistory[i], chordCertainty[i], midiBlocks);
     }
     
+    
+    
+    //peaks = fvec(weightHistory.size(), 0);
 
-    peaks = fvec(weightHistory.size(), 0);
+    //peaks = getPeaks(chordHistory);
+    //peaks = getPeaks(weightHistory);
+    fundamental.history = fundamental.index;
+    //fundamental.index = std::max(maxArg(weightHistory), maxArg(chordHistory));
+    fundamental.index = maxArg(weightHistory);
+    peaks[fundamental.index] = 1;
+        
+    //chordAvg = positiveMean(chordHistory, fundamental.index, highNote);
+    chordAvg = positiveMean(weightHistory, fundamental.index, highNote);
+        
+    for(int i = lowNote; i < highNote; i++)
+    {
+        if(fundamental.history != 0 && fundamental.history == fundamental.index)
+        {
+            //peakFloor = thresh.chordPct * (chordHistory[fundamental.index] - chordAvg) + chordAvg;
+            peakFloor = thresh.chordPct * (weightHistory[fundamental.index] - chordAvg) + chordAvg;
+        }
+        //peaks[i] = chordHistory[i] < peakFloor ? 0 : peaks[i];
+        peaks[i] = weightHistory[i] < peakFloor ? 0 : peaks[i];
+        peaksHistory[i] = SMA(peaksHistory[i], peaks[i], 4.0f);
+    }
+    
+}
+*/
+
+void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh) 
+{
+    weights = dct(
+        matrix, historyDS,
+        range.lowNote, range.highNote,
+        audio.ds.signalStart, historyDS.size());
+
+    maxWeights = absMaxNormalize(weights, 0);
+    sumWeights = sumNormalize(weights, 0);
+
+    fmatrix freqMatrix = freqCertaintyMatrix(
+        maxWeights, maxOctMatrix,
+        range.lowNote, range.highNote,
+        0, weights.size());
+
+    fundamentalCertainty = freqCertaintyVector(
+        sumWeights, freqMatrix,
+        range.lowNote, range.highNote,
+        0, weights.size());
+
+    for(int i = range.lowNote; i < range.highNote; i++)
+    {
+        fundamentalHistory[i] = SMA(fundamentalHistory[i], fundamentalCertainty[i], blocks.midi);
+    }
+
+    fundamental.prevIndex = fundamental.index;
+
+    
+    peaks = fvec(fundamentalHistory.size(), 0);
     if (amp.dB > thresh.noise) 
     {
-        //peaks = getPeaks(chordHistory);
-        peaks = getPeaks(weightHistory);
-        fundamental.history = fundamental.index;
-        fundamental.index = maxArg(weightHistory);
+        fundamental.index = maxArg(fundamentalHistory);
         peaks[fundamental.index] = 1;
-        //chordAvg = positiveMean(chordHistory, fundamental.index, highNote);
-        chordAvg = positiveMean(weightHistory, fundamental.index, highNote);
-        
-        for(int i = lowNote; i < highNote; i++)
-        {
-            if(fundamental.history != 0 && fundamental.history == fundamental.index)
-            {
-                //peakFloor = thresh.chordPct * (chordHistory[fundamental.index] - chordAvg) + chordAvg;
-                peakFloor = thresh.chordPct * (weightHistory[fundamental.index] - chordAvg) + chordAvg;
-            }
-            //peaks[i] = chordHistory[i] < peakFloor ? 0 : peaks[i];
-            peaks[i] = weightHistory[i] < peakFloor ? 0 : peaks[i];
-            peaksHistory[i] = SMA(peaksHistory[i], peaks[i], 4.0f);
-        }
-
-        
-        
     }
+
+    
 
 }
 
-void Scribe::updateMidiInfo(
+void Scribe::updateChords(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh) {}
+void Scribe::updatePeaks() {}
+
+void Scribe::updateFMidiInfo(
     const Threshold& thresh, const Amp& amp, const Velocity& vel, 
     const Range& range, const Shift& shift)
 {
-    for(int i = 0; i < needsTrigger.size(); i++)
-    {
-        //if(weightHistory[i] > thresh.certainty && peaks[i] == 1 && onNotes[i] == false)
-        //if (peaks[i] == 1 && onNotes[i] == false && amp.dB > thresh.noise)
-        if (peaksHistory[i] >0.5f && onNotes[i] == false && amp.dB > thresh.noise)
-        {
-            needsTrigger[i] = true;
-            
-            finalNote[i] = midiShift(shift, midiNumbers[i]);
-        }
+    //runChords = !runChords; //force next cycle to switch between updateFundamental and updateChords
 
-        if(onNotes[i] == true )
+    for(int i = 0; i < fNeedsRelease.size(); i++)
+    {
+        
+        if (peaks[i] == 1 && fOnNotes[i] == false) 
+        {
+            fNeedsTrigger[fundamental.index] = true;
+            fNeedsRelease[fundamental.index] = false;
+
+            finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
+        }
+        
+
+        if(fOnNotes[i] == true )
         {
             if(
                 amp.dB < thresh.release 
                 || i < range.lowNote 
                 || i >= range.highNote
-                || amp.retrig < thresh.retrig && needsTrigger[i] == false
-                //|| i == fundamental.history && fundamental.history != fundamental.index
-                //|| i != fundamental.index && chordHistory[i] < thresh.chordPct * chordHistory[fundamental.index]
-                //|| weightHistory[i] < thresh.chordPct * weightHistory[fundamental.index]
-                || peaksHistory[i] < 0.5f
+                || amp.retrig < thresh.retrig && fNeedsTrigger[i] == false
+                || i != fundamental.index
                  )
             {
-                needsRelease[i] = true;
+                fNeedsRelease[i] = true;
+                fNeedsTrigger[i] = false;
             }
-
-            /*
-            if(i == fundamental.history )
-            {
-                needsRelease[fundamental.history] = true;
-            }*/
         } 
-        
     }
+    
 }
+
+void Scribe::updateCMidiInfo(
+    const Threshold& thresh, const Amp& amp, const Velocity& vel,
+    const Range& range, const Shift& shift) {}
 
 void Scribe::turnOnMidi(int i, const Amp& amp, const Threshold& thresh) 
 {
-    if (needsTrigger[i]) 
+    if (fNeedsTrigger[i]) 
     {
-        onNotes[i] = true;
-        if(amp.retrig > thresh.retrig)
+        fOnNotes[i] = true;
+        fNeedsTrigger[i] = false;
+        if(amp.retrig >= thresh.retrig)
         {
             //wait for retrigger phase to stop before deciding to
             //turn off trigger flag.
-            needsTrigger[i] = false;
+            //fNeedsTrigger[i] = false;
         }
     }
 }
@@ -179,11 +196,11 @@ void Scribe::turnOnMidi(int i, const Amp& amp, const Threshold& thresh)
 void Scribe::turnOffMidi(int i)
 {
 
-    if(needsRelease[i])
+    if(fNeedsRelease[i])
     {
-        needsRelease[i] = false;
-        onNotes[i] = false;
-        needsTrigger[i] = false;
+        fNeedsRelease[i] = false;
+        fOnNotes[i] = false;
+        fNeedsTrigger[i] = false;
         finalNote[i] = midiNumbers[i];
     }
 }
@@ -224,26 +241,4 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 
     velocity = params.velocity;
 
-}
-
-
-void Calculations::updateFundamental(const Scribe& scribe)
-{
-
-    if(amp.retrig < threshold.retrig && amp.dB > threshold.noise)
-    {
-        fundamental.history = fundamental.index;
-        fundamental.index = maxArg(scribe.weightHistory); 
-    }
-
-    if(amp.retrig > threshold.retrig && fundamental.history != fundamental.index)
-    {
-        fundamental.history = fundamental.index;
-    }
-
-    if(amp.dB < threshold.release)
-    {
-        fundamental.index = 0;
-        fundamental.history = 0;
-    }
 }

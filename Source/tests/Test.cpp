@@ -8,12 +8,12 @@
 int main()
 {
 
-    float srate = 44100;
-    float blockSize = 128;
+    float srate = 48000;
+    float blockSize = 192;
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_amtri.csv", 2.5*srate);
+    fvec signal0 = importCsv("input/a3-multi-on.csv", 1*srate);
 
     #if PRINT == 1
     printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -53,16 +53,18 @@ int main()
 
         calcs.updateSignal(scribe, params);
 
-        scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi, 
+        scribe.updateFundamental(calcs.range, calcs.blocks, 
                              calcs.amp, calcs.threshold);
 
-        scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
+        scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
                               calcs.range, calcs.shift);
 
 
 
 
+        /*
 
+        moved to bottom so I can view changes
         for(int i = 0; i < scribe.needsRelease.size(); i++)
         {
             if(scribe.needsTrigger[i])
@@ -74,13 +76,14 @@ int main()
                 scribe.turnOffMidi(i);
             }
         }
+        */
         
 
         
 #if PRINT == 1
         fvec output = {
             (float)scribe.fundamental.index,
-            (float)scribe.fundamental.history,
+            (float)scribe.fundamental.prevIndex,
             calcs.delay.dBShort,
             calcs.delay.dBLong,
             calcs.threshold.noise,
@@ -93,25 +96,30 @@ int main()
             999,
             calcs.amp.retrig,
             calcs.threshold.retrig,
-            scribe.needsTrigger[scribe.fundamental.index],
             999,
-            float(scribe.fundamental.history != scribe.fundamental.index),
-            //scribe.chordHistory[scribe.fundamental.index],
-            scribe.weightHistory[scribe.fundamental.index],
+            (float)scribe.fNeedsTrigger[scribe.fundamental.index],
+            (float)scribe.fOnNotes[scribe.fundamental.index],
+            (float)scribe.fNeedsRelease[scribe.fundamental.index],
+            999,
+            (float)scribe.fNeedsTrigger[scribe.fundamental.prevIndex],
+            (float)scribe.fOnNotes[scribe.fundamental.prevIndex],
+            (float)scribe.fNeedsRelease[scribe.fundamental.prevIndex],
+            999,
+            float(scribe.fundamental.prevIndex != scribe.fundamental.index),
             calcs.threshold.chordPct,
             scribe.peakFloor,
             };
             
 
         //printRows( trueSignal, "_2_history.csv");
-        //printRows( scribe.historyDS, "output/_2_historyDS.csv");
+        printRows( scribe.historyDS, "output/_2_historyDS.csv");
         //printRows( scribe.weights, "output/_2_weights.csv");
-        //printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
-        printRows( scribe.weightHistory, "output/_2_maxWHist.csv");
+        printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
+        printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
         //printRows( scribe.chordHistory, "output/_2_chordHist.csv");
-        printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
-        printRows( scribe.peaks, "output/_2_peaks.csv");
-        printRows( scribe.onNotes, "output/_2_onNotes.csv");
+        //printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
+        //printRows( scribe.peaks, "output/_2_peaks.csv");
+        printRows( scribe.fOnNotes, "output/_2_onNotes.csv");
         printRows(output, "output/_2_value_output.csv");
         //
 
@@ -132,6 +140,17 @@ int main()
             (float)midiSwitch.state <<"\n";
 #endif
 
+    for(int i = 0; i < scribe.fNeedsRelease.size(); i++)
+        {
+            if(scribe.fNeedsTrigger[i])
+            {
+                scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
+            }
+            if(scribe.fNeedsRelease[i])
+            {
+                scribe.turnOffMidi(i);
+            }
+        }
     }
     return 0;
 }

@@ -97,10 +97,8 @@ struct Blocks
 
 struct Note
 {
-    float index   = 0;
-    float octave  = 0;
-    float pitch   = 0;
-    float ratio   = 0;
+    int index       = 0;
+    int prevIndex   = 0;
     float history = 0;
 };
 
@@ -151,8 +149,17 @@ struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
-    void updateWeights(int lowNote, int highNote, int midiBlocks, const Amp& amp, const Threshold& thresh);
-    void updateMidiInfo(
+    
+    void updateFundamental(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh);
+    void updateChords(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh);
+    
+    void updatePeaks();
+    
+    void updateFMidiInfo(
+        const Threshold& thresh, const Amp& amp, const Velocity& vel, 
+        const Range& range, const Shift& shift);
+    
+    void updateCMidiInfo(
         const Threshold& thresh, const Amp& amp, const Velocity& vel, 
         const Range& range, const Shift& shift);
 
@@ -170,23 +177,26 @@ struct Scribe {
     fvec weights        = fvec(frequencies.size(), 0);
     fvec maxWeights     = fvec(frequencies.size(), 0);
     fvec sumWeights     = fvec(frequencies.size(), 0);
-    fvec certainty      = fvec(frequencies.size(), 0);
-    fvec weightHistory  = fvec(frequencies.size(), 0);
+    fvec fundamentalCertainty      = fvec(frequencies.size(), 0);
+    fvec fundamentalHistory  = fvec(frequencies.size(), 0);
     fvec chordCertainty = fvec(frequencies.size(), 0);
     fvec chordHistory   = fvec(frequencies.size(), 0);
     fvec peaks          = fvec(frequencies.size(), 0);
     fvec peaksHistory   = fvec(frequencies.size(), 0);
-    fvec notedB         = fvec(frequencies.size(), -90);
     ivec finalNote      = ivec(frequencies.size(), 0);
     
-    std::vector<bool> needsTrigger = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> onNotes = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> needsRelease = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> fNeedsTrigger = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> fOnNotes = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> fNeedsRelease = std::vector<bool>(frequencies.size(), false);
+
+    std::vector<bool> cNeedsTrigger = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> cOnNotes = std::vector<bool>(frequencies.size(), false);
+    std::vector<bool> cNeedsRelease = std::vector<bool>(frequencies.size(), false);
     
     Note fundamental;
     float chordAvg = 0;
     float peakFloor = 0;
-
+    bool runChords = false;
     fvec timeVector = fvec(audio.ds.samples, 0);
 
     cmatrix matrix = cmatrix(frequencies.size(), cvec(audio.ds.samples, std::complex<float>(0, 0)));
@@ -227,7 +237,6 @@ struct Calculations
     //these functions should be called in order
     void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
-    void updateFundamental (const Scribe& scribe);
     
 
     AudioParams params;

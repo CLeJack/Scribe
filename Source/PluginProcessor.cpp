@@ -226,11 +226,16 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateSignal(scribe, params);
 
-    scribe.updateWeights(calcs.range.lowNote, calcs.range.highNote, calcs.blocks.midi, calcs.amp, calcs.threshold);
+    if (!scribe.runChords) 
+    {
+        scribe.updateFundamental(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
+    }
+    else 
+    {
+        scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
+    }
 
-    scribe.updateMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
-
-    calcs.updateFundamental(scribe);
+    scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
     processMidi(midiMessages);
 
@@ -277,17 +282,17 @@ void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
 {
     juce::MidiMessage note;
 
-    for (int i = 0; i < scribe.onNotes.size(); i++) 
+    for (int i = 0; i < scribe.fOnNotes.size(); i++) 
     {
-        if (scribe.needsTrigger[i]) 
+        if (scribe.fNeedsTrigger[i]) 
         {
             note = juce::MidiMessage::noteOn(1, scribe.finalNote[i], (juce::uint8) 100);
             midiMessages.addEvent(note, 0);
-            scribe.turnOnMidi(i);
+            scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
         }
 
         //calc dB check is itentional redundancy; this should turn off all notes if they are on when the amplitude is too low
-        if (scribe.needsRelease[i]) 
+        if (scribe.fNeedsRelease[i]) 
         {
             note = juce::MidiMessage::noteOff(1, scribe.finalNote[i], (juce::uint8)0);
             midiMessages.addEvent(note, 0);
