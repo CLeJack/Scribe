@@ -137,18 +137,71 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const A
     fundamental.prevIndex = fundamental.index;
 
     
-    peaks = fvec(fundamentalHistory.size(), 0);
+    //peaks = fvec(fundamentalHistory.size(), 0);
     if (amp.dB > thresh.noise) 
     {
         fundamental.index = maxArg(fundamentalHistory);
-        peaks[fundamental.index] = 1;
+        //peaks[fundamental.index] = 1;
     }
 
     
 
 }
 
-void Scribe::updateChords(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh) {}
+void Scribe::updateChords(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh) 
+{
+
+    if(fOnNotes[fundamental.index])
+    {
+        fmatrix chordMatrix = chordCertaintyMatrix(
+            fundamental.index, tuning.octaveSize, 
+            maxWeights, maxSineMatrix, 
+            0, weights.size());
+        
+        chordCertainty = freqCertaintyVector(
+            sumWeights, chordMatrix, 
+            range.lowNote, range.highNote, 
+            0, weights.size());
+        
+        for (int i = 0; i < fundamental.index; i++) 
+        {
+            chordHistory[i] = 0;
+        }
+
+        for (int i = range.highNote; i < chordHistory.size(); i++) 
+        {
+            chordHistory[i] = 0;
+        }
+
+        for(int i = fundamental.index; i < range.highNote; i++)
+        {
+            chordHistory[i] = SMA(chordHistory[i], chordCertainty[i], blocks.midi);
+        }
+
+    
+        peaks = getPeaks(chordHistory);
+        chordAvg = positiveMean(chordHistory, fundamental.index, range.highNote);
+        float chordMax = maxValue(chordHistory, fundamental.index, range.highNote);
+        peakFloor = thresh.chordPct * (chordMax - chordAvg) + chordAvg;
+        int peakSum = sum(peaks);
+
+        //I don't want to include the fundamental in the chord data
+        //the fundamental could be accidentally turned off in the midi update otherwise
+        //also figuring out when it should be removed and when it shouldn't be becomes more difficult
+        peaks[fundamental.index] = 0;
+
+        for(int i = fundamental.index + 1; i < range.highNote; i++)
+        {
+            peaks[i] = chordHistory[i] < peakFloor ? 0 : peaks[i];
+        }
+    }
+    else
+    {
+        peaks = fvec(chordHistory.size(), 0);
+    }
+    
+    
+}
 void Scribe::updatePeaks() {}
 
 void Scribe::updateFMidiInfo(
@@ -204,7 +257,35 @@ void Scribe::updateFMidiInfo(
 
 void Scribe::updateCMidiInfo(
     const Threshold& thresh, const Amp& amp, const Velocity& vel,
-    const Range& range, const Shift& shift) {}
+    const Range& range, const Shift& shift) 
+{
+    for(int i = 0; i < cNeedsRelease.size(); i++)
+    {
+        if (peaks[i] == 1 && cOnNotes[i] == false && amp.dB > thresh.noise)
+        {
+            cNeedsTrigger[i] = true;
+            cNeedsRelease[i] = false;
+
+            finalNote[i] = midiShift(shift, midiNumbers[fundamental.index]);
+        }
+
+        if(cOnNotes[i] == true && i != fundamental.index )
+        {
+            if(
+                amp.dB < thresh.release 
+                || i < range.lowNote 
+                || i >= range.highNote
+                || (amp.retrig < thresh.retrig && inTriggerState == false)
+                || peaks[i] != 1
+                 )
+            {
+                fNeedsRelease[i] = true;
+                fNeedsTrigger[i] = false;
+            }
+        } 
+    }
+
+}
 
 void Scribe::turnOnMidi(int i, const Amp& amp, const Threshold& thresh) 
 {
@@ -212,12 +293,11 @@ void Scribe::turnOnMidi(int i, const Amp& amp, const Threshold& thresh)
     {
         fOnNotes[i] = true;
         fNeedsTrigger[i] = false;
-        if(amp.retrig >= thresh.retrig)
-        {
-            //wait for retrigger phase to stop before deciding to
-            //turn off trigger flag.
-            //fNeedsTrigger[i] = false;
-        }
+    }
+    if(cNeedsTrigger[i])
+    {
+        cOnNotes[i] = true;
+        cNeedsTrigger[i] = false;
     }
 }
 
@@ -233,6 +313,14 @@ void Scribe::turnOffMidi(int i)
     }
     if (i = fundamental.index) {
         inTriggerState = false;
+    }
+
+    if(cNeedsRelease[i])
+    {
+        cNeedsRelease[i] = false;
+        cOnNotes[i] = false;
+        cNeedsTrigger[i] = false;
+        finalNote[i] = midiNumbers[i];
     }
 }
 

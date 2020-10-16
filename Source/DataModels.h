@@ -34,7 +34,7 @@ struct Threshold
     float noise   = -50;
 
     float certainty = 0.7f;
-    float chordPct = 0.9f;
+    float chordPct = 0.7f;
 
     float trigger = 0.75f;
     float retrig = 0.95f;

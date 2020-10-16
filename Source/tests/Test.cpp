@@ -8,12 +8,12 @@
 int main()
 {
 
-    float srate = 48000;
-    float blockSize = 192;
+    float srate = 44100;
+    float blockSize = 128;
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/a3-multi-on.csv", 1*srate);
+    fvec signal0 = importCsv("input/_test_amtri.csv", 1*srate);
 
     #if PRINT == 1
     printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -57,6 +57,13 @@ int main()
                              calcs.amp, calcs.threshold);
 
         scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
+                              calcs.range, calcs.shift);
+
+        
+        scribe.updateChords(calcs.range, calcs.blocks, 
+                             calcs.amp, calcs.threshold);
+
+        scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
                               calcs.range, calcs.shift);
 
 
@@ -116,10 +123,11 @@ int main()
         //printRows( scribe.weights, "output/_2_weights.csv");
         printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
         printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
-        //printRows( scribe.chordHistory, "output/_2_chordHist.csv");
+        printRows( scribe.chordHistory, "output/_2_chordHist.csv");
         //printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
-        //printRows( scribe.peaks, "output/_2_peaks.csv");
-        printRows( scribe.fOnNotes, "output/_2_onNotes.csv");
+        printRows( scribe.peaks, "output/_2_peaks.csv");
+        printRows( scribe.fOnNotes, "output/_2_fOnNotes.csv");
+        printRows( scribe.cOnNotes, "output/_2_cOnNotes.csv");
         printRows(output, "output/_2_value_output.csv");
         //
 
