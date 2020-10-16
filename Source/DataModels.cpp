@@ -116,6 +116,19 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const A
         range.lowNote, range.highNote,
         0, weights.size());
 
+    //clear info that is out of bounds in case the range moves up and down
+    for (int i = 0; i < range.lowNote; i++) 
+    {
+        fundamentalHistory[i] = 0;
+    }
+
+    for (int i = range.highNote; i < fundamentalHistory.size(); i++) 
+    {
+        fundamentalHistory[i] = 0;
+    }
+
+
+    //get history info in range
     for(int i = range.lowNote; i < range.highNote; i++)
     {
         fundamentalHistory[i] = SMA(fundamentalHistory[i], fundamentalCertainty[i], blocks.midi);
@@ -144,16 +157,27 @@ void Scribe::updateFMidiInfo(
 {
     //runChords = !runChords; //force next cycle to switch between updateFundamental and updateChords
 
+    if (fOnNotes[fundamental.index] == false && amp.dB > thresh.noise)
+    {
+        fNeedsTrigger[fundamental.index] = true;
+        fNeedsRelease[fundamental.index] = false;
+        inTriggerState = true;
+
+        finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
+    }
+
     for(int i = 0; i < fNeedsRelease.size(); i++)
     {
-        
+        /*
         if (peaks[i] == 1 && fOnNotes[i] == false) 
         {
             fNeedsTrigger[fundamental.index] = true;
             fNeedsRelease[fundamental.index] = false;
+            inTriggerState = true;
 
             finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
         }
+        */
         
 
         if(fOnNotes[i] == true )
@@ -162,7 +186,7 @@ void Scribe::updateFMidiInfo(
                 amp.dB < thresh.release 
                 || i < range.lowNote 
                 || i >= range.highNote
-                || amp.retrig < thresh.retrig && fNeedsTrigger[i] == false
+                || (amp.retrig < thresh.retrig && inTriggerState == false)
                 || i != fundamental.index
                  )
             {
@@ -172,6 +196,10 @@ void Scribe::updateFMidiInfo(
         } 
     }
     
+    if(amp.retrig >= thresh.retrig && fNeedsTrigger[fundamental.index] == false)
+    {
+        inTriggerState = false;
+    }
 }
 
 void Scribe::updateCMidiInfo(
@@ -202,6 +230,9 @@ void Scribe::turnOffMidi(int i)
         fOnNotes[i] = false;
         fNeedsTrigger[i] = false;
         finalNote[i] = midiNumbers[i];
+    }
+    if (i = fundamental.index) {
+        inTriggerState = false;
     }
 }
 

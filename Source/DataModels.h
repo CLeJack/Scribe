@@ -194,6 +194,7 @@ struct Scribe {
     std::vector<bool> cNeedsRelease = std::vector<bool>(frequencies.size(), false);
     
     Note fundamental;
+    bool inTriggerState = false;
     float chordAvg = 0;
     float peakFloor = 0;
     bool runChords = false;
