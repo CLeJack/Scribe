@@ -14,15 +14,6 @@
 #include "CircularBuffer.h"
 #include "Stats.h"
 
-class SignalSliders : public juce::Component
-{
-public:
-    SignalSliders();
-    void resized() override;
-    std::vector<juce::Slider> sliders;
-    std::vector<juce::Label> labels;
-};
-
 
 
 class SignalScope : public juce::Component 
@@ -36,33 +27,23 @@ public:
 class SignalMeter : public juce::Component 
 {
 public:
-    SignalMeter(int bufferSize, int thresholdSize);
+    SignalMeter(int bufferSize);
     void paint(juce::Graphics& g) override;
 
-    fvec thresholds;
     FloatBuffer dBBuffer;
     
 };
 
-class SignalThresholds : public juce::Component
-{
-public:
-    SignalThresholds();
-    void paint(juce::Graphics& g) override;
-
-    std::vector<float> relativeHeights;
-};
 
 class GuiSignal : public juce::Component 
 {
 public:
-    GuiSignal(int signalSize, int bufferSize, int thresholdSize);
+    GuiSignal(int signalSize, int bufferSize);
     void resized() override;
 
-    SignalSliders sliderPanel;
+
     SignalScope scope;
 
-    SignalThresholds thresholds;
     SignalMeter meter;
     
 };

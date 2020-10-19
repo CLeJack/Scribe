@@ -67,6 +67,7 @@ struct Velocity
     int max = 127;
 
     float maxdB = -20;
+    int current = 0;
 };
 
 //calculation specific
@@ -177,8 +178,10 @@ struct Scribe {
     fvec weights        = fvec(frequencies.size(), 0);
     fvec maxWeights     = fvec(frequencies.size(), 0);
     fvec sumWeights     = fvec(frequencies.size(), 0);
-    fvec fundamentalCertainty      = fvec(frequencies.size(), 0);
-    fvec fundamentalHistory  = fvec(frequencies.size(), 0);
+
+    fvec fundamentalCertainty = fvec(frequencies.size(), 0);
+    fvec fundamentalHistory   = fvec(frequencies.size(), 0);
+
     fvec chordCertainty = fvec(frequencies.size(), 0);
     fvec chordHistory   = fvec(frequencies.size(), 0);
     fvec peaks          = fvec(frequencies.size(), 0);
@@ -199,6 +202,8 @@ struct Scribe {
     float peakFloor = 0;
     bool runChords = false;
     fvec timeVector = fvec(audio.ds.samples, 0);
+
+    bool sendAllNotesOff = false;
 
     cmatrix matrix = cmatrix(frequencies.size(), cvec(audio.ds.samples, std::complex<float>(0, 0)));
 

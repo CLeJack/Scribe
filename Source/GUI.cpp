@@ -55,7 +55,7 @@ PaperLookAndFeel::PaperLookAndFeel()
     //Label
     setColour(0x1000280, PAPER);
     setColour(0x1000281, BOLD_BLACK_INK);
-    setColour(0x1000282, FADE_BLACK_INK);
+    setColour(0x1000282, juce::Colours::black.withAlpha(0.0f));
 
     //resizable window
     setColour(0x1005700, PAPER);
@@ -63,8 +63,11 @@ PaperLookAndFeel::PaperLookAndFeel()
 
     //slider
     setColour(0x1001200, PAPER_DARK);
-    setColour(0x1001300, BOLD_BLACK_INK);
-    setColour(0x1001310, FADE_BLACK_INK);
+    setColour(0x1001300, FADE_BLACK_INK);
+    setColour(0x1001310, PAPER_DARK);
+    setColour(0x1001311, FADE_BLACK_INK);
+    setColour(0x1001312, PAPER_DARK);
+    setColour(0x1001312, PAPER_DARK);
 
     
     //TabbedComponent
@@ -77,6 +80,10 @@ PaperLookAndFeel::PaperLookAndFeel()
     setColour(0x1005814, BOLD_BLACK_INK);
     setColour(0x1005815, BOLD_BLACK_INK);
     
+
+    //TextButton
+    setColour(0x1000100, BOLD_BLACK_INK);
+    setColour(0x1000101, FADE_BLACK_INK);
     
 }
 
@@ -102,7 +109,11 @@ backgroundColourId                  = 0x1001200, PAPER_DARK
 
 thumbColourId                       = 0x1001300, BOLD_BLACK_INK
 
-trackColourid                       = 0x1001310, FADE_BLACK_INK
+trackColourid                       = 0x1001310, PAPER_DARK
+
+rotaryFill                          = 0x1001311, FADE_BLACK_INK //fills on the left side 
+
+rotarySliderOutlineColourId         = 0x1001312, PAPER_DARK
 
 //--- TabbedComponent
 
@@ -123,5 +134,9 @@ frontOutlineColourId                = 0x1005814, BOLD_BLACK_INK
 frontTextColourId                   = 0x1005815, BOLD_BLACK_INK
 
 
+//--- TextButton
+buttonColourId                      = 0x1000100, BOLD_BLACK_INK
+
+buttonOnColourId                    = 0x1000101, FADE_BLACK_INK
 
 */

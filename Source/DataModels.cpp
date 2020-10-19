@@ -186,11 +186,14 @@ void Scribe::updateChords(const Range& range, const Blocks& blocks, const Amp& a
         int peakSum = sum(peaks);
 
         //I don't want to include the fundamental in the chord data
-        //the fundamental could be accidentally turned off in the midi update otherwise
-        //also figuring out when it should be removed and when it shouldn't be becomes more difficult
+        //because I don't want it to be turned off within the chord update logic
+        //the note next to the fundamental is removed due to the simplicty of the peak algo
+        //corners will very frequently be considered peaks
+        //This could be resolved by increasing the number of frequency bins to 3 per note
+        //and increasing the octave size to 36, but I don't want to mess with this right now
         peaks[fundamental.index] = 0;
-
-        for(int i = fundamental.index + 1; i < range.highNote; i++)
+        peaks[fundamental.index + 1] = 0;
+        for(int i = fundamental.index; i < range.highNote; i++)
         {
             peaks[i] = chordHistory[i] < peakFloor ? 0 : peaks[i];
         }
@@ -198,6 +201,12 @@ void Scribe::updateChords(const Range& range, const Blocks& blocks, const Amp& a
     else
     {
         peaks = fvec(chordHistory.size(), 0);
+    }
+
+    //This +2 offset is needed due ot the
+    for(int i = fundamental.index; i < range.highNote; i++)
+    {
+        peaksHistory[i] = SMA(peaksHistory[i], peaks[i], blocks.midi);
     }
     
     
@@ -261,7 +270,7 @@ void Scribe::updateCMidiInfo(
 {
     for(int i = 0; i < cNeedsRelease.size(); i++)
     {
-        if (peaks[i] == 1 && cOnNotes[i] == false && amp.dB > thresh.noise)
+        if (peaksHistory[i] >= .5 && cOnNotes[i] == false && amp.dB > thresh.noise)
         {
             cNeedsTrigger[i] = true;
             cNeedsRelease[i] = false;
@@ -359,5 +368,7 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     shift = params.shift;
 
     velocity = params.velocity;
+
+    velocity.current = getVelocity(velocity, amp.dB, threshold.noise);
 
 }

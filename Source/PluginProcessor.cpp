@@ -151,6 +151,19 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             waiting(buffer, midiMessages);
             break;
     }
+
+    if (scribe.sendAllNotesOff) 
+    {
+        juce::MidiMessage note;
+
+        for (int i = 0; i < scribe.fOnNotes.size(); i++)
+        {
+            note = juce::MidiMessage::noteOff(1, scribe.finalNote[i], (juce::uint8)0);
+            midiMessages.addEvent(note, 0);
+            scribe.turnOffMidi(i);
+        }
+        scribe.sendAllNotesOff = false;
+    }
     
 }
 
@@ -226,16 +239,13 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateSignal(scribe, params);
 
-    if (!scribe.runChords) 
-    {
-        scribe.updateFundamental(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
-    }
-    else 
-    {
-        scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
-    }
+    scribe.updateFundamental(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
+    //chords currently aren't functioning
+    //try the pitch-octave-certainty implementation next
+    //scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
 
     scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
+    //scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
     processMidi(midiMessages);
 
@@ -286,7 +296,7 @@ void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
     {
         if (scribe.fNeedsTrigger[i]) 
         {
-            note = juce::MidiMessage::noteOn(1, scribe.finalNote[i], (juce::uint8) 100);
+            note = juce::MidiMessage::noteOn(1, scribe.finalNote[i], (juce::uint8) calcs.velocity.current);
             midiMessages.addEvent(note, 0);
             scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
         }

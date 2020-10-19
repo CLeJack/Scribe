@@ -124,8 +124,8 @@ int main()
         printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
         printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
         printRows( scribe.chordHistory, "output/_2_chordHist.csv");
-        //printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
-        printRows( scribe.peaks, "output/_2_peaks.csv");
+        printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
+        //printRows( scribe.peaks, "output/_2_peaks.csv");
         printRows( scribe.fOnNotes, "output/_2_fOnNotes.csv");
         printRows( scribe.cOnNotes, "output/_2_cOnNotes.csv");
         printRows(output, "output/_2_value_output.csv");

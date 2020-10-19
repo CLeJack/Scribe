@@ -12,32 +12,19 @@
 #include <JuceHeader.h>
 #include "GUIGlobals.h"
 
-class MidiBar : public juce::Component 
-{
-public:
-    MidiBar(float min, float max, float ticks);
-    void paint(juce::Graphics& g) override;
-    float val;
-    float min;
-    float max;
-    float ticks;
-};
 
-class MidiData : public juce::Component 
+class MidiMeter : public juce::Component 
 {
 public:
+    MidiMeter(int ticks, float min, float max);
     void paint(juce::Graphics& g) override;
-    float midi;
-    float vel;
-};
-
-class MidiSliders : public juce::Component
-{
-public:
-    MidiSliders();
-    void resized() override;
-    std::vector<juce::Slider> sliders;
-    std::vector<juce::Label> labels;
+  
+    int ticks = 1;
+    const float scaleMax;
+    const float scaleMin;
+    float refMax = 0;
+    float refCurrent = 0;
+    float refMin = 0;
 };
 
 class GuiMidi : public juce::Component 
@@ -45,15 +32,7 @@ class GuiMidi : public juce::Component
 public:
     GuiMidi();
     void resized() override;
-    void paint(juce::Graphics& g);
 
-
-    MidiSliders sliderPanel;
-
-    int delayedAmp = 0;
-
-    float midiOn = 0;
-    float velOn = 0;
-
-    float retrigger = 0;
+    MidiMeter dB;
+    MidiMeter vel;
 };
