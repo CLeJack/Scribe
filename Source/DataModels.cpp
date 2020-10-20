@@ -221,26 +221,28 @@ void Scribe::updateFMidiInfo(
 
     if (fOnNotes[fundamental.index] == false && amp.dB > thresh.noise)
     {
-        fNeedsTrigger[fundamental.index] = true;
-        fNeedsRelease[fundamental.index] = false;
+        /*
+        if (inTriggerState == false && amp.retrig < thresh.retrig) 
+        {
+            inTriggerState = true;
+        }
+        else if (inTriggerState == true && amp.retrig > thresh.retrigStop) 
+        {
+            
+        }
+        */
+
         inTriggerState = true;
 
+        fNeedsTrigger[fundamental.index] = true;
+        fNeedsRelease[fundamental.index] = false;
+
         finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
+        
     }
 
     for(int i = 0; i < fNeedsRelease.size(); i++)
     {
-        /*
-        if (peaks[i] == 1 && fOnNotes[i] == false) 
-        {
-            fNeedsTrigger[fundamental.index] = true;
-            fNeedsRelease[fundamental.index] = false;
-            inTriggerState = true;
-
-            finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
-        }
-        */
-        
 
         if(fOnNotes[i] == true )
         {

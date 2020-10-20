@@ -30,8 +30,7 @@ public:
     
     void updateSpectrum();
     void updateSignal();
-    void updateMidi(bool send);
-    void updateSettings();
+
 
     void setSliders();
     GUIState getTabState();
@@ -48,7 +47,6 @@ private:
     GuiMainPanel guiMainPanel;
     GuiSpectrum guiSpectrum;
     GuiSignal guiSignal;
-    GuiSettings guiSettings;
     GuiTabs guiTabs;
     
 

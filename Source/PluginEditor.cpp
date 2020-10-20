@@ -26,7 +26,6 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiTabs.setLookAndFeel(new PaperLookAndFeel());
     guiSpectrum.setLookAndFeel(new PaperLookAndFeel());
     guiSignal.setLookAndFeel(new PaperLookAndFeel());
-    guiSettings.setLookAndFeel(new PaperLookAndFeel());
 
     addAndMakeVisible(guiMainPanel);
     addAndMakeVisible(guiTabs);
@@ -34,13 +33,11 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiTabs.addTab("Main",   PAPER, &guiMainTab,   false);
     guiTabs.addTab("Spectrum", PAPER, &guiSpectrum, false);
     guiTabs.addTab("Signal", PAPER, &guiSignal,   false);
-    guiTabs.addTab("Settings", PAPER, &guiSettings, false);
 
     guiMainTab.resized();
     guiMainPanel.resized();
     guiSpectrum.resized();
     guiSignal.resized();
-    guiSettings.resized();
 
     guiMainPanel.smoothing.slider.addListener(this);
 
@@ -205,14 +202,3 @@ void ScribeAudioProcessorEditor::updateSignal()
     guiSignal.meter.dBBuffer.push(calcs.amp.dB);
 
 }
-
-void ScribeAudioProcessorEditor::updateMidi(bool send) 
-{
-    if (send) 
-    {
-
-    }
-    
-}
-
-void ScribeAudioProcessorEditor::updateSettings() {}
