@@ -38,7 +38,7 @@ public:
     juce::Label spectrumLabel;
     juce::Label midiLabel;
 
-    GuiMainSlider smoothing; //milliseconds
+    //GuiMainSlider smoothing; //milliseconds
 
     GuiMainSlider maxVel;
     GuiMainSlider minVel;

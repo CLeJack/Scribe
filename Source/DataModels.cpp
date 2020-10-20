@@ -33,6 +33,8 @@ void Scribe::initialize(float srate, float blockSize)
 
     history.reset(new FloatBuffer(audio.samples, 0.0f));
 
+    fpsBlocks = (float)audio.srate / (audio.blockSize * fps);
+
     isInitialized = true;
 }
 
@@ -45,56 +47,7 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
     return isInitialized;
 }
 
-/*
-void Scribe::updateWeights(int lowNote, int highNote, int midiBlocks, const Amp& amp, const Threshold& thresh)
-{
 
-    
-    
-    fmatrix chordMatrix = chordCertaintyMatrix(
-        fundamental.index, tuning.octaveSize, 
-        maxWeights, maxSineMatrix, 
-        0, weights.size());
-    
-    chordCertainty = freqCertaintyVector(
-        sumWeights, chordMatrix, 
-        lowNote, highNote, 
-        0, weights.size());
-    
-    
-    for(int i = lowNote; i < highNote; i++)
-    {
-        chordHistory[i] = SMA(chordHistory[i], chordCertainty[i], midiBlocks);
-    }
-    
-    
-    
-    //peaks = fvec(weightHistory.size(), 0);
-
-    //peaks = getPeaks(chordHistory);
-    //peaks = getPeaks(weightHistory);
-    fundamental.history = fundamental.index;
-    //fundamental.index = std::max(maxArg(weightHistory), maxArg(chordHistory));
-    fundamental.index = maxArg(weightHistory);
-    peaks[fundamental.index] = 1;
-        
-    //chordAvg = positiveMean(chordHistory, fundamental.index, highNote);
-    chordAvg = positiveMean(weightHistory, fundamental.index, highNote);
-        
-    for(int i = lowNote; i < highNote; i++)
-    {
-        if(fundamental.history != 0 && fundamental.history == fundamental.index)
-        {
-            //peakFloor = thresh.chordPct * (chordHistory[fundamental.index] - chordAvg) + chordAvg;
-            peakFloor = thresh.chordPct * (weightHistory[fundamental.index] - chordAvg) + chordAvg;
-        }
-        //peaks[i] = chordHistory[i] < peakFloor ? 0 : peaks[i];
-        peaks[i] = weightHistory[i] < peakFloor ? 0 : peaks[i];
-        peaksHistory[i] = SMA(peaksHistory[i], peaks[i], 4.0f);
-    }
-    
-}
-*/
 
 void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh) 
 {
@@ -221,23 +174,20 @@ void Scribe::updateFMidiInfo(
 
     if (fOnNotes[fundamental.index] == false && amp.dB > thresh.noise)
     {
-        /*
         if (inTriggerState == false && amp.retrig < thresh.retrig) 
         {
             inTriggerState = true;
         }
-        else if (inTriggerState == true && amp.retrig > thresh.retrigStop) 
+        else if (inTriggerState == true && amp.retrig >= thresh.retrigStop) 
         {
-            
+            fNeedsTrigger[fundamental.index] = true;
+            fNeedsRelease[fundamental.index] = false;
+
+            finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
         }
-        */
+       
 
-        inTriggerState = true;
-
-        fNeedsTrigger[fundamental.index] = true;
-        fNeedsRelease[fundamental.index] = false;
-
-        finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
+        
         
     }
 

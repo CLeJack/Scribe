@@ -72,7 +72,7 @@ void GuiMainSlider::paint(juce::Graphics& g)
 }
 
 GuiMainPanel::GuiMainPanel() :
-    smoothing("Smooth", true, 0.0, 25.0, .01),
+    //smoothing("Smooth", true, 0.0, 25.0, .01),
     maxVel("Max Vel", true, 0, 127, 1),
     minVel("Min Vel", true, 0, 127, 1),
     maxdB("Max dB", true, -60, 0, 1),
@@ -102,9 +102,9 @@ GuiMainPanel::GuiMainPanel() :
     juce::TextButton panic;
     */
 
-    spectrumLabel.setText("Spectrum", juce::NotificationType::dontSendNotification);
-    spectrumLabel.setJustificationType(juce::Justification::centred);
-    spectrumLabel.setBorderSize(juce::BorderSize<int>(0));
+    //spectrumLabel.setText("Spectrum", juce::NotificationType::dontSendNotification);
+    //spectrumLabel.setJustificationType(juce::Justification::centred);
+    //spectrumLabel.setBorderSize(juce::BorderSize<int>(0));
 
     midiLabel.setText("Midi", juce::NotificationType::dontSendNotification);
     midiLabel.setJustificationType(juce::Justification::centred);
@@ -114,7 +114,7 @@ GuiMainPanel::GuiMainPanel() :
 
     addAndMakeVisible(spectrumLabel);
 
-    addAndMakeVisible(smoothing);
+    //addAndMakeVisible(smoothing);
     
     addAndMakeVisible(midiLabel);
 
@@ -141,15 +141,16 @@ void GuiMainPanel::resized()
     float textH = area.getHeight() * 0.05;
     float sliderH = area.getHeight() * 0.9 * 0.2;
 
-    spectrumLabel.setBounds(area.removeFromTop(textH));
+    //spectrumLabel.setBounds(area.removeFromTop(textH));
 
-    auto sliderArea = area.removeFromTop(sliderH);
+    //auto sliderArea = area.removeFromTop(sliderH);
+    auto sliderArea = area;
 
 #define SET_AREA(sl, sliderArea, frac){\
 sl.setBounds (sliderArea.removeFromLeft (sliderArea.getWidth() * frac));\
 }
 
-    SET_AREA(smoothing, sliderArea, 0.333);
+    //SET_AREA(smoothing, sliderArea, 0.333);
 
     midiLabel.setBounds(area.removeFromTop(textH));
 

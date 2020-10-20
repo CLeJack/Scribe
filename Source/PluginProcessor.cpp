@@ -214,7 +214,7 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
         scribe.initialize(getSampleRate(), getBlockSize());
         pluginState = PluginState::ready;
     }
-    buffer.clear();
+    //buffer.clear();
 }
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -267,19 +267,21 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         {
         case GUIState::spectrum:
             editor->updateSpectrum();
+            editor->repaint();
             break;
         case GUIState::signal:
             editor->updateSignal();
+            editor->repaint();
             break;
         case GUIState::main:
             break;
         }
 
-        editor->repaint();
+        
     }
     
 
-    buffer.clear();
+    //buffer.clear();
 }
 
 void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
@@ -309,7 +311,7 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 {
     pluginState = PluginState::waiting;
     
-    buffer.clear();
+    //buffer.clear();
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

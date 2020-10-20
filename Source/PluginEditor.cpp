@@ -39,7 +39,7 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiSpectrum.resized();
     guiSignal.resized();
 
-    guiMainPanel.smoothing.slider.addListener(this);
+    //guiMainPanel.smoothing.slider.addListener(this);
 
     guiMainPanel.maxdB.slider.addListener(this);
     guiMainPanel.maxVel.slider.addListener(this);
@@ -108,13 +108,14 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 {
     auto& panel = guiMainPanel;
     
-
+    /*
     if (slider == &panel.smoothing.slider)
     {
         params.smoothTime.midi = slider->getValue();
     }
+    */
 
-    else if (slider == &panel.minVel.slider)
+    if (slider == &panel.minVel.slider)
     {
         params.velocity.min = slider->getValue();
     }
@@ -165,7 +166,7 @@ void ScribeAudioProcessorEditor::buttonClicked(juce::Button* button)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void ScribeAudioProcessorEditor::setSliders()
 {
-    guiMainPanel.smoothing.slider.setValue(params.smoothTime.midi);
+    //guiMainPanel.smoothing.slider.setValue(params.smoothTime.midi);
 
     guiMainPanel.maxdB.slider.setValue(params.velocity.maxdB);
     guiMainPanel.maxVel.slider.setValue(params.velocity.max);

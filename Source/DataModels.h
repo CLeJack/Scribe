@@ -202,6 +202,8 @@ struct Scribe {
     float peakFloor = 0;
     bool runChords = false;
     fvec timeVector = fvec(audio.ds.samples, 0);
+    const float fps = 30;
+    float fpsBlocks = 11;
 
     bool sendAllNotesOff = false;
 
