@@ -82,6 +82,8 @@ private:
     std::vector<juce::MidiMessage> notes;
 
     int frameCounter = 0;
+    const float fps = 30;
+    int fpsBlocks = 11;
 
 
     

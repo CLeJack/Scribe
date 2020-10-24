@@ -33,12 +33,13 @@ struct Threshold
     float release = -60;
     float noise   = -50;
 
-    float certainty = 0.7f;
+    float certainty = 0.6f; //certainty of .7 is too high for notes below A2, but works really well otherwise
     float chordPct = 0.7f;
 
     float trigger = 0.75f;
     float retrig = 0.95f;
     float retrigStop  = 1.0f;
+    float midiDelay = 15;
 };
 
 struct Scale
@@ -63,10 +64,10 @@ struct Shift
 
 struct Velocity
 {
-    int min = 50;
+    int min = 0;
     int max = 127;
 
-    float maxdB = -20;
+    float maxdB = 0;
     int current = 0;
 };
 
@@ -94,6 +95,7 @@ struct Blocks
     float midi = 1;
     float dBShort  = 1;
     float dBLong   = 1;
+    int midiDelay = 1;
 };
 
 struct Note
@@ -158,7 +160,7 @@ struct Scribe {
     
     void updateFMidiInfo(
         const Threshold& thresh, const Amp& amp, const Velocity& vel, 
-        const Range& range, const Shift& shift);
+        const Range& range, const Shift& shift, const Blocks& blocks);
     
     void updateCMidiInfo(
         const Threshold& thresh, const Amp& amp, const Velocity& vel, 
@@ -202,8 +204,10 @@ struct Scribe {
     float peakFloor = 0;
     bool runChords = false;
     fvec timeVector = fvec(audio.ds.samples, 0);
-    const float fps = 30;
-    float fpsBlocks = 11;
+
+    int delayCounter = 0;
+    int delayTime = 0;
+    bool awaitingDelay = 0;
 
     bool sendAllNotesOff = false;
 

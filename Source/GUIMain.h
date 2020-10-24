@@ -38,14 +38,11 @@ public:
     juce::Label spectrumLabel;
     juce::Label midiLabel;
 
-    //GuiMainSlider smoothing; //milliseconds
-
     GuiMainSlider maxVel;
     GuiMainSlider minVel;
 
     GuiMainSlider maxdB;
     GuiMainSlider noise;
-    GuiMainSlider release;
 
     GuiMainSlider lowNote;
     GuiMainSlider octave;

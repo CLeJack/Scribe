@@ -39,8 +39,6 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiSpectrum.resized();
     guiSignal.resized();
 
-    //guiMainPanel.smoothing.slider.addListener(this);
-
     guiMainPanel.maxdB.slider.addListener(this);
     guiMainPanel.maxVel.slider.addListener(this);
     guiMainPanel.minVel.slider.addListener(this);
@@ -50,7 +48,6 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiMainPanel.semitone.slider.addListener(this);
     
     guiMainPanel.noise.slider.addListener(this);
-    guiMainPanel.release.slider.addListener(this);
 
     guiMainPanel.panic.addListener(this);
     
@@ -70,22 +67,6 @@ void ScribeAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    //g.setColour (juce::Colours::white);
-    //g.setFont (15.0f);
-    //g.drawFittedText ("test", getLocalBounds(), juce::Justification::centred, 1);
-    switch (guiTabs.guiState) 
-    {
-        case GUIState::main:
-            
-            break;
-        case GUIState::spectrum:
-            //paintSpectrum();
-            break;
-        case GUIState::signal:
-            //paintWindow();
-            break;
-    }
     
 }
 
@@ -107,13 +88,6 @@ GUIState ScribeAudioProcessorEditor::getTabState()
 void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) 
 {
     auto& panel = guiMainPanel;
-    
-    /*
-    if (slider == &panel.smoothing.slider)
-    {
-        params.smoothTime.midi = slider->getValue();
-    }
-    */
 
     if (slider == &panel.minVel.slider)
     {
@@ -143,10 +117,6 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     {
         params.threshold.noise = slider->getValue();
     }
-    else if (slider == &panel.release.slider)
-    {
-        params.threshold.release = slider->getValue();
-    }
     else if (slider == &panel.lowNote.slider)
     {
         params.range.lowNote = slider->getValue();
@@ -166,8 +136,6 @@ void ScribeAudioProcessorEditor::buttonClicked(juce::Button* button)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void ScribeAudioProcessorEditor::setSliders()
 {
-    //guiMainPanel.smoothing.slider.setValue(params.smoothTime.midi);
-
     guiMainPanel.maxdB.slider.setValue(params.velocity.maxdB);
     guiMainPanel.maxVel.slider.setValue(params.velocity.max);
     guiMainPanel.minVel.slider.setValue(params.velocity.min);
@@ -177,7 +145,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMainPanel.semitone.slider.setValue(params.shift.semitone);
 
     guiMainPanel.noise.slider.setValue(params.threshold.noise);
-    guiMainPanel.release.slider.setValue(params.threshold.release);
+
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,7 +155,6 @@ void ScribeAudioProcessorEditor::updateSpectrum()
     for (int i = 0; i < scribe.weights.size(); i++)
     {
         guiSpectrum.certainty.weights[i] = scribe.fundamentalHistory[i];
-        //guiSpectrum.peaks.weights[i] = scribe.chordCertainty[i];
     }
 
 

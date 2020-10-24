@@ -33,8 +33,6 @@ void Scribe::initialize(float srate, float blockSize)
 
     history.reset(new FloatBuffer(audio.samples, 0.0f));
 
-    fpsBlocks = (float)audio.srate / (audio.blockSize * fps);
-
     isInitialized = true;
 }
 
@@ -168,27 +166,25 @@ void Scribe::updatePeaks() {}
 
 void Scribe::updateFMidiInfo(
     const Threshold& thresh, const Amp& amp, const Velocity& vel, 
-    const Range& range, const Shift& shift)
+    const Range& range, const Shift& shift, const Blocks& blocks)
 {
     //runChords = !runChords; //force next cycle to switch between updateFundamental and updateChords
 
-    if (fOnNotes[fundamental.index] == false && amp.dB > thresh.noise)
+    float certainty_level = fundamental.index > 33 ? .7 : .6; //temporary until I add adjustments back or work out a formula;
+    if (
+            fOnNotes[fundamental.index] == false 
+            && amp.dB > thresh.noise 
+            && amp.retrig >= thresh.retrig
+            && fundamentalHistory[fundamental.index] > certainty_level
+            //a good trigger point as been found
+       )
     {
-        if (inTriggerState == false && amp.retrig < thresh.retrig) 
-        {
-            inTriggerState = true;
-        }
-        else if (inTriggerState == true && amp.retrig >= thresh.retrigStop) 
-        {
-            fNeedsTrigger[fundamental.index] = true;
-            fNeedsRelease[fundamental.index] = false;
+        fNeedsTrigger[fundamental.index] = true;
+        fNeedsRelease[fundamental.index] = false;
 
-            finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
-        }
-       
+        finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
+        awaitingDelay = false;
 
-        
-        
     }
 
     for(int i = 0; i < fNeedsRelease.size(); i++)
@@ -255,11 +251,13 @@ void Scribe::turnOnMidi(int i, const Amp& amp, const Threshold& thresh)
         fOnNotes[i] = true;
         fNeedsTrigger[i] = false;
     }
+    /*
     if(cNeedsTrigger[i])
     {
         cOnNotes[i] = true;
         cNeedsTrigger[i] = false;
     }
+    */
 }
 
 void Scribe::turnOffMidi(int i)
@@ -275,7 +273,7 @@ void Scribe::turnOffMidi(int i)
     if (i = fundamental.index) {
         inTriggerState = false;
     }
-
+    /*
     if(cNeedsRelease[i])
     {
         cNeedsRelease[i] = false;
@@ -283,6 +281,7 @@ void Scribe::turnOffMidi(int i)
         cNeedsTrigger[i] = false;
         finalNote[i] = midiNumbers[i];
     }
+    */
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -307,6 +306,7 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     blocks.dBShort = secToBlocks (params.smoothTime.dBShort, scribe.audio.srate, scribe.audio.blockSize);
     blocks.dBLong = secToBlocks (params.smoothTime.dBLong, scribe.audio.srate, scribe.audio.blockSize);
     blocks.midi = secToBlocks (params.smoothTime.midi, scribe.audio.srate, scribe.audio.blockSize);
+    blocks.midiDelay = secToBlocks(params.threshold.midiDelay, scribe.audio.srate, scribe.audio.blockSize);
 
     delay.dBShort = SMA(delay.dBShort, amp.dB, blocks.dBShort);
     delay.dBLong = SMA(delay.dBLong, amp.dB, blocks.dBLong);

@@ -13,7 +13,7 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_amtri.csv", 1*srate);
+    fvec signal0 = importCsv("input/_test_ab4seq.csv", 1*srate);
 
     #if PRINT == 1
     printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -57,15 +57,15 @@ int main()
                              calcs.amp, calcs.threshold);
 
         scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
-                              calcs.range, calcs.shift);
+                              calcs.range, calcs.shift, calcs.blocks);
 
-        
+        /*
         scribe.updateChords(calcs.range, calcs.blocks, 
                              calcs.amp, calcs.threshold);
 
         scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
                               calcs.range, calcs.shift);
-
+        */
 
 
 
@@ -115,19 +115,22 @@ int main()
             float(scribe.fundamental.prevIndex != scribe.fundamental.index),
             calcs.threshold.chordPct,
             scribe.peakFloor,
+            999,
+            (float)scribe.delayCounter,
+            (float)scribe.awaitingDelay
             };
             
 
         //printRows( trueSignal, "_2_history.csv");
         printRows( scribe.historyDS, "output/_2_historyDS.csv");
         //printRows( scribe.weights, "output/_2_weights.csv");
-        printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
-        printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
-        printRows( scribe.chordHistory, "output/_2_chordHist.csv");
-        printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
+        //printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
+        //printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
+        //printRows( scribe.chordHistory, "output/_2_chordHist.csv");
+        //printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
         //printRows( scribe.peaks, "output/_2_peaks.csv");
-        printRows( scribe.fOnNotes, "output/_2_fOnNotes.csv");
-        printRows( scribe.cOnNotes, "output/_2_cOnNotes.csv");
+        //printRows( scribe.fOnNotes, "output/_2_fOnNotes.csv");
+        //printRows( scribe.cOnNotes, "output/_2_cOnNotes.csv");
         printRows(output, "output/_2_value_output.csv");
         //
 

@@ -72,39 +72,15 @@ void GuiMainSlider::paint(juce::Graphics& g)
 }
 
 GuiMainPanel::GuiMainPanel() :
-    //smoothing("Smooth", true, 0.0, 25.0, .01),
     maxVel("Max Vel", true, 0, 127, 1),
     minVel("Min Vel", true, 0, 127, 1),
     maxdB("Max dB", true, -60, 0, 1),
     noise("Noise dB", true, -60, 0, 1),
-    release("Release dB", true, -60, 0, 1),
     lowNote("Low Note", true, 12, 28, 1),
     octave("Octave", true, -8, 8, 1),
     semitone("Semitone", true, -12, 12, 1)
 {
-    /*
-    juce::Label spectrumLabel;
-    juce::Label midiLabel;
-
-    GuiMainSlider smoothing; //milliseconds
-
-    GuiMainSlider maxVel;
-    GuiMainSlider minVel;
-
-    GuiMainSlider maxdB;
-    GuiMainSlider noise;
-    GuiMainSlider release;
-
-    GuiMainSlider lowNote;
-    GuiMainSlider octave;
-    GuiMainSlider semitone;
-
-    juce::TextButton panic;
-    */
-
-    //spectrumLabel.setText("Spectrum", juce::NotificationType::dontSendNotification);
-    //spectrumLabel.setJustificationType(juce::Justification::centred);
-    //spectrumLabel.setBorderSize(juce::BorderSize<int>(0));
+ 
 
     midiLabel.setText("Midi", juce::NotificationType::dontSendNotification);
     midiLabel.setJustificationType(juce::Justification::centred);
@@ -113,8 +89,6 @@ GuiMainPanel::GuiMainPanel() :
     panic.setButtonText("!");
 
     addAndMakeVisible(spectrumLabel);
-
-    //addAndMakeVisible(smoothing);
     
     addAndMakeVisible(midiLabel);
 
@@ -123,7 +97,6 @@ GuiMainPanel::GuiMainPanel() :
     
     addAndMakeVisible(maxdB);
     addAndMakeVisible(noise);
-    addAndMakeVisible(release);
     
     addAndMakeVisible(lowNote);
     addAndMakeVisible(octave);
@@ -141,16 +114,12 @@ void GuiMainPanel::resized()
     float textH = area.getHeight() * 0.05;
     float sliderH = area.getHeight() * 0.9 * 0.2;
 
-    //spectrumLabel.setBounds(area.removeFromTop(textH));
 
-    //auto sliderArea = area.removeFromTop(sliderH);
     auto sliderArea = area;
 
 #define SET_AREA(sl, sliderArea, frac){\
 sl.setBounds (sliderArea.removeFromLeft (sliderArea.getWidth() * frac));\
 }
-
-    //SET_AREA(smoothing, sliderArea, 0.333);
 
     midiLabel.setBounds(area.removeFromTop(textH));
 
@@ -163,7 +132,6 @@ sl.setBounds (sliderArea.removeFromLeft (sliderArea.getWidth() * frac));\
 
     SET_AREA(maxdB, sliderArea, 0.333);
     SET_AREA(noise, sliderArea, 0.5);
-    SET_AREA(release, sliderArea, 1.0);
 
 
     sliderArea = area.removeFromTop(sliderH);

@@ -42,7 +42,7 @@ const juce::Colour MARKER3{ (juce::uint8)192, (juce::uint8)192, (juce::uint8)192
 
 //implement this as a pluginProcessor field later
 //pass the plugin processor to the guitab;
-enum class GUIState { main, spectrum, signal, midi, settings };
+enum class GUIState { main, spectrum, signal };
 
 #define CALL_EACH_ELEM_FUNC(vec, func) {\
 for(int i = 0; i < vec.size(); i++)\

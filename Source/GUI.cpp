@@ -40,12 +40,6 @@ void GuiTabs::currentTabChanged(int ind, const juce::String& name)
         case 2 :
             guiState = (GUIState)2;
             break;
-        case 3:
-            guiState = (GUIState)3;
-            break;
-        case 4:
-            guiState = (GUIState)4;
-            break;
     }
 }
 

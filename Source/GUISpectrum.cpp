@@ -12,16 +12,14 @@
 
 
 GuiSpectrum::GuiSpectrum(int barCount, int octaveSize) : 
-    background1(barCount, octaveSize), background2(barCount, octaveSize),
-    notes1(barCount, octaveSize), notes2(barCount, octaveSize),
-    certainty(barCount), peaks(barCount)
+    background1(barCount, octaveSize),
+    notes1(barCount, octaveSize),
+    certainty(barCount)
 {
     addAndMakeVisible(background1);
     addAndMakeVisible(notes1);
-    //addAndMakeVisible(background2);
-    //addAndMakeVisible(notes2);
     addAndMakeVisible(certainty);
-    //addAndMakeVisible(peaks);
+
 }
 
 void GuiSpectrum::resized() 
@@ -43,24 +41,18 @@ void GuiSpectrum::resized()
     W = area.getWidth();
 
     //auto displayArea1 = area.removeFromTop(H*0.5f);
-    auto displayArea1 = area;
-
-    //auto displayArea2 = area;
 
     //displayArea1.removeFromBottom(pad * 0.5f);
-    //displayArea2.removeFromTop(pad * 0.5f);
 
+    auto displayArea1 = area;
 
     //set all bounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-
     background1.setBounds (displayArea1);
     notes1.setBounds      (displayArea1.removeFromBottom(displayArea1.getHeight() * 0.05f));
     certainty.setBounds  (displayArea1);
     
-    //background2.setBounds (displayArea2);
-    //notes2.setBounds      (displayArea2.removeFromBottom(displayArea2.getHeight() * 0.05f));
-    //peaks.setBounds      (displayArea2);
+
     
 
 }

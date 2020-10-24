@@ -50,7 +50,6 @@ inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
 }
 
 
-class GuiSettings : public juce::Component {};
 
 //5. GuiTabs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class GuiTabs : public juce::TabbedComponent

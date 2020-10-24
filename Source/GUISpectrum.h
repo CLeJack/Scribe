@@ -72,11 +72,8 @@ public:
     void resized() override;
 
     SpectrumBackground background1;
-    SpectrumBackground background2;
     SpectrumNotes notes1;
-    SpectrumNotes notes2;
     SpectrumCertainty certainty;
-    SpectrumPeaks peaks;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GuiSpectrum);
 };

@@ -138,7 +138,7 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-
+    
     switch(pluginState)
     {
         case PluginState::ready :   
@@ -214,11 +214,13 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
         scribe.initialize(getSampleRate(), getBlockSize());
         pluginState = PluginState::ready;
     }
-    //buffer.clear();
+    buffer.clear();
 }
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+
+    fpsBlocks = getSampleRate() / (getBlockSize() * fps);
     //add the block to history
     auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
@@ -244,7 +246,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     //try the pitch-octave-certainty implementation next
     //scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
 
-    scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
+    scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift, calcs.blocks);
     //scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
     processMidi(midiMessages);
@@ -255,7 +257,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     //don't forget to update this to be srate specific
     // 11 was with 44100 hz in mind and is approximately 30 fps
-    frameCounter = (frameCounter + 1) % 11; 
+    frameCounter = (frameCounter + 1) % fpsBlocks; 
 
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
     
@@ -267,21 +269,19 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         {
         case GUIState::spectrum:
             editor->updateSpectrum();
-            editor->repaint();
             break;
         case GUIState::signal:
             editor->updateSignal();
-            editor->repaint();
             break;
         case GUIState::main:
             break;
         }
-
+        editor->repaint();
         
     }
     
 
-    //buffer.clear();
+    buffer.clear();
 }
 
 void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
@@ -311,7 +311,7 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
 {
     pluginState = PluginState::waiting;
     
-    //buffer.clear();
+    buffer.clear();
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
