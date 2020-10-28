@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="rvbHJj" name="Scribe" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              bundleIdentifier="com.limitgauge.Scribe" aaxIdentifier="com.limitgauge.Scribe"
+              pluginManufacturer="LimitGauge" pluginManufacturerCode="LIMI"
+              companyName="LimitGaugeLLC" pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut"
+              pluginName="Scribe" pluginDesc="Analog to Midi Converter" pluginCode="SCRI"
+              pluginChannelConfigs="{1, 1}" pluginFormats="buildVST3" version="1.0.0">
+  <MAINGROUP id="H8lfpx" name="Scribe">
+    <GROUP id="{684C1541-4D92-5356-02DF-8F04051D7B68}" name="Res">
+      <FILE id="BCqb9X" name="scribe-icon.png" compile="0" resource="1" file="Res/scribe-icon.png"/>
+    </GROUP>
+    <GROUP id="{33973F6F-06C1-9A96-2178-3386DF1F8349}" name="Source">
+      <FILE id="f9EP8S" name="Likelihood.cpp" compile="1" resource="0" file="Source/Likelihood.cpp"/>
+      <FILE id="ZASO4l" name="Likelihood.h" compile="0" resource="0" file="Source/Likelihood.h"/>
+      <FILE id="j9iYow" name="ModelInstances.cpp" compile="1" resource="0"
+            file="Source/ModelInstances.cpp"/>
+      <FILE id="u1hAkj" name="ModelInstances.h" compile="0" resource="0"
+            file="Source/ModelInstances.h"/>
+      <FILE id="cJFuQn" name="DataModels.cpp" compile="1" resource="0" file="Source/DataModels.cpp"/>
+      <FILE id="wXCjuf" name="DataModels.h" compile="0" resource="0" file="Source/DataModels.h"/>
+      <FILE id="zT60q8" name="GUIGlobals.h" compile="0" resource="0" file="Source/GUIGlobals.h"/>
+      <FILE id="QLmx1Q" name="GUIMain.cpp" compile="1" resource="0" file="Source/GUIMain.cpp"/>
+      <FILE id="J18Qu9" name="GUIMain.h" compile="0" resource="0" file="Source/GUIMain.h"/>
+      <FILE id="CcPjPQ" name="GUISignal.cpp" compile="1" resource="0" file="Source/GUISignal.cpp"/>
+      <FILE id="qULwcK" name="GUISignal.h" compile="0" resource="0" file="Source/GUISignal.h"/>
+      <FILE id="fux8xL" name="GUISpectrum.cpp" compile="1" resource="0" file="Source/GUISpectrum.cpp"/>
+      <FILE id="Gy7FfO" name="GUISpectrum.h" compile="0" resource="0" file="Source/GUISpectrum.h"/>
+      <FILE id="typisM" name="GUI.cpp" compile="1" resource="0" file="Source/GUI.cpp"/>
+      <FILE id="RTwVod" name="GUI.h" compile="0" resource="0" file="Source/GUI.h"/>
+      <FILE id="oxaq0f" name="CircularBuffer.cpp" compile="1" resource="0"
+            file="Source/CircularBuffer.cpp"/>
+      <FILE id="re81pF" name="CircularBuffer.h" compile="0" resource="0"
+            file="Source/CircularBuffer.h"/>
+      <FILE id="iyFLHA" name="DCT.cpp" compile="1" resource="0" file="Source/DCT.cpp"/>
+      <FILE id="DAKkby" name="DCT.h" compile="0" resource="0" file="Source/DCT.h"/>
+      <FILE id="NEOyFm" name="Head.h" compile="0" resource="0" file="Source/Head.h"/>
+      <FILE id="jwzzaJ" name="MidiSwitch.cpp" compile="1" resource="0" file="Source/MidiSwitch.cpp"/>
+      <FILE id="KSzCT5" name="MidiSwitch.h" compile="0" resource="0" file="Source/MidiSwitch.h"/>
+      <FILE id="jqQq70" name="ProcessData.cpp" compile="1" resource="0" file="Source/ProcessData.cpp"/>
+      <FILE id="wjdUx2" name="ProcessData.h" compile="0" resource="0" file="Source/ProcessData.h"/>
+      <FILE id="zyybT0" name="Stats.cpp" compile="1" resource="0" file="Source/Stats.cpp"/>
+      <FILE id="QsUJFo" name="Stats.h" compile="0" resource="0" file="Source/Stats.h"/>
+      <FILE id="DzwsBV" name="Tuning.cpp" compile="1" resource="0" file="Source/Tuning.cpp"/>
+      <FILE id="ZwbKPv" name="Tuning.h" compile="0" resource="0" file="Source/Tuning.h"/>
+      <FILE id="eKVXkB" name="Waveforms.cpp" compile="1" resource="0" file="Source/Waveforms.cpp"/>
+      <FILE id="bQI5CR" name="Waveforms.h" compile="0" resource="0" file="Source/Waveforms.h"/>
+      <FILE id="yV3jYb" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="NYwvgL" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="FTdqfK" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="PVCHZQ" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2019 targetFolder="Builds/VisualStudio2019">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Scribe"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Scribe"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="C:/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="C:/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2019>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <WINDOWS/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>

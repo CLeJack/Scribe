@@ -1,45 +1,169 @@
+/*
+  ==============================================================================
+
+    MidiSwitch.cpp
+    Created: 24 Oct 2020 5:16:23pm
+    Author:  cjack
+
+  ==============================================================================
+*/
+
+
 #include "MidiSwitch.h"
 
-MidiSwitch::MidiSwitch() {}
 
-MidiSwitch::MidiSwitch(int index, float freq, float refFreq) 
+void Notes::push(float val)
 {
+    prev = current;
+    current = val;
 }
 
-void MidiSwitch::turnOn(const MidiParams& params, const fvec& maxWeights, const fvec& certainty)
+void Notes::clear()
 {
+    prev = 0;
+    current = 0;
 }
 
-void MidiSwitch::update(const MidiParams& params, const fvec& maxWeights, const fvec& certainty)
+bool Notes::areEqual()
 {
-    //I'm not liking this offset--look into alternative methods later.
-    currentdB = weightTodB(maxWeights[index], params.refdB);
-    this->certainty = certainty[index];
+    return midiRound(prev) == midiRound(current);
 }
 
-bool MidiSwitch::needsRelease(const MidiParams& params)
+bool Notes::equal(float midiNum)
 {
+    return midiRound(midiNum) == midiRound(current);
+}
 
-    bool output = false;
-    if(isOn)
+bool Notes::areZero()
+{
+    return midiRound(prev) + midiRound(current) == 0;
+}
+
+SwitchMessage MidiSwitch::update(const MidiParams& params)
+{
+    SwitchMessage output = SwitchMessage();
+
+    switch(state)
     {
-        if( currentdB < params.releaseThresh)
-        {
-            output = true;
-            isOn = false;
-        }
+        case MidiState::on :
+            output = on(params);
+            break;
+        case MidiState::retrigger :
+            output = retrigger(params);
+            break;
+        case MidiState::off :
+            output = off(params);
+            break;
+    }
+    return output;
+}
+
+void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
+{
+    // if a midiNum switches too rapidly without a retrigger--don't count it.
+    // legato and slides happen over a time period that should be detectable by retrigger
+    // or portamento logic
+    m.on = midiRound(notes.current);
+
+    m.onVel = p.velocityVal;
+    m.off = midiRound(notes.prev);
+    m.offVel = 0;
+    m.send = true;
+}
+void MidiSwitch::offSequence(const MidiParams& p, SwitchMessage& m)
+{
+    m.on = 0;
+    m.onVel = 0;
+    m.off = midiRound(notes.prev);
+    m.offVel = 0;
+    m.send = true;
+}
+
+SwitchMessage MidiSwitch::on (const MidiParams& params)
+{
+    SwitchMessage output = SwitchMessage();
+    float smooth;
+    smooth = smoothNote(params); //should be called before on, retrigger
+    if(params.delaydB < params.releaseThresh )
+    {
+        state = MidiState::off;
+    }
+    else if(params.retrigVal < params.retrigStart)
+    {
+        state = MidiState::retrigger;
+    }
+    else if(!notes.equal(smooth))
+    {
+        //portamento or retrigger logic here.
+        //going to retrigger for now
+        notes.push(smooth);
+        onSequence(params, output);
 
     }
-    
+    else
+    {
+        notes.push(smooth);
+    }
 
     return output;
 }
 
 
-
-MidiSwitch& MidiSwitch::operator=(MidiSwitch other)
+SwitchMessage MidiSwitch::off (const MidiParams& params)
 {
-    index = other.index;
-    midiNum = other.midiNum;
-    return *this;
+    SwitchMessage output = SwitchMessage();
+    //if(!notes.areZero() && !validAmp(params))
+    if(!notes.areZero())
+    {   
+        //clear midiNum buffer if it hasn't been cleared out;
+
+        offSequence(params, output);
+        //order matters here.
+        //don't want to push a new midiNum before setting off midiNum to prev
+        notes.push(0);
+        
+    }
+    else if(params.delaydB > params.noiseThresh && params.midiNum != 0)
+    {
+        notes.push(params.midiNum);
+        onSequence(params, output);
+        state = MidiState::on;
+
+    }
+
+    return output;
+}
+
+
+SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
+{
+    SwitchMessage output = SwitchMessage();
+    if(!notes.areZero() && params.retrigVal < params.retrigStop)
+    {   
+        //clear midiNum buffer if it hasn't been cleared out;
+
+        offSequence(params, output);
+        //order matters here.
+        //don't want to push a new midiNum before setting off midiNum to prev
+        notes.push(0);
+        
+    }
+    else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
+    {
+        state = MidiState::off;
+    }
+    return output;
+}
+
+float MidiSwitch::smoothNote(const MidiParams& params)
+{
+    //acting like a rolling average where the window size = smoothFactor
+    if(params.midiNum == 0)
+    {
+        return notes.current;
+    }
+    float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
+    ref += params.midiNum * 1.0f/params.smoothFactor;
+    ref = std::abs(notes.current - ref) < params.constrainStep ? ref : notes.current;
+    return ref;
 }

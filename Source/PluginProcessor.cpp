@@ -246,17 +246,28 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     //try the pitch-octave-certainty implementation next
     //scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
 
-    scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift, calcs.blocks);
+    //scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift, calcs.blocks);
     //scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
 
-    processMidi(midiMessages);
+    //processMidi(midiMessages);
 
+    SwitchMessage message{};
+
+    MidiParams midiParams = getMidiParams(calcs, scribe);
+
+    message = scribe.midiSwitch.update(midiParams);
+
+    if (message.send)
+    {
+        juce::MidiMessage note;
+        note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
+        midiMessages.addEvent(note, 0);
+
+        note = juce::MidiMessage::noteOn(1, message.on, (juce::uint8)message.onVel);
+        midiMessages.addEvent(note, 1);
+    }
 
     
-    
-
-    //don't forget to update this to be srate specific
-    // 11 was with 44100 hz in mind and is approximately 30 fps
     frameCounter = (frameCounter + 1) % fpsBlocks; 
 
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();

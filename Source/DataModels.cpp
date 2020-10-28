@@ -92,9 +92,9 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const A
     if (amp.dB > thresh.noise) 
     {
         fundamental.index = maxArg(fundamentalHistory);
+        //fundamental.index = maxArg(fundamentalCertainty);
         //peaks[fundamental.index] = 1;
     }
-
     
 
 }
@@ -170,20 +170,21 @@ void Scribe::updateFMidiInfo(
 {
     //runChords = !runChords; //force next cycle to switch between updateFundamental and updateChords
 
-    float certainty_level = fundamental.index > 33 ? .7 : .6; //temporary until I add adjustments back or work out a formula;
+    float certainty_level = .6; //temporary until I add adjustments back or work out a formula;
     if (
             fOnNotes[fundamental.index] == false 
             && amp.dB > thresh.noise 
             && amp.retrig >= thresh.retrig
             && fundamentalHistory[fundamental.index] > certainty_level
+            //&& std::abs(amp.slope) <= thresh.slope
             //a good trigger point as been found
        )
     {
         fNeedsTrigger[fundamental.index] = true;
         fNeedsRelease[fundamental.index] = false;
+        inTriggerState = true;
 
         finalNote[fundamental.index] = midiShift(shift, midiNumbers[fundamental.index]);
-        awaitingDelay = false;
 
     }
 
@@ -196,7 +197,9 @@ void Scribe::updateFMidiInfo(
                 amp.dB < thresh.release 
                 || i < range.lowNote 
                 || i >= range.highNote
-                || (amp.retrig < thresh.retrig && inTriggerState == false)
+                //|| (amp.retrig < thresh.retrig && inTriggerState == false)
+                || (amp.retrig < thresh.retrig)
+                //||std::abs(amp.slope) <= thresh.slope && inTriggerState == false
                 || i != fundamental.index
                  )
             {
@@ -311,7 +314,10 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     delay.dBShort = SMA(delay.dBShort, amp.dB, blocks.dBShort);
     delay.dBLong = SMA(delay.dBLong, amp.dB, blocks.dBLong);
 
-    amp.retrig = delay.dBShort/delay.dBLong;
+    //amp.retrig =  delay.dBShort/delay.dBLong;
+    amp.retrig = amp.dB/delay.dBShort;
+    amp.slope = (delay.dBShort - delay.dBLong)
+              / std::abs(params.smoothTime.dBShort - params.smoothTime.dBLong);
     
 
     //Threshold updates
@@ -323,4 +329,30 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 
     velocity.current = getVelocity(velocity, amp.dB, threshold.noise);
 
+}
+
+MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
+{
+
+    auto output = MidiParams();
+
+    //All of these values should be updated in Calculations::updateSignalCalcs()
+
+    output.weightVal = scribe.fundamentalCertainty[scribe.fundamental.index];
+    output.weightThresh = 0;
+
+    output.midiNum = midiShift(calcs.shift, scribe.midiNumbers[scribe.fundamental.index]);
+    output.delaydB = calcs.amp.dB; //calcs.delay.dBShort;
+    output.noiseThresh = calcs.threshold.noise;
+    output.releaseThresh = calcs.threshold.release;
+
+    output.retrigVal = calcs.amp.retrig;
+    output.retrigStart = calcs.threshold.retrig;
+    output.retrigStop = calcs.threshold.retrigStop;
+
+    output.velocityVal = calcs.velocity.current;
+
+    output.smoothFactor = calcs.blocks.dBShort;
+
+    return output;
 }

@@ -37,9 +37,10 @@ struct Threshold
     float chordPct = 0.7f;
 
     float trigger = 0.75f;
-    float retrig = 0.95f;
+    float retrig = 0.99f;
     float retrigStop  = 1.0f;
     float midiDelay = 15;
+    float slope = .01;
 };
 
 struct Scale
@@ -82,6 +83,7 @@ struct Amp
     float half2 = 0;
     float dB    = 0;
     float retrig = 0;
+    float slope = 0;
 };
 
 struct Delay
@@ -222,6 +224,8 @@ struct Scribe {
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
 
+    MidiSwitch midiSwitch;
+
 };
 
 
@@ -303,3 +307,5 @@ inline int getVelocity(const Velocity& vel, float dB, float dBFloor)
 
     return output;
 }
+
+MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe);
