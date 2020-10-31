@@ -273,7 +273,7 @@ void Scribe::turnOffMidi(int i)
         fNeedsTrigger[i] = false;
         finalNote[i] = midiNumbers[i];
     }
-    if (i = fundamental.index) {
+    if (i == fundamental.index) {
         inTriggerState = false;
     }
     /*
