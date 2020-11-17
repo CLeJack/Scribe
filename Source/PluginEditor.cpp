@@ -154,7 +154,7 @@ void ScribeAudioProcessorEditor::updateSpectrum()
 {
     for (int i = 0; i < scribe.weights.size(); i++)
     {
-        guiSpectrum.certainty.weights[i] = scribe.fundamentalHistory[i];
+        guiSpectrum.certainty.weights[i] = scribe.maxWeights[i];
     }
 
 

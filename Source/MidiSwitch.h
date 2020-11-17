@@ -11,7 +11,7 @@
 
 #pragma once
 #include "Head.h"
-
+#include "Stats.h"
 
 enum class MidiState {off, on, retrigger};
 
@@ -35,6 +35,7 @@ struct MidiParams
     int velocityVal;
     
     float smoothFactor = 0;
+    float consistency = 0;
     bool constrain = false;
     int constrainStep = 2;
 };

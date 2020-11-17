@@ -439,8 +439,12 @@ float getPeriod(float freq, float srate, int size)
     return int(size - srate/freq)+1;
 }
 
-
-float SMA(float hist, float val, float size)
+//acts like a low pass filter, but instead of being concerned with frequency input
+//this function removes size number of blocks from history, and adds the most recent
+//data in it's place
+//this is similar to averaging a window of data where each value in the window 
+//is a metric computed in a given blocksize
+float SMABlocks(float hist, float val, float size)
 {
     /*
     it seems this method has two vunerabilities
@@ -457,6 +461,7 @@ float SMA(float hist, float val, float size)
     return hist * (1 - frac) + (val * frac);
 }
 
+//acts like a low pass filter.
 float SMA(float hist, float val, float frac)
 {
     return hist * (1 - frac) + (val * frac);

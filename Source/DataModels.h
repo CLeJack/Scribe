@@ -33,9 +33,6 @@ struct Threshold
     float release = -60;
     float noise   = -50;
 
-    float certainty = 0.6f; //certainty of .7 is too high for notes below A2, but works really well otherwise
-    float chordPct = 0.7f;
-
     float trigger = 0.75f;
     float retrig = 0.99f;
     float retrigStop  = 1.0f;
@@ -52,9 +49,9 @@ struct Scale
 struct SmoothTime //corresponds with Calculation Delay 
 {
     //milliseconds
-    float midi     = 25;
-    float dBShort  = 5; //shorter smoothing time
-    float dBLong   = 25; //longer smoothing time
+    float midi     = .025f;
+    float dBShort  = .005f; //higher frequency events
+    float dBLong   = .010f; //lower frequency events
 };
 
 struct Shift
@@ -82,12 +79,14 @@ struct Amp
     float half1 = 0;
     float half2 = 0;
     float dB    = 0;
+    float dBPrev = 0;
     float retrig = 0;
     float slope = 0;
 };
 
 struct Delay
 {
+    float dbShortPrev = -90;
     float dBShort = -90;
     float dBLong  = -90;
 };
@@ -97,7 +96,14 @@ struct Blocks
     float midi = 1;
     float dBShort  = 1;
     float dBLong   = 1;
-    int midiDelay = 1;
+};
+
+//for SMA function (simple moving average)
+struct Fraction
+{
+    float midi = 0;
+    float dBShort = 0;
+    float dBLong = 0;
 };
 
 struct Note
@@ -105,6 +111,12 @@ struct Note
     int index       = 0;
     int prevIndex   = 0;
     float history = 0;
+};
+
+struct Consistency
+{
+    float history = 0;
+    float current = 0;
 };
 
 
@@ -155,21 +167,8 @@ struct Scribe {
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
     
-    void updateFundamental(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh);
-    void updateChords(const Range& range, const Blocks& blocks, const Amp& amp, const Threshold& thresh);
-    
-    void updatePeaks();
-    
-    void updateFMidiInfo(
-        const Threshold& thresh, const Amp& amp, const Velocity& vel, 
-        const Range& range, const Shift& shift, const Blocks& blocks);
-    
-    void updateCMidiInfo(
-        const Threshold& thresh, const Amp& amp, const Velocity& vel, 
-        const Range& range, const Shift& shift);
+    void updateFundamental(const Range& range);
 
-    void turnOnMidi(int i, const Amp& amp, const Threshold& thresh);
-    void turnOffMidi(int i);
 
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
 
@@ -181,35 +180,12 @@ struct Scribe {
 
     fvec weights        = fvec(frequencies.size(), 0);
     fvec maxWeights     = fvec(frequencies.size(), 0);
-    fvec sumWeights     = fvec(frequencies.size(), 0);
-
-    fvec fundamentalCertainty = fvec(frequencies.size(), 0);
-    fvec fundamentalHistory   = fvec(frequencies.size(), 0);
-
-    fvec chordCertainty = fvec(frequencies.size(), 0);
-    fvec chordHistory   = fvec(frequencies.size(), 0);
-    fvec peaks          = fvec(frequencies.size(), 0);
-    fvec peaksHistory   = fvec(frequencies.size(), 0);
-    ivec finalNote      = ivec(frequencies.size(), 0);
-    
-    std::vector<bool> fNeedsTrigger = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> fOnNotes = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> fNeedsRelease = std::vector<bool>(frequencies.size(), false);
-
-    std::vector<bool> cNeedsTrigger = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> cOnNotes = std::vector<bool>(frequencies.size(), false);
-    std::vector<bool> cNeedsRelease = std::vector<bool>(frequencies.size(), false);
     
     Note fundamental;
     bool inTriggerState = false;
-    float chordAvg = 0;
-    float peakFloor = 0;
-    bool runChords = false;
-    fvec timeVector = fvec(audio.ds.samples, 0);
+    float dBSmoothing = 0;
 
-    int delayCounter = 0;
-    int delayTime = 0;
-    bool awaitingDelay = 0;
+    fvec timeVector = fvec(audio.ds.samples, 0);
 
     bool sendAllNotesOff = false;
 
@@ -262,12 +238,15 @@ struct Calculations
 
     Amp amp;
     Delay delay;
+    Fraction fraction;
     Blocks blocks;
 
     Shift shift;
     Velocity velocity;
 
     Note fundamental;
+
+    Consistency consistency;
 
 };
 

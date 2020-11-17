@@ -64,6 +64,6 @@ fvec hadamardX(const fvec& arr1, const fvec& arr2);
 fvec add(const fvec& arr1, const fvec& arr2);
 
 //simple moving average without storage
-float SMA(float hist, float val, float size);
+float SMABlocks(float hist, float val, float size);
 
 float SMA(float hist, float val, float frac);

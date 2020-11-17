@@ -92,13 +92,17 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         state = MidiState::retrigger;
     }
-    else if(!notes.equal(smooth))
+    else if(!notes.equal(smooth) && params.consistency >= .9)
     {
         //portamento or retrigger logic here.
         //going to retrigger for now
         notes.push(smooth);
         onSequence(params, output);
 
+    }
+    else if(params.consistency < .9)
+    {
+        notes.push(notes.current);
     }
     else
     {
@@ -123,7 +127,8 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.delaydB > params.noiseThresh && params.midiNum != 0)
+    else if(params.delaydB > params.noiseThresh && params.midiNum != 0
+            && params.consistency >= .9)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
@@ -162,8 +167,6 @@ float MidiSwitch::smoothNote(const MidiParams& params)
     {
         return notes.current;
     }
-    float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
-    ref += params.midiNum * 1.0f/params.smoothFactor;
-    ref = std::abs(notes.current - ref) < params.constrainStep ? ref : notes.current;
-    return ref;
+    
+    return SMABlocks(notes.current, params.midiNum, params.smoothFactor);;
 }

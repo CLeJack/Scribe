@@ -53,19 +53,7 @@ int main()
 
         calcs.updateSignal(scribe, params);
 
-        scribe.updateFundamental(calcs.range, calcs.blocks, 
-                             calcs.amp, calcs.threshold);
-
-        //scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
-        //                      calcs.range, calcs.shift, calcs.blocks);
-
-        /*
-        scribe.updateChords(calcs.range, calcs.blocks, 
-                             calcs.amp, calcs.threshold);
-
-        scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, 
-                              calcs.range, calcs.shift);
-        */
+        scribe.updateFundamental(calcs.range);
 
        SwitchMessage message{};
        
@@ -100,12 +88,10 @@ int main()
             (float)message.off,
             999,
             float(scribe.fundamental.prevIndex != scribe.fundamental.index),
-            calcs.threshold.chordPct,
-            scribe.peakFloor,
             999,
             (float)calcs.amp.slope,
-            (float)scribe.fundamentalCertainty[scribe.fundamental.index],
-            (float)scribe.fundamentalHistory[scribe.fundamental.index]
+            calcs.consistency.current,
+            calcs.consistency.history
             };
             
 
