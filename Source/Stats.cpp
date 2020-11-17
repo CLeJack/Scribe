@@ -457,6 +457,11 @@ float SMA(float hist, float val, float size)
     return hist * (1 - frac) + (val * frac);
 }
 
+float SMA(float hist, float val, float frac)
+{
+    return hist * (1 - frac) + (val * frac);
+}
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 fvec add(const fvec& arr1, const fvec& arr2)

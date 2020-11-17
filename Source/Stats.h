@@ -65,3 +65,5 @@ fvec add(const fvec& arr1, const fvec& arr2);
 
 //simple moving average without storage
 float SMA(float hist, float val, float size);
+
+float SMA(float hist, float val, float frac);

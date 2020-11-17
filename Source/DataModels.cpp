@@ -91,8 +91,8 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks, const A
     //peaks = fvec(fundamentalHistory.size(), 0);
     if (amp.dB > thresh.noise) 
     {
-        fundamental.index = maxArg(fundamentalHistory);
-        //fundamental.index = maxArg(fundamentalCertainty);
+        //fundamental.index = maxArg(fundamentalHistory);
+        fundamental.index = maxArg(fundamentalCertainty);
         //peaks[fundamental.index] = 1;
     }
     
