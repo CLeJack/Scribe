@@ -30,12 +30,13 @@ struct MidiParams
 
     float retrigVal = 0;
     float retrigStart = 0;
+    float retrigSameStart = 0;
     float retrigStop = 0;
     
     int velocityVal;
     
     float smoothFactor = 0;
-    float consistency = 0;
+    bool isConsistent = false;
     bool constrain = false;
     int constrainStep = 2;
 };

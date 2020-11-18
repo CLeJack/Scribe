@@ -98,12 +98,7 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 
     
     
-    consistency.current = float(scribe.fundamental.index == scribe.fundamental.prevIndex);
-    consistency.history = SMABlocks(consistency.history, consistency.current, blocks.dBShort);
-    if(scribe.midiSwitch.state == MidiState::retrigger)
-    {
-        consistency.history = 0;
-    }
+    
 
     amp.retrig =  amp.half2/amp.val;
     
@@ -117,6 +112,20 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 
     velocity.current = getVelocity(velocity, amp.dB, threshold.noise);
 
+}
+
+void Calculations::updateConsistency(const Scribe& scribe, const AudioParams& params)
+{
+    consistency.current = float(scribe.fundamental.index == scribe.fundamental.prevIndex);
+    consistency.history = SMABlocks(consistency.history, consistency.current, blocks.dBShort);
+    if(scribe.midiSwitch.state == MidiState::retrigger)
+    {
+        consistency.history = 0;
+    }
+
+    
+    consistency.isConsistent =  consistency.history >= params.threshold.consistency? true : false;
+    
 }
 
 MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
@@ -136,12 +145,13 @@ MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
 
     output.retrigVal = calcs.amp.retrig;
     output.retrigStart = calcs.threshold.retrig;
+    output.retrigSameStart = calcs.threshold.retrigSameNote;
     output.retrigStop = calcs.threshold.retrigStop;
 
     output.velocityVal = calcs.velocity.current;
 
     output.smoothFactor = calcs.blocks.midi;
-    output.consistency = calcs.consistency.history;
+    output.isConsistent = calcs.consistency.isConsistent;
 
     return output;
 }

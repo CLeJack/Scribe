@@ -242,6 +242,8 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     scribe.updateFundamental(calcs.range);
 
+    calcs.updateConsistency(scribe, params);
+
 
     SwitchMessage message{};
 

@@ -83,30 +83,23 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
     float smooth;
+    
     smooth = smoothNote(params); //should be called before on, retrigger
     if(params.delaydB < params.releaseThresh )
     {
         state = MidiState::off;
     }
-    else if(params.retrigVal < params.retrigStart)
+    else if( (params.retrigVal < params.retrigStart && notes.current != params.midiNum) 
+        || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum) )
     {
         state = MidiState::retrigger;
+        
     }
-    else if(!notes.equal(smooth) && params.consistency >= .9)
+    else if(notes.current != params.midiNum && params.isConsistent)
     {
-        //portamento or retrigger logic here.
-        //going to retrigger for now
-        notes.push(smooth);
+        notes.push(params.midiNum);
         onSequence(params, output);
 
-    }
-    else if(params.consistency < .9)
-    {
-        notes.push(notes.current);
-    }
-    else
-    {
-        notes.push(smooth);
     }
 
     return output;
@@ -128,7 +121,7 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         
     }
     else if(params.delaydB > params.noiseThresh && params.midiNum != 0
-            && params.consistency >= .9)
+            && params.isConsistent)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
@@ -143,7 +136,8 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
 SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
-    if(!notes.areZero() && params.retrigVal < params.retrigStop)
+    //if(!notes.areZero() && params.retrigVal < params.retrigStop)
+    if (!notes.areZero())
     {   
         //clear midiNum buffer if it hasn't been cleared out;
 
@@ -153,7 +147,8 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
+    //else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
+    else 
     {
         state = MidiState::off;
     }

@@ -13,9 +13,9 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    //fvec signal0 = importCsv("input/upwards-error-g3-to-a3.csv", 1*srate);
-    //fvec signal0 = importCsv("input/c5-eb5-severe-drop.csv", 1*srate);
-    fvec signal0 = importCsv("input/d5-c5-b4-drop.csv", 1*srate);
+    fvec signal0 = importCsv("input/upwards-error-g3-to-a3.csv", 1*srate);
+    //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
+    //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
 
     #if PRINT == 1
     //printRows(scribe.frequencies, "output/_0_freqs.csv");
@@ -56,6 +56,8 @@ int main()
         calcs.updateSignal(scribe, params);
 
         scribe.updateFundamental(calcs.range);
+
+        calcs.updateConsistency(scribe, params);
 
        SwitchMessage message{};
        

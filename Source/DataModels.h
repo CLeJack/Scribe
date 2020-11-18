@@ -34,7 +34,10 @@ struct Threshold
     float noise   = -50;
     
     float retrig = 0.98f;
+    float retrigSameNote = 0.90f;
     float retrigStop  = 1.1f;
+
+    float consistency = .95f;
 };
 
 struct Scale
@@ -114,6 +117,7 @@ struct Consistency
 {
     float history = 0;
     float current = 0;
+    bool isConsistent = false;
 };
 
 
@@ -226,6 +230,7 @@ struct Calculations
     //these functions should be called in order
     void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
+    void updateConsistency(const Scribe& scribe, const AudioParams& params);
     
 
     AudioParams params;
