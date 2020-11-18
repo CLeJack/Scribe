@@ -80,28 +80,32 @@ void Calculations::updateRange(const Scribe& scribe, const AudioParams& params)
 void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 {
 
+    blocks.dBShort = secToFraction(params.smoothTime.dBShort, scribe.audio.srate, scribe.audio.blockSize);
+    blocks.dBLong  = secToFraction(params.smoothTime.dBLong, scribe.audio.srate, scribe.audio.blockSize);
+    blocks.midi    = secToFraction(params.smoothTime.midi, scribe.audio.srate, scribe.audio.blockSize);
+
+
     //center of mass w.r.t. signal y axis. Very similar to RMS, but with faster response;
-    amp.val = CoMY(scribe.historyDS);
+    auto CoMs = CoMY3(scribe.historyDS);
+
+    amp.val = SMABlocks(amp.val, CoMs[0], blocks.dBShort);
+    amp.half1 = SMABlocks(amp.half1, CoMs[1], blocks.dBShort);
+    amp.half2 = SMABlocks(amp.half2, CoMs[2], blocks.dBShort);
 
     amp.dBPrev = amp.dB;
     amp.dB = int16ToDb(amp.val);
     amp.dB = (amp.dB < scribe.audio.mindB) || std::isnan(amp.dB) ? scribe.audio.mindB : amp.dB;
 
     
-
-    blocks.dBShort = secToFraction(params.smoothTime.dBShort, scribe.audio.srate, scribe.audio.blockSize);
-    blocks.dBLong  = secToFraction(params.smoothTime.dBLong, scribe.audio.srate, scribe.audio.blockSize);
-    blocks.midi    = secToFraction(params.smoothTime.midi, scribe.audio.srate, scribe.audio.blockSize);
-
-    delay.dBShort = SMABlocks(delay.dBShort, amp.dB, blocks.dBShort);
-    delay.dBLong = SMABlocks(delay.dBLong, amp.dB, blocks.dBLong);
+    
     consistency.current = float(scribe.fundamental.index == scribe.fundamental.prevIndex);
     consistency.history = SMABlocks(consistency.history, consistency.current, blocks.dBShort);
+    if(scribe.midiSwitch.state == MidiState::retrigger)
+    {
+        consistency.history = 0;
+    }
 
-    amp.retrig =  delay.dBShort/delay.dBLong;
-    //amp.retrig = amp.dB/delay.dBLong;
-    amp.slope = (delay.dBShort - delay.dBLong)
-              / std::abs(params.smoothTime.dBShort - params.smoothTime.dBLong);
+    amp.retrig =  amp.half2/amp.val;
     
 
     //Threshold updates

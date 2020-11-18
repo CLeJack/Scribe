@@ -76,7 +76,6 @@ private:
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
-    void processMidi(juce::MidiBuffer& midiMessages);
     
 
     std::vector<juce::MidiMessage> notes;

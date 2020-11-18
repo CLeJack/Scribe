@@ -13,15 +13,17 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/trem.csv", 2.5*srate);
+    //fvec signal0 = importCsv("input/upwards-error-g3-to-a3.csv", 1*srate);
+    //fvec signal0 = importCsv("input/c5-eb5-severe-drop.csv", 1*srate);
+    fvec signal0 = importCsv("input/d5-c5-b4-drop.csv", 1*srate);
 
     #if PRINT == 1
-    printRows(scribe.frequencies, "output/_0_freqs.csv");
-    printColumn(scribe.timeVector, "output/_0_timeVector.csv");
+    //printRows(scribe.frequencies, "output/_0_freqs.csv");
+    //printColumn(scribe.timeVector, "output/_0_timeVector.csv");
 
-    printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
-    printMatrix(scribe.maxSineMatrix, "output/_0_maxsinematrix.csv",0);
-    printMatrix(scribe.maxOctMatrix, "output/_0_maxOctMatrix.csv",0);
+    //printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
+    //printMatrix(scribe.maxSineMatrix, "output/_0_maxsinematrix.csv",0);
+    //printMatrix(scribe.maxOctMatrix, "output/_0_maxOctMatrix.csv",0);
 
     //printColumn(signal0, "output/_1_signal.csv");
 
@@ -67,15 +69,10 @@ int main()
         fvec output = {
             (float)scribe.fundamental.index,
             (float)scribe.fundamental.prevIndex,
-            calcs.delay.dBShort,
-            calcs.delay.dBLong,
-            calcs.threshold.noise,
             999,
             calcs.amp.dB,
-            calcs.threshold.release,
-            999,
-            (float)calcs.range.lowNote,
-            (float)calcs.range.highNote,
+            calcs.amp.val,
+            calcs.amp.half2,
             999,
             calcs.amp.retrig,
             calcs.threshold.retrig,
@@ -87,9 +84,6 @@ int main()
             (float)message.on,
             (float)message.off,
             999,
-            float(scribe.fundamental.prevIndex != scribe.fundamental.index),
-            999,
-            (float)calcs.amp.slope,
             calcs.consistency.current,
             calcs.consistency.history
             };
@@ -124,19 +118,7 @@ int main()
             midiSwitch.notes.prev <<", "<<
             (float)midiSwitch.state <<"\n";
 #endif
-/*
-    for(int i = 0; i < scribe.fNeedsRelease.size(); i++)
-        {
-            if(scribe.fNeedsTrigger[i])
-            {
-                scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
-            }
-            if(scribe.fNeedsRelease[i])
-            {
-                scribe.turnOffMidi(i);
-            }
-        }
-        */
+
     }
     return 0;
 }

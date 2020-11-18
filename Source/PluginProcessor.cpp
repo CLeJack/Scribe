@@ -156,11 +156,10 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     {
         juce::MidiMessage note;
 
-        for (int i = 0; i < scribe.fOnNotes.size(); i++)
+        for (int i = 0; i < 128; i++)
         {
-            note = juce::MidiMessage::noteOff(1, scribe.finalNote[i], (juce::uint8)0);
+            note = juce::MidiMessage::noteOff(1, i, (juce::uint8)0);
             midiMessages.addEvent(note, 0);
-            scribe.turnOffMidi(i);
         }
         scribe.sendAllNotesOff = false;
     }
@@ -241,15 +240,8 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateSignal(scribe, params);
 
-    scribe.updateFundamental(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
-    //chords currently aren't functioning
-    //try the pitch-octave-certainty implementation next
-    //scribe.updateChords(calcs.range, calcs.blocks, calcs.amp, calcs.threshold);
+    scribe.updateFundamental(calcs.range);
 
-    //scribe.updateFMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift, calcs.blocks);
-    //scribe.updateCMidiInfo(calcs.threshold, calcs.amp, calcs.velocity, calcs.range, calcs.shift);
-
-    //processMidi(midiMessages);
 
     SwitchMessage message{};
 
@@ -293,29 +285,6 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     
 
     buffer.clear();
-}
-
-void ScribeAudioProcessor::processMidi(juce::MidiBuffer& midiMessages)
-{
-    juce::MidiMessage note;
-
-    for (int i = 0; i < scribe.fOnNotes.size(); i++) 
-    {
-        if (scribe.fNeedsTrigger[i]) 
-        {
-            note = juce::MidiMessage::noteOn(1, scribe.finalNote[i], (juce::uint8) calcs.velocity.current);
-            midiMessages.addEvent(note, 0);
-            scribe.turnOnMidi(i, calcs.amp, calcs.threshold);
-        }
-
-        //calc dB check is itentional redundancy; this should turn off all notes if they are on when the amplitude is too low
-        if (scribe.fNeedsRelease[i]) 
-        {
-            note = juce::MidiMessage::noteOff(1, scribe.finalNote[i], (juce::uint8)0);
-            midiMessages.addEvent(note, 0);
-            scribe.turnOffMidi(i);
-        }
-    }
 }
 
 void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)

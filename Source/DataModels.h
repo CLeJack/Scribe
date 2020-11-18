@@ -32,12 +32,9 @@ struct Threshold
 
     float release = -60;
     float noise   = -50;
-
-    float trigger = 0.75f;
-    float retrig = 0.99f;
-    float retrigStop  = 1.0f;
-    float midiDelay = 15;
-    float slope = .01;
+    
+    float retrig = 0.98f;
+    float retrigStop  = 1.1f;
 };
 
 struct Scale
