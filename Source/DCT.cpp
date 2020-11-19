@@ -73,6 +73,7 @@ void setComplexMatrix(cmatrix& matrix, const fvec& freqs, const fvec& timeVector
         for(int col = 0; col < timeVector.size(); col++)
         {
             matrix[row][col] = std::exp(iunit * (omega * timeVector[col]));
+            
         }
     }
 }

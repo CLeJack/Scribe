@@ -49,7 +49,7 @@ bool Scribe::detectsPropertyChange(float srate, float blockSize)
 
 
 
-void Scribe::updateFundamental(const Range& range) 
+void Scribe::updateFundamental(const Range& range, const Blocks& blocks) 
 {
     weights = dct(
         matrix, historyDS,
@@ -57,11 +57,31 @@ void Scribe::updateFundamental(const Range& range)
         audio.ds.signalStart, historyDS.size());
 
     maxWeights = absMaxNormalize(weights, 0);
-    
+    sumWeights = sumNormalize(weights, 0);
 
-    //fundamental.index = maxArg(fundamentalCertainty);
+    fmatrix freqMatrix = freqCertaintyMatrix(
+        maxWeights, maxOctMatrix,
+        range.lowNote, range.highNote,
+        0, weights.size());
+
+    fundamentalCertainty = freqCertaintyVector(
+        sumWeights, freqMatrix,
+        range.lowNote, range.highNote,
+        0, weights.size());
+
+    /*
+    //get history info in range
+    for (int i = range.lowNote; i < range.highNote; i++)
+    {
+        fundamentalHistory[i] = SMABlocks(fundamentalHistory[i], fundamentalCertainty[i], blocks.midi);
+    }
+    */
+
     fundamental.prevIndex = fundamental.index;
-    fundamental.index = maxArg(maxWeights);
+    
+    //fundamental.index = maxArg(maxWeights);
+    fundamental.index = maxArg(fundamentalCertainty);
+    //fundamental.index = maxArg(fundamentalHistory); //history gets really sloppy with transitions
 
 }
 

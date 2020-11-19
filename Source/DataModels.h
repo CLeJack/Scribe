@@ -168,7 +168,7 @@ struct Scribe {
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
     
-    void updateFundamental(const Range& range);
+    void updateFundamental(const Range& range, const Blocks& blocks);
 
 
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
@@ -181,7 +181,11 @@ struct Scribe {
 
     fvec weights        = fvec(frequencies.size(), 0);
     fvec maxWeights     = fvec(frequencies.size(), 0);
-    
+    fvec sumWeights     = fvec(frequencies.size(), 0);
+
+    fvec fundamentalCertainty = fvec(frequencies.size(), 0);
+    fvec fundamentalHistory   = fvec(frequencies.size(), 0);
+
     Note fundamental;
     bool inTriggerState = false;
     float dBSmoothing = 0;

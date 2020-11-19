@@ -240,7 +240,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateSignal(scribe, params);
 
-    scribe.updateFundamental(calcs.range);
+    scribe.updateFundamental(calcs.range, calcs.blocks);
 
     calcs.updateConsistency(scribe, params);
 
