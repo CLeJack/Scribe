@@ -11,8 +11,9 @@
 #include <JuceHeader.h>
 
 #include "ModelInstances.h"
-#include "GUI.h"
 #include "GUIGlobals.h"
+#include "GUITabs.h"
+#include "GUIPaper.h"
 #include "GUIMain.h"
 #include "GUISpectrum.h"
 #include "GUISignal.h"
@@ -23,7 +24,7 @@ class ScribeAudioProcessorEditor;
 //==============================================================================
 /**
 */
-class ScribeAudioProcessor  : public juce::AudioProcessor
+class ScribeAudioProcessor  : public juce::AudioProcessor, public juce::AudioProcessorParameter::Listener
 {
 public:
     //==============================================================================
@@ -67,7 +68,15 @@ public:
     
     //Parameters~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    
+    juce::AudioParameterFloat* maxdBP;
+    juce::AudioParameterInt* maxVelP;
+    juce::AudioParameterInt* minVelP;
+
+    juce::AudioParameterInt* lowNoteP;
+    juce::AudioParameterInt* octaveP;
+    juce::AudioParameterInt* semitoneP;
+
+    juce::AudioParameterFloat* noiseP;
 
 
 private:
@@ -76,6 +85,7 @@ private:
     void waiting(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
     void updating(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages);
+    void updateParams();
     
 
     std::vector<juce::MidiMessage> notes;
@@ -84,10 +94,8 @@ private:
     const float fps = 30;
     int fpsBlocks = 11;
 
-
-    
-
-    
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScribeAudioProcessor)
 };

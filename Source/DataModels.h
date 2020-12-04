@@ -201,7 +201,7 @@ struct Scribe {
     fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
 
 
-    std::unique_ptr<FloatBuffer> history;
+    std::unique_ptr<Buffer<float> > history;
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
 

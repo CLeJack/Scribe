@@ -37,8 +37,6 @@ struct MidiParams
     
     float smoothFactor = 0;
     bool isConsistent = false;
-    bool constrain = false;
-    int constrainStep = 2;
 };
 
 struct SwitchMessage

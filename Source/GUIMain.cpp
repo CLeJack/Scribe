@@ -102,8 +102,8 @@ GuiMainPanel::GuiMainPanel() :
     addAndMakeVisible(octave);
     addAndMakeVisible(semitone);
 
-
     addAndMakeVisible(panic);
+
 }
 
 
@@ -142,6 +142,11 @@ sl.setBounds (sliderArea.removeFromLeft (sliderArea.getWidth() * frac));\
 
     area.removeFromLeft(area.getWidth() * 0.333);
     area.removeFromRight(area.getWidth() * 0.5);
+    
+    
+    area.removeFromTop(area.getHeight() * 0.5);
+
+
     area.removeFromTop(area.getHeight() * 0.333);
     area.removeFromBottom(area.getHeight() * 0.5);
     panic.setBounds(area);

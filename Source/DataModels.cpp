@@ -31,7 +31,7 @@ void Scribe::initialize(float srate, float blockSize)
     setOctErrMatrix1(maxOctMatrix, matrix, timeVector, frequencies, absMaxNormalize );
     setSineMatrix(maxSineMatrix, matrix, timeVector, frequencies, absMaxNormalize);
 
-    history.reset(new FloatBuffer(audio.samples, 0.0f));
+    history.reset(new Buffer<float>(audio.samples, 0.0f));
 
     dBSmoothing = blockSize/srate;
 

@@ -24,6 +24,26 @@ ScribeAudioProcessor::ScribeAudioProcessor()
                        )
 #endif
 {
+    addParameter(maxdBP = new juce::AudioParameterFloat("maxdBP", "Max dB", -60.0f, 0.0f, params.velocity.maxdB));
+    addParameter(maxVelP = new juce::AudioParameterInt("maxVelP", "Max Vel.", 0, 127, params.velocity.max));
+    addParameter(minVelP = new juce::AudioParameterInt("minVelP", "Min Vel.", 0, 127, params.velocity.min));
+
+    addParameter(lowNoteP = new juce::AudioParameterInt("lowNoteP", "Low Note", 12, 28, params.range.lowNote));
+    addParameter(octaveP = new juce::AudioParameterInt("octaveP", "Octave", -8, 8, params.shift.octave));
+    addParameter(semitoneP = new juce::AudioParameterInt("semitoneP", "Semitone", -12, 12, params.shift.semitone));
+
+    addParameter(noiseP = new juce::AudioParameterFloat("noiseP", "Noise (dB)", -60.0f, 0.0f, params.threshold.noise));
+
+
+    maxdBP->addListener(this);
+    maxVelP->addListener(this);
+    minVelP->addListener(this);
+
+    lowNoteP->addListener(this);
+    octaveP->addListener(this);
+    semitoneP->addListener(this);
+
+    noiseP->addListener(this);
 
     pluginState = PluginState::waiting;
     
@@ -169,13 +189,26 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 //==============================================================================
 bool ScribeAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows == juce::SystemStats::OperatingSystemType::Windows)
+    {
+        return  true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 juce::AudioProcessorEditor* ScribeAudioProcessor::createEditor()
 {
-    return new ScribeAudioProcessorEditor (*this);
-    //return nullptr;
+    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows == juce::SystemStats::OperatingSystemType::Windows) 
+    {
+        return  new ScribeAudioProcessorEditor(*this);
+    }
+    else 
+    {
+        return nullptr;
+    }
 }
 
 //==============================================================================
@@ -199,6 +232,15 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new ScribeAudioProcessor();
 }
 
+void ScribeAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) 
+{
+    updateParams();
+}
+
+void ScribeAudioProcessor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+{
+}
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // custom functions
@@ -218,7 +260,7 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-
+    
     fpsBlocks = getSampleRate() / (getBlockSize() * fps);
     //add the block to history
     auto* channelData = buffer.getReadPointer(0);
@@ -235,6 +277,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
     }
 
+    updateParams(); //align virtualParams with gui
 
     calcs.updateRange(scribe, params);
 
@@ -294,6 +337,17 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
     pluginState = PluginState::waiting;
     
     buffer.clear();
+}
+
+void ScribeAudioProcessor::updateParams() 
+{
+    params.velocity.maxdB   = *maxdBP;
+    params.velocity.max     = *maxVelP;
+    params.velocity.min     = *minVelP;
+    params.range.lowNote    = *lowNoteP;
+    params.shift.octave     = *octaveP;
+    params.shift.semitone   = *semitoneP;
+    params.threshold.noise  = *noiseP;
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -34,6 +34,8 @@ public:
 
     void setSliders();
     GUIState getTabState();
+
+    
     
     
     

@@ -30,7 +30,7 @@ public:
     SignalMeter(int bufferSize);
     void paint(juce::Graphics& g) override;
 
-    FloatBuffer dBBuffer;
+    Buffer<float> dBBuffer;
     
 };
 

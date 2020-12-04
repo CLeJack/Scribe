@@ -13,6 +13,10 @@
       <FILE id="BCqb9X" name="scribe-icon.png" compile="0" resource="1" file="Res/scribe-icon.png"/>
     </GROUP>
     <GROUP id="{33973F6F-06C1-9A96-2178-3386DF1F8349}" name="Source">
+      <FILE id="AE2DMM" name="GUIPaper.cpp" compile="1" resource="0" file="Source/GUIPaper.cpp"/>
+      <FILE id="LwQeEf" name="GUIPaper.h" compile="0" resource="0" file="Source/GUIPaper.h"/>
+      <FILE id="NEvcxS" name="GUITabs.cpp" compile="1" resource="0" file="Source/GUITabs.cpp"/>
+      <FILE id="CzGFgO" name="GUITabs.h" compile="0" resource="0" file="Source/GUITabs.h"/>
       <FILE id="f9EP8S" name="Likelihood.cpp" compile="1" resource="0" file="Source/Likelihood.cpp"/>
       <FILE id="ZASO4l" name="Likelihood.h" compile="0" resource="0" file="Source/Likelihood.h"/>
       <FILE id="j9iYow" name="ModelInstances.cpp" compile="1" resource="0"
@@ -28,10 +32,6 @@
       <FILE id="qULwcK" name="GUISignal.h" compile="0" resource="0" file="Source/GUISignal.h"/>
       <FILE id="fux8xL" name="GUISpectrum.cpp" compile="1" resource="0" file="Source/GUISpectrum.cpp"/>
       <FILE id="Gy7FfO" name="GUISpectrum.h" compile="0" resource="0" file="Source/GUISpectrum.h"/>
-      <FILE id="typisM" name="GUI.cpp" compile="1" resource="0" file="Source/GUI.cpp"/>
-      <FILE id="RTwVod" name="GUI.h" compile="0" resource="0" file="Source/GUI.h"/>
-      <FILE id="oxaq0f" name="CircularBuffer.cpp" compile="1" resource="0"
-            file="Source/CircularBuffer.cpp"/>
       <FILE id="re81pF" name="CircularBuffer.h" compile="0" resource="0"
             file="Source/CircularBuffer.h"/>
       <FILE id="iyFLHA" name="DCT.cpp" compile="1" resource="0" file="Source/DCT.cpp"/>

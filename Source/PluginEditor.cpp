@@ -91,37 +91,43 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 
     if (slider == &panel.minVel.slider)
     {
-        params.velocity.min = slider->getValue();
+        //params.velocity.min = slider->getValue();
+        *audioProcessor.minVelP = slider->getValue();
     }
 
     else if (slider == &panel.maxVel.slider)
     {
-        params.velocity.max = slider->getValue();
+        //params.velocity.max = slider->getValue();
+        *audioProcessor.maxVelP = slider->getValue();
     }
     else if (slider == &panel.maxdB.slider)
     {
-        params.velocity.maxdB = slider->getValue();
+        //params.velocity.maxdB = slider->getValue();
+        *audioProcessor.maxdBP = slider->getValue();
     }
 
     else if (slider == &panel.octave.slider)
     {
-        params.shift.octave = slider->getValue();
+        //params.shift.octave = slider->getValue();
+        *audioProcessor.octaveP = slider->getValue();
     }
 
     else if (slider == &panel.semitone.slider)
     {
-        params.shift.semitone = slider->getValue();
+        //params.shift.semitone = slider->getValue();
+        *audioProcessor.semitoneP = slider->getValue();
     }
     
     else if (slider == &panel.noise.slider)
     {
-        params.threshold.noise = slider->getValue();
+        //params.threshold.noise = slider->getValue();
+        *audioProcessor.noiseP = slider->getValue();
     }
     else if (slider == &panel.lowNote.slider)
     {
-        params.range.lowNote = slider->getValue();
+        //params.range.lowNote = slider->getValue();
+        *audioProcessor.lowNoteP = slider->getValue();
     }
-
 
 
 }

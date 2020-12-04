@@ -60,9 +60,6 @@ SwitchMessage MidiSwitch::update(const MidiParams& params)
 
 void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
 {
-    // if a midiNum switches too rapidly without a retrigger--don't count it.
-    // legato and slides happen over a time period that should be detectable by retrigger
-    // or portamento logic
     m.on = midiRound(notes.current);
 
     m.onVel = p.velocityVal;
@@ -89,18 +86,18 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         state = MidiState::off;
     }
-    else if( (params.retrigVal < params.retrigStart && notes.current != params.midiNum) 
-        || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum) )
+    else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum)
+        || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
     {
         state = MidiState::retrigger;
-        
+
     }
-    else if(notes.current != params.midiNum && params.isConsistent)
+    else if (notes.current != params.midiNum && params.isConsistent)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
 
-    }
+    }    
 
     return output;
 }
