@@ -11,6 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
+
 //==============================================================================
 ScribeAudioProcessor::ScribeAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -189,26 +191,27 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 //==============================================================================
 bool ScribeAudioProcessor::hasEditor() const
 {
-    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows == juce::SystemStats::OperatingSystemType::Windows)
-    {
-        return  true;
-    }
-    else
-    {
-        return false;
-    }
+#if GUILESS == 0
+
+    return  true;
+
+#else
+
+    return false;
+#endif
 }
 
 juce::AudioProcessorEditor* ScribeAudioProcessor::createEditor()
 {
-    if (juce::SystemStats::getOperatingSystemType() & juce::SystemStats::OperatingSystemType::Windows == juce::SystemStats::OperatingSystemType::Windows) 
-    {
-        return  new ScribeAudioProcessorEditor(*this);
-    }
-    else 
-    {
-        return nullptr;
-    }
+
+#if GUILESS == 0
+
+    return  new ScribeAudioProcessorEditor(*this);
+
+#else
+
+    return nullptr;
+#endif
 }
 
 //==============================================================================
