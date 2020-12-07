@@ -2,11 +2,11 @@
 
 Scribe is a monophonic, open source, midi conversion VST built with JUCE.
 
-The Windows and Linux version of this file are hosted at 
+The Windows and Linux versions of this VST are hosted at: 
 
 limitegauge.com
 
-I currently do not have a MAC system to compile and test the MAC build with, but the source can be downloaded locally and compiled using the Mac JUCE exporter.
+I currently do not have a MAC system to compile and test the MAC build with, but the source can be downloaded and compiled using the Mac JUCE exporter.
 
 #### Quick Start and Tips
 
