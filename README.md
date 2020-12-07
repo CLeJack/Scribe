@@ -6,7 +6,7 @@ The Windows and Linux versions of this VST are hosted at:
 
 limitegauge.com
 
-I currently do not have a MAC system to compile and test the MAC build with, but the source can be downloaded and compiled using the Mac JUCE exporter.
+I currently do not have a Mac system to compile and test the Mac build with, but the source can be downloaded and compiled using the Mac JUCE exporter.
 
 #### Quick Start and Tips
 
@@ -29,7 +29,7 @@ playing above the 9th fret, and using the midi panel to octave shift to your des
 Scribe has a very simple design. The primary logic that makes it work is contained in the DCT.h and DCT.cpp files. 
 DCT stands for Discrete Customized Transform--borrowing from the Discrete Fourier Transform.
 
-The Fourier Transform and its derivatives are bound by sample rate and an analysis window which, when combined, give a fixed frequency resolution.
+The Fourier Transform and its derivatives are bound by sample rate and an analysis window which give a fixed frequency resolution.
 As a consequence, to get a resolution of one hertz with something like a DFT or FFT would require a window of 44100 samples.
 
 Scribe takes advantage of the following facts.
