@@ -1,3 +1,14 @@
+/*
+  ==============================================================================
+
+    MidiSwitch.cpp
+    Created: 24 Oct 2020 5:16:23pm
+    Author:  cjack
+
+  ==============================================================================
+*/
+
+
 #include "MidiSwitch.h"
 
 
@@ -49,9 +60,6 @@ SwitchMessage MidiSwitch::update(const MidiParams& params)
 
 void MidiSwitch::onSequence(const MidiParams& p, SwitchMessage& m)
 {
-    // if a midiNum switches too rapidly without a retrigger--don't count it.
-    // legato and slides happen over a time period that should be detectable by retrigger
-    // or portamento logic
     m.on = midiRound(notes.current);
 
     m.onVel = p.velocityVal;
@@ -72,27 +80,24 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
     float smooth;
+    
     smooth = smoothNote(params); //should be called before on, retrigger
     if(params.delaydB < params.releaseThresh )
     {
         state = MidiState::off;
     }
-    else if(params.retrigVal < params.retrigStart)
+    else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum)
+        || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
     {
         state = MidiState::retrigger;
-    }
-    else if(!notes.equal(smooth))
-    {
-        //portamento or retrigger logic here.
-        //going to retrigger for now
-        notes.push(smooth);
-        onSequence(params, output);
 
     }
-    else
+    else if (notes.current != params.midiNum && params.isConsistent)
     {
-        notes.push(smooth);
-    }
+        notes.push(params.midiNum);
+        onSequence(params, output);
+
+    }    
 
     return output;
 }
@@ -112,7 +117,8 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.delaydB > params.noiseThresh && params.midiNum != 0)
+    else if(params.delaydB > params.noiseThresh && params.midiNum != 0
+            && params.isConsistent)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
@@ -127,7 +133,8 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
 SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
-    if(!notes.areZero() && params.retrigVal < params.retrigStop)
+    //if(!notes.areZero() && params.retrigVal < params.retrigStop)
+    if (!notes.areZero())
     {   
         //clear midiNum buffer if it hasn't been cleared out;
 
@@ -137,7 +144,8 @@ SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
         notes.push(0);
         
     }
-    else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
+    //else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
+    else 
     {
         state = MidiState::off;
     }
@@ -151,8 +159,6 @@ float MidiSwitch::smoothNote(const MidiParams& params)
     {
         return notes.current;
     }
-    float ref = notes.current * (1.0f - 1.0f/params.smoothFactor);
-    ref += params.midiNum * 1.0f/params.smoothFactor;
-    ref = std::abs(notes.current - ref) < params.constrainStep ? ref : notes.current;
-    return ref;
+    
+    return SMABlocks(notes.current, params.midiNum, params.smoothFactor);;
 }

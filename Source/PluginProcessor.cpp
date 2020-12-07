@@ -11,6 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
+
 //==============================================================================
 ScribeAudioProcessor::ScribeAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -24,6 +26,26 @@ ScribeAudioProcessor::ScribeAudioProcessor()
                        )
 #endif
 {
+    addParameter(maxdBP = new juce::AudioParameterFloat("maxdBP", "Max dB", -60.0f, 0.0f, params.velocity.maxdB));
+    addParameter(maxVelP = new juce::AudioParameterInt("maxVelP", "Max Vel.", 0, 127, params.velocity.max));
+    addParameter(minVelP = new juce::AudioParameterInt("minVelP", "Min Vel.", 0, 127, params.velocity.min));
+
+    addParameter(lowNoteP = new juce::AudioParameterInt("lowNoteP", "Low Note", 12, 28, params.range.lowNote));
+    addParameter(octaveP = new juce::AudioParameterInt("octaveP", "Octave", -8, 8, params.shift.octave));
+    addParameter(semitoneP = new juce::AudioParameterInt("semitoneP", "Semitone", -12, 12, params.shift.semitone));
+
+    addParameter(noiseP = new juce::AudioParameterFloat("noiseP", "Noise (dB)", -60.0f, 0.0f, params.threshold.noise));
+
+
+    maxdBP->addListener(this);
+    maxVelP->addListener(this);
+    minVelP->addListener(this);
+
+    lowNoteP->addListener(this);
+    octaveP->addListener(this);
+    semitoneP->addListener(this);
+
+    noiseP->addListener(this);
 
     pluginState = PluginState::waiting;
     
@@ -138,7 +160,7 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-
+    
     switch(pluginState)
     {
         case PluginState::ready :   
@@ -151,19 +173,45 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             waiting(buffer, midiMessages);
             break;
     }
+
+    if (scribe.sendAllNotesOff) 
+    {
+        juce::MidiMessage note;
+
+        for (int i = 0; i < 128; i++)
+        {
+            note = juce::MidiMessage::noteOff(1, i, (juce::uint8)0);
+            midiMessages.addEvent(note, 0);
+        }
+        scribe.sendAllNotesOff = false;
+    }
     
 }
 
 //==============================================================================
 bool ScribeAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+#if GUILESS == 0
+
+    return  true;
+
+#else
+
+    return false;
+#endif
 }
 
 juce::AudioProcessorEditor* ScribeAudioProcessor::createEditor()
 {
-    return new ScribeAudioProcessorEditor (*this);
-    //return nullptr;
+
+#if GUILESS == 0
+
+    return  new ScribeAudioProcessorEditor(*this);
+
+#else
+
+    return nullptr;
+#endif
 }
 
 //==============================================================================
@@ -187,6 +235,15 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new ScribeAudioProcessor();
 }
 
+void ScribeAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) 
+{
+    updateParams();
+}
+
+void ScribeAudioProcessor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+{
+}
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // custom functions
@@ -206,10 +263,8 @@ void ScribeAudioProcessor::waiting(juce::AudioBuffer<float>& buffer, juce::MidiB
 
 void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::MidiMessage note;
-
-    //updateAudioParams(); //handled by gui now
-
+    
+    fpsBlocks = getSampleRate() / (getBlockSize() * fps);
     //add the block to history
     auto* channelData = buffer.getReadPointer(0);
     for (int i = 0; i < buffer.getNumSamples(); i++)
@@ -225,35 +280,26 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
     }
 
+    updateParams(); //align virtualParams with gui
 
-    calcs.updateRange (params.range);
+    calcs.updateRange(scribe, params);
 
-    //discrete customized transform (dct) using a portion of frequency and signal
-    dct (scribe.weights,
-        scribe.matrix,                                         //dft using this matrix
-        scribe.historyDS,                                      //on this signal
-        calcs.range.lowNote, calcs.range.highNote,             //for these rows
-        scribe.audio.ds.signalStart, scribe.historyDS.size()); //and these columns
+    calcs.updateSignal(scribe, params);
 
-    sumNormalize (scribe.weights);
-    weightRatio  (scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
+    scribe.updateFundamental(calcs.range, calcs.blocks);
 
-    //I need void version of the above for pre existing matrices;
+    calcs.updateConsistency(scribe, params);
 
-    calcs.updateSignal (scribe, params);
-
-    calcs.updateMidi   (scribe, params);
 
     SwitchMessage message{};
 
-    MidiParams midiParams = getMidiParams(calcs);
+    MidiParams midiParams = getMidiParams(calcs, scribe);
 
     message = scribe.midiSwitch.update(midiParams);
 
-    
-
     if (message.send)
     {
+        juce::MidiMessage note;
         note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
         midiMessages.addEvent(note, 0);
 
@@ -261,11 +307,9 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         midiMessages.addEvent(note, 1);
     }
 
-    //don't forget to update this to be srate specific
-    // 11 was with 44100 hz in mind and is approximately 30 fps
-    frameCounter = (frameCounter + 1) % 11; 
+    
+    frameCounter = (frameCounter + 1) % fpsBlocks; 
 
-    frameCounter = message.send ? 0 : frameCounter;
     auto editor = (ScribeAudioProcessorEditor*)getActiveEditor();
     
     if (frameCounter == 0 && editor != nullptr) 
@@ -280,17 +324,11 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         case GUIState::signal:
             editor->updateSignal();
             break;
-        case GUIState::midi:
-            editor->updateMidi(message.send);
-            break;
-        case GUIState::settings:
-            editor->updateSettings();
-            break;
         case GUIState::main:
             break;
         }
-
         editor->repaint();
+        
     }
     
 
@@ -302,6 +340,17 @@ void ScribeAudioProcessor::updating(juce::AudioBuffer<float>& buffer, juce::Midi
     pluginState = PluginState::waiting;
     
     buffer.clear();
+}
+
+void ScribeAudioProcessor::updateParams() 
+{
+    params.velocity.maxdB   = *maxdBP;
+    params.velocity.max     = *maxVelP;
+    params.velocity.min     = *minVelP;
+    params.range.lowNote    = *lowNoteP;
+    params.shift.octave     = *octaveP;
+    params.shift.semitone   = *semitoneP;
+    params.threshold.noise  = *noiseP;
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -10,6 +10,8 @@ void printRows(const fvec& arr, std::string title);
 
 void printRows(const ivec& arr, std::string title);
 
+void printRows(const std::vector<bool>& arr, std::string title);
+
 void printMatrix(fmatrix& mat, std::string title, int id);
 
 void printMatrix(cmatrix& mat, std::string title, int id);

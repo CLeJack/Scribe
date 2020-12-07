@@ -1,17 +1,41 @@
 #include "Stats.h"
 
 //Basic Stats~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-float mean(const fvec& arr)
+
+float mean(const fvec& arr, int start, int end)
 {
     float output = 0;
-    for(int i= 0; i < arr.size(); i++)
+    for(int i= start; i < end; i++)
     {
         output += arr[i];
     }
 
-    return output/arr.size();
+    return output/(float)arr.size();
 }
 
+float mean(const fvec& arr, int start)
+{
+    return mean(arr, start, arr.size());
+}
+
+float mean(const fvec& arr)
+{
+    return mean(arr, 0, arr.size());
+}
+
+
+float positiveMean(const fvec& arr, int start, int end)
+{
+    float output = 0;
+    float count = 1;
+    for(int i= start; i < end; i++)
+    {
+        output += arr[i];
+        count += 1;
+    }
+
+    return output/count;
+}
 //~~Root mean Squared ~~~~~~~~~~~~~~~~~~~~~~~
 float rms(const fvec& arr, int start, int end)
 {
@@ -156,7 +180,7 @@ int minArg(const fvec& arr)
 
 
 //~~Normalization~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-fvec absMaxNormalize(const fvec& arr)
+fvec absMaxNormalize(const fvec& arr, int zero)
 {
     float max = absMaxValue(arr, 0);
     fvec output(arr.size(), 0);
@@ -182,7 +206,7 @@ void absMaxNormalize(fvec& arr)
     }
 }
 
-fvec sumNormalize(const fvec& arr)
+fvec sumNormalize(const fvec& arr, int zero)
 {
     float total = 0;
     fvec output(arr.size(), 0);
@@ -415,19 +439,56 @@ float getPeriod(float freq, float srate, int size)
     return int(size - srate/freq)+1;
 }
 
-
-float SMA(float hist, float val, float size)
+//acts like a low pass filter, but instead of being concerned with frequency input
+//this function removes size number of blocks from history, and adds the most recent
+//data in it's place
+//this is similar to averaging a window of data where each value in the window 
+//is a metric computed in a given blocksize
+float SMABlocks(float hist, float val, float size)
 {
     /*
     it seems this method has two vunerabilities
 
     1. it holds on to data introduced into the history much longer than if an actual window was used
-       e.g. if 1 million was introduced with a prev_avg of 1, many updates would be needed to flush 1 million
-       if a window of size N with history was used, only N+1 updates would be needed.
+       e.g. if 1 million was introduced with a prev_avg of 1, many updates would be needed to flush 1 million.
+       If a window of size N with history was used, only N+1 updates would be needed.
 
     2. rounding error is introduced with each division.
 
     log(0) introduces infinities, but rounding error shouldn't be an issue.
     */
-    return hist - (hist / size) + (val / size);
+   float frac = 1.0f/size;
+    return hist * (1 - frac) + (val * frac);
+}
+
+//acts like a low pass filter.
+float SMA(float hist, float val, float frac)
+{
+    return hist * (1 - frac) + (val * frac);
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+fvec add(const fvec& arr1, const fvec& arr2)
+{
+    fvec output(arr1.size(), 0);
+
+    for(int i = 0; i < arr1.size(); i++)
+    {
+        output[i] = arr1[i] + arr2[i];
+    }
+
+    return output;
+}
+
+fvec hadamardX(const fvec& arr1, const fvec& arr2)
+{
+    fvec output(arr1.size(), 0);
+
+    for(int i = 0; i < arr1.size(); i++)
+    {
+        output[i] = arr1[i] * arr2[i];
+    }
+
+    return output;
 }

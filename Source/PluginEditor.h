@@ -14,7 +14,9 @@
 
 //==============================================================================
 
-class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener
+class ScribeAudioProcessorEditor  : public juce::AudioProcessorEditor, 
+    public juce::Slider::Listener,
+    public juce::Button::Listener
 {
 public:
     ScribeAudioProcessorEditor (ScribeAudioProcessor&);
@@ -24,14 +26,16 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void sliderValueChanged(juce::Slider* slider) override ;
+    void buttonClicked(juce::Button* button) override;
     
     void updateSpectrum();
     void updateSignal();
-    void updateMidi(bool send);
-    void updateSettings();
+
 
     void setSliders();
     GUIState getTabState();
+
+    
     
     
     
@@ -41,11 +45,10 @@ private:
     // access the processor object that created it.
     ScribeAudioProcessor& audioProcessor;
 
-    GuiMain guiMain;
+    GuiMainTab guiMainTab;
+    GuiMainPanel guiMainPanel;
     GuiSpectrum guiSpectrum;
     GuiSignal guiSignal;
-    GuiMidi guiMidi;
-    GuiSettings guiSettings;
     GuiTabs guiTabs;
     
 

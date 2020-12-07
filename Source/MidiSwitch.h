@@ -1,6 +1,17 @@
+/*
+  ==============================================================================
+
+    MidiSwitch.h
+    Created: 24 Oct 2020 5:16:23pm
+    Author:  cjack
+
+  ==============================================================================
+*/
+
+
 #pragma once
 #include "Head.h"
-
+#include "Stats.h"
 
 enum class MidiState {off, on, retrigger};
 
@@ -19,13 +30,13 @@ struct MidiParams
 
     float retrigVal = 0;
     float retrigStart = 0;
+    float retrigSameStart = 0;
     float retrigStop = 0;
     
     int velocityVal;
     
     float smoothFactor = 0;
-    bool constrain = false;
-    int constrainStep = 2;
+    bool isConsistent = false;
 };
 
 struct SwitchMessage

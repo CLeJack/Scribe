@@ -13,26 +13,25 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/_test_a3.csv", 2.5*srate);
+    fvec signal0 = importCsv("input/upwards-error-g3-to-a3.csv", 1*srate);
+    //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
+    //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
 
     #if PRINT == 1
-    printRows(scribe.frequencies, "output/_0_freqs.csv");
-    printColumn(scribe.timeVector, "output/_0_timeVector.csv");
+    //printRows(scribe.frequencies, "output/_0_freqs.csv");
+    //printColumn(scribe.timeVector, "output/_0_timeVector.csv");
 
-    printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
+    //printMatrixReal(scribe.matrix, "output/_0_cmatrix.csv",0);
+    //printMatrix(scribe.maxSineMatrix, "output/_0_maxsinematrix.csv",0);
+    //printMatrix(scribe.maxOctMatrix, "output/_0_maxOctMatrix.csv",0);
 
-    printColumn(signal0, "output/_1_signal.csv");
+    //printColumn(signal0, "output/_1_signal.csv");
 
     #endif
 
     int loops = (signal0.size() / scribe.audio.blockSize);
     int start = 0;
     int end = 0;
-
-    params.threshold.noise0 = -68;
-    params.threshold.noise1 = -68;
-    params.threshold.noise2 = -68;
-    params.threshold.noise3 = -68;
 
     for(int i = 0; i < loops; i++)
     {
@@ -52,56 +51,58 @@ int main()
             scribe.historyDS[i] = trueSignal[i * scribe.audio.ds.factor];
         }
 
-        
-        calcs.updateRange(params.range);
+        calcs.updateRange(scribe, params);
 
-        dct(scribe.weights, scribe.matrix, scribe.historyDS,
-            calcs.range.lowNote, calcs.range.highNote, 
-            scribe.audio.ds.signalStart, scribe.historyDS.size());
+        calcs.updateSignal(scribe, params);
 
-        sumNormalize(scribe.weights);
-        weightRatio(scribe.ratios, scribe.weights, scribe.tuning.octaveSize);
-        
-        calcs.updateSignal (scribe, params);
-        calcs.updateMidi   (scribe, params);
+        scribe.updateFundamental(calcs.range);
 
-        SwitchMessage message{};
-        
-        MidiParams midiParams = getMidiParams(calcs);
+        calcs.updateConsistency(scribe, params);
 
-        message = scribe.midiSwitch.update(midiParams);
+       SwitchMessage message{};
+       
+       MidiParams midiParams = getMidiParams(calcs, scribe);
+       
+       message = scribe.midiSwitch.update(midiParams);
         
 
         
 #if PRINT == 1
         fvec output = {
-            (float)calcs.fundamental.index,
-            (float)calcs.note.index,
-            (float)calcs.targets.weight,
-            calcs.threshold.weight,
-            (float)calcs.fundamental.ratio,
-            (float)calcs.note.ratio,
-            calcs.amp.val,
+            (float)scribe.fundamental.index,
+            (float)scribe.fundamental.prevIndex,
+            999,
             calcs.amp.dB,
-            calcs.delay.dBShort,
-            calcs.delay.dBLong,
-            calcs.threshold.noise,
-            calcs.targets.retrigger,
+            calcs.amp.val,
+            calcs.amp.half2,
+            999,
+            calcs.amp.retrig,
+            calcs.threshold.retrig,
+            calcs.threshold.retrigStop,
+            999,
+            (float)scribe.midiSwitch.state,
+            (float)scribe.midiSwitch.notes.current,
+            (float)scribe.midiSwitch.notes.prev,
             (float)message.on,
-            (float)message.onVel,
             (float)message.off,
-            (float)message.offVel,
-            (float)message.send,
-            scribe.midiSwitch.notes.current,
-            scribe.midiSwitch.notes.prev,
-            (float)scribe.midiSwitch.state};
+            999,
+            calcs.consistency.current,
+            calcs.consistency.history
+            };
             
 
         //printRows( trueSignal, "_2_history.csv");
-        printRows( scribe.historyDS, "output/_2_historyDS.csv");
-        printRows( scribe.weights, "output/_2_weights.csv");
-        printRows( scribe.ratios, "output/_2_ratios.csv");
+        //printRows( scribe.historyDS, "output/_2_historyDS.csv");
+        //printRows( scribe.weights, "output/_2_weights.csv");
+        //printRows( scribe.maxWeights, "output/_2_maxNormW.csv");
+        //printRows( scribe.fundamentalHistory, "output/_2_maxWHist.csv");
+        //printRows( scribe.chordHistory, "output/_2_chordHist.csv");
+        //printRows( scribe.peaksHistory, "output/_2_peakWHist.csv");
+        //printRows( scribe.peaks, "output/_2_peaks.csv");
+        //printRows( scribe.fOnNotes, "output/_2_fOnNotes.csv");
+        //printRows( scribe.cOnNotes, "output/_2_cOnNotes.csv");
         printRows(output, "output/_2_value_output.csv");
+        //
 
 #elif PRINT == 2
 

@@ -5,19 +5,124 @@
 #include "CircularBuffer.h"
 #include "Stats.h"
 #include "DCT.h"
+#include "Likelihood.h"
 #include "ProcessData.h"
 #include "MidiSwitch.h"
 
+
 /*
 * 
+0. Shared Structs
 1. Scribe Model
 2. AudioParam Model
 3. Calculations Model
 
 */
 
-// 1. Scribe program data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// 0.Shared Structs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+struct Range 
+{
+    int lowNote  = 28;
+    int highNote = lowNote + 48;
+};
+
+struct Threshold
+{
+
+    float release = -60;
+    float noise   = -50;
+    
+    float retrig = 0.98f;
+    float retrigSameNote = 0.90f;
+    float retrigStop  = 1.1f;
+
+    float consistency = .95f;
+};
+
+struct Scale
+{
+    float noise  = -5;
+    float weight = 0.5f;
+};
+
+struct SmoothTime //corresponds with Calculation Delay 
+{
+    //milliseconds
+    float midi     = .025f;
+    float dBShort  = .005f; //higher frequency events
+    float dBLong   = .010f; //lower frequency events
+};
+
+struct Shift
+{
+    int octave   = 0;
+    int semitone = 0;
+};
+
+struct Velocity
+{
+    int min = 0;
+    int max = 127;
+
+    float maxdB = 0;
+    int current = 0;
+};
+
+//calculation specific
+
+enum class TriggerState { trigger, retriggering, stable };
+
+struct Amp
+{
+    float val   = 0;
+    float half1 = 0;
+    float half2 = 0;
+    float dB    = 0;
+    float dBPrev = 0;
+    float retrig = 0;
+    float slope = 0;
+};
+
+struct Delay
+{
+    float dbShortPrev = -90;
+    float dBShort = -90;
+    float dBLong  = -90;
+};
+
+struct Blocks
+{
+    float midi = 1;
+    float dBShort  = 1;
+    float dBLong   = 1;
+};
+
+//for SMA function (simple moving average)
+struct Fraction
+{
+    float midi = 0;
+    float dBShort = 0;
+    float dBLong = 0;
+};
+
+struct Note
+{
+    int index       = 0;
+    int prevIndex   = 0;
+    float history = 0;
+};
+
+struct Consistency
+{
+    float history = 0;
+    float current = 0;
+    bool isConsistent = false;
+};
+
+
+
+//scribe specific
 struct Tuning
 {
     const float refFreq = 440; //(Hz) concert tuning
@@ -51,91 +156,63 @@ struct Audio
 
     float srate = 44100;
     int blockSize = 128;
+    float mindB = -90;
     DownSample ds;
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~
+
+// 1. Scribe program data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Scribe {
 
     void initialize(float srate, float blockSize);//set all required non-const variables here
     bool detectsPropertyChange(float srate, float blockSize);
+    
+    void updateFundamental(const Range& range, const Blocks& blocks);
+
+
     bool isInitialized = false; //don't run PluginProcessor ready state loop without this set to true
 
     Tuning tuning;
     Audio audio;
 
     fvec frequencies = fvec(1 + tuning.highExp - tuning.lowExp, 0);
+    ivec midiNumbers = ivec(frequencies.size(), 0);
 
-    fvec weights = fvec(frequencies.size(), 0);
-    fvec ratios = fvec(frequencies.size(), 0);
+    fvec weights        = fvec(frequencies.size(), 0);
+    fvec maxWeights     = fvec(frequencies.size(), 0);
+    fvec sumWeights     = fvec(frequencies.size(), 0);
+
+    fvec fundamentalCertainty = fvec(frequencies.size(), 0);
+    fvec fundamentalHistory   = fvec(frequencies.size(), 0);
+
+    Note fundamental;
+    bool inTriggerState = false;
+    float dBSmoothing = 0;
 
     fvec timeVector = fvec(audio.ds.samples, 0);
 
+    bool sendAllNotesOff = false;
+
     cmatrix matrix = cmatrix(frequencies.size(), cvec(audio.ds.samples, std::complex<float>(0, 0)));
 
-    std::unique_ptr<FloatBuffer> history;
+    //sum normalization and max normalization
+    fmatrix maxOctMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+    fmatrix maxSineMatrix = fmatrix(frequencies.size(), fvec(audio.ds.samples,0));
+
+
+    std::unique_ptr<Buffer<float> > history;
 
     fvec historyDS = fvec(audio.ds.samples, 0.0001f);
 
-    MidiSwitch midiSwitch = MidiSwitch();
+    MidiSwitch midiSwitch;
+
 };
 
 
 
 // 2. AudioParam data model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-struct Range 
-{
-    int lowNote  = 28;
-    int highNote = lowNote + 48;
-};
 
-struct Threshold
-{
-    float ratio = 3;
-
-    float release = -60;
-
-    float weight0 = 0.05f;
-    float weight1 = 0.05f;
-    float weight2 = 0.10f;
-    float weight3 = 0.15f;
-
-    float noise0 = -35;
-    float noise1 = -40;
-    float noise2 = -45;
-    float noise3 = -50;
-
-    float retrigStart = 0.9f;
-    float retrigStop  = 1.0f;
-};
-
-struct Scale
-{
-    float noise  = -5;
-    float weight = 0.5f;
-};
-
-struct SmoothTime //corresponds with Calculation Delay 
-{
-    //milliseconds
-    float midi     = 11;
-    float dBShort  = 11; //shorter smoothing time
-    float dBLong   = dBShort * 2; //longer smoothing time
-};
-
-struct Shift
-{
-    int octave   = 0;
-    int semitone = 0;
-};
-
-struct Velocity
-{
-    int min = 50;
-    int max = 127;
-
-    float ratio = .15;
-};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~
 struct AudioParams
@@ -150,90 +227,70 @@ struct AudioParams
 
 // 3. Calculations Data Model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-struct RangeResults
-{
-    int lowNote  = 0;
-    int highNote = 0;
-};
-
-struct ThresholdResults
-{
-    float weight = 0;
-    float noise  = 0;
-
-    float release   = 0;
-    float retrigger = 0;
-
-    float retrigStart = 0;
-    float retrigStop  = 0;
-};
-
-struct Note
-{
-    int index   = 0;
-    int octave  = 0;
-    int pitch   = 0;
-    float ratio = 0;
-};
-
-struct Midi
-{
-    int index    = 0;
-    int velocity = 0;
-};
-
-struct Amp
-{
-    float val   = 0;
-    float half1 = 0;
-    float half2 = 0;
-    float dB    = 0;
-};
-
-struct Delay
-{
-    float dBShort = -90;
-    float dBLong  = -90;
-};
-
-struct Blocks
-{
-    float midi = 1;
-    float dBShort  = 1;
-    float dBLong   = 1;
-};
-
-
-
-struct Targets 
-{
-    float weight    = 0;
-    float retrigger = 0;
-};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct Calculations
 {
     //these functions should be called in order
-    void updateRange  (const Range& params);
+    void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
-    void updateMidi   (const Scribe& scribe, const AudioParams& params);
+    void updateConsistency(const Scribe& scribe, const AudioParams& params);
+    
+
     AudioParams params;
 
-    RangeResults range;
-    ThresholdResults threshold;
+    Range range;
+    Threshold threshold;
 
     Amp amp;
     Delay delay;
+    Fraction fraction;
     Blocks blocks;
-    
-    Note fundamental;
-    Note note;
-    Midi midi;
 
-    Targets targets;
+    Shift shift;
+    Velocity velocity;
+
+    Note fundamental;
+
+    Consistency consistency;
 
 };
 
-MidiParams getMidiParams(const Calculations& calcs);
 
+inline int getMidiNumber(float freq, float refFreq)
+{
+    return int(0.5f + 69 + 12 * std::log2(freq / refFreq));
+}
+
+inline int midiShift(const Shift& shift, int midiNum)
+{
+    int midi = midiNum;
+    int oct = shift.octave + midi/12;
+    int pitch = (midi%12) + shift.semitone;
+
+    int out = 12*oct + pitch;
+
+    if(out < 0 || out > 127)
+    {
+        return 0;
+    }
+    
+    return out;
+}
+
+
+
+inline int getVelocity(const Velocity& vel, float dB, float dBFloor) 
+{
+
+    //switch this back to previous method with rolling values
+    float pct = std::abs((dB - dBFloor) / (vel.maxdB - dBFloor));
+
+    int output = vel.min + pct * (vel.max - vel.min);
+    output = output > vel.max ? vel.max : output;
+    output = output < vel.min ? vel.min : output;
+
+    return output;
+}
+
+MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe);

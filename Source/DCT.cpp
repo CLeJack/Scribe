@@ -44,7 +44,7 @@ fvec dct(const cmatrix& matrix, const fvec& signal,
 fvec dct(const cmatrix& matrix, const fvec& signal)
 {   // can pass exMatrix with exWeights
 
-    int rowf = matrix.size() - 1;
+    int rowf = matrix.size();
     int indf = signal.size();
 
     return dct( matrix, signal, 0, rowf, 0, indf);
@@ -73,6 +73,7 @@ void setComplexMatrix(cmatrix& matrix, const fvec& freqs, const fvec& timeVector
         for(int col = 0; col < timeVector.size(); col++)
         {
             matrix[row][col] = std::exp(iunit * (omega * timeVector[col]));
+            
         }
     }
 }

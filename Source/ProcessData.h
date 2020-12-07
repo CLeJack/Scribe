@@ -1,14 +1,13 @@
 #pragma once
 #include "Head.h"
 
-
-inline int secToBlocks(float seconds, float srate, float blockSize, float timeDivisor = 1000.0f)
+inline float secToFraction(float seconds, float srate, float blockSize, float timeDivisor = 1)
 {
 	// second to blocks
 	// set time divisor to 1000 for milliseconds, or 1 for seconds 
 	// srate (samples/sec) * seconds / blockSize (samples/block) + 1;
 	// gives a minimum of 1 block when seconds = 0
-	return srate * (seconds/timeDivisor) / blockSize + 1;
+	return srate * (seconds/timeDivisor) / blockSize;
 }
 
 inline float weightLimit(float minWeight, float weightScale, float minIndex, float currentIndex, float octSize) 

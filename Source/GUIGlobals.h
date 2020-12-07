@@ -40,9 +40,34 @@ const juce::Colour MARKER2{ (juce::uint8)128, (juce::uint8)128, (juce::uint8)128
 const juce::Colour MARKER3{ (juce::uint8)192, (juce::uint8)192, (juce::uint8)192 };
 
 
-//implement this as a pluginProcessor field later
-//pass the plugin processor to the guitab;
-enum class GUIState { main, spectrum, signal, midi, settings };
+enum class GUIState { main, spectrum, signal };
+
+
+inline void initText(juce::Label& component, const char* text, int justification)
+{
+    component.setText(text, juce::NotificationType::dontSendNotification);
+    component.setJustificationType(juce::Justification(justification));
+}
+
+inline void resizeH(juce::Rectangle<int>& area, int pixels) 
+{
+    area.removeFromTop(pixels);
+    area.removeFromBottom(pixels);
+}
+
+inline void resizeW(juce::Rectangle<int>& area, float pixels) 
+{
+    area.removeFromLeft(pixels);
+    area.removeFromRight(pixels);
+}
+
+inline void resizeHW(juce::Rectangle<int>& area, float pixh, float pixw)
+{
+    resizeH(area, pixh);
+    resizeW(area, pixw);
+}
+
+
 
 #define CALL_EACH_ELEM_FUNC(vec, func) {\
 for(int i = 0; i < vec.size(); i++)\
