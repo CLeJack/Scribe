@@ -60,7 +60,7 @@ void SignalScope::paint(juce::Graphics& g)
     Y = (signalVec[0] + max) / (2 * max);
     Y = Y > 1 ? 1 : Y;
     Y = H - H * Y;
-    Y = isnan(Y) ? 0 : Y;
+    Y = std::isnan(Y) ? 0 : Y;
 
     signalPath.startNewSubPath(X, Y);
 
@@ -70,7 +70,7 @@ void SignalScope::paint(juce::Graphics& g)
         Y = (signalVec[i] + max) / (2 * max);
         Y = Y > 1 ? 1 : Y;
         Y = H * Y;
-        Y = isnan(Y) ? 0 : Y;
+        Y = std::isnan(Y) ? 0 : Y;
         signalPath.lineTo(X, Y);
     }
 
