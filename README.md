@@ -36,7 +36,7 @@ Scribe takes advantage of the following facts.
 * There is no intention of modifying or reconstructing the original signal, so negative frequencies aren't needed.
 * The analysis window only needs to be large enough to contain a single cycle of the lowest frequency of interest.
 * The range of a guitar is small, so the signal can be downsampled dramatically.
-* Other FFT algorithms compute frequencies based on sample rate and window size, but there's nothing preventing choosing only frequencies of interests. In the case of Scribe, this means 12TET notes with a 440 hz reference.
+* Other FFT algorithms attempt to give insight into a large range of the frequency spectrum, but there's nothing stopping us from choosing only frequencies of interests. In the case of Scribe, this means 12TET frequencies with a 440 hz reference.
 
 
 #### License
