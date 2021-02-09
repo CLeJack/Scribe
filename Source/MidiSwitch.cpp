@@ -86,22 +86,23 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         state = MidiState::off;
     }
-    /*
+    //add bend state here and duplicate the default push behavior
+    //add param for pitch bendOn
     else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum)
         || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
     {
         state = MidiState::retrigger;
 
     }
-    
     else if (notes.current != params.midiNum && params.isConsistent)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
         state = MidiState::bend;
+        //scribe was getting stuck in the bend state--I need to go back and implement this
 
     }
-    */  
+    
 
     return output;
 }

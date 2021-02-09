@@ -202,10 +202,10 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
             //adjust to make the modulation more sensitive;
             //another potential user param
             float pitchScaling = 5;
-
+            float sign = position < 0 ? -1 : 1;
             //scale the position based on frequency index--centered at index 45
             // -1.06 determined from solving for height difference between two different octaves
-            position = pitchScaling * (position + -.00416 * ( index - 45 ));
+            position = pitchScaling * (position + sign * -.00416 * ( index - 45 ));
 
             //correct for excessive scaling;
 

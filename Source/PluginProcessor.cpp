@@ -191,6 +191,7 @@ void ScribeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 //==============================================================================
 bool ScribeAudioProcessor::hasEditor() const
 {
+    //GUILESS is defined in projucer exporter preprocessor definitions
 #if GUILESS == 0
 
     return  true;
@@ -290,23 +291,34 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     calcs.updateConsistency(scribe, params);
 
+    calcs.updatePitchWheel(scribe, params);
+
 
     SwitchMessage message{};
 
     MidiParams midiParams = getMidiParams(calcs, scribe);
 
     message = scribe.midiSwitch.update(midiParams);
-
+    
+    juce::MidiMessage note;
+    
     if (message.send)
     {
-        juce::MidiMessage note;
+        
         note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
         midiMessages.addEvent(note, 0);
 
         note = juce::MidiMessage::noteOn(1, message.on, (juce::uint8)message.onVel);
-        midiMessages.addEvent(note, 1);
+        midiMessages.addEvent(note, 0);
     }
 
+    if (calcs.pitchWheelPosition != 0) 
+    {
+        note = juce::MidiMessage::pitchWheel(1, 16383 * (0.5 * calcs.pitchWheelPosition + 0.5));
+
+        midiMessages.addEvent(note, 0);
+    }
+    
     
     frameCounter = (frameCounter + 1) % fpsBlocks; 
 
