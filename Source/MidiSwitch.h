@@ -13,7 +13,7 @@
 #include "Head.h"
 #include "Stats.h"
 
-enum class MidiState {off, on, retrigger};
+enum class MidiState {off, on, retrigger, bend};
 
 struct MidiMode{};
 struct ConstrainMidi : public MidiMode {};

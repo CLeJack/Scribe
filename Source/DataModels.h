@@ -110,7 +110,9 @@ struct Note
 {
     int index       = 0;
     int prevIndex   = 0;
-    float history = 0;
+    float history   = 0;
+
+    int lastActivated = 0;
 };
 
 struct Consistency
@@ -235,6 +237,7 @@ struct Calculations
     void updateRange  (const Scribe& scribe, const AudioParams& params);
     void updateSignal (const Scribe& scribe, const AudioParams& params);
     void updateConsistency(const Scribe& scribe, const AudioParams& params);
+    void updatePitchWheel(const Scribe& scribe, const AudioParams& params);
     
 
     AudioParams params;
@@ -253,6 +256,8 @@ struct Calculations
     Note fundamental;
 
     Consistency consistency;
+
+    float pitchWheelPosition = 0;
 
 };
 

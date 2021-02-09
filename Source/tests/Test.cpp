@@ -13,7 +13,7 @@ int main()
 
     scribe.initialize(srate, blockSize);
 
-    fvec signal0 = importCsv("input/upwards-error-g3-to-a3.csv", 1*srate);
+    fvec signal0 = importCsv("input/bend.csv", 3*srate);
     //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
     //fvec signal0 = importCsv("input/sudden-drop-out.csv", 1*srate);
 
@@ -55,9 +55,11 @@ int main()
 
         calcs.updateSignal(scribe, params);
 
-        scribe.updateFundamental(calcs.range);
+        scribe.updateFundamental(calcs.range, calcs.blocks);
 
         calcs.updateConsistency(scribe, params);
+
+        calcs.updatePitchWheel(scribe, params);
 
        SwitchMessage message{};
        
@@ -71,6 +73,7 @@ int main()
         fvec output = {
             (float)scribe.fundamental.index,
             (float)scribe.fundamental.prevIndex,
+            (float)scribe.fundamental.lastActivated,
             999,
             calcs.amp.dB,
             calcs.amp.val,
@@ -87,7 +90,9 @@ int main()
             (float)message.off,
             999,
             calcs.consistency.current,
-            calcs.consistency.history
+            calcs.consistency.history,
+            999,
+            calcs.pitchWheelPosition
             };
             
 

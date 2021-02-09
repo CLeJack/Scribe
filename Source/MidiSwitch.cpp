@@ -86,18 +86,22 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         state = MidiState::off;
     }
+    /*
     else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum)
         || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
     {
         state = MidiState::retrigger;
 
     }
+    
     else if (notes.current != params.midiNum && params.isConsistent)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
+        state = MidiState::bend;
 
-    }    
+    }
+    */  
 
     return output;
 }

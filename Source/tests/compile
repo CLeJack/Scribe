@@ -1,5 +1,5 @@
 #! /bin/bash
-UtilSrc=("CircularBuffer.cpp" "DCT.cpp" "Stats.cpp" "Tuning.cpp" "Waveforms.cpp" "Likelihood.cpp")
+UtilSrc=("DCT.cpp" "Stats.cpp" "Tuning.cpp" "Waveforms.cpp" "Likelihood.cpp")
 MidiSrc=("MidiSwitch.cpp")
 ProcSrc=("ProcessData.cpp" "DataModels.cpp" "ModelInstances.cpp")
 TestSrc=("Debug.cpp")

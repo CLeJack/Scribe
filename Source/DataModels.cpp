@@ -69,19 +69,23 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks)
         range.lowNote, range.highNote,
         0, weights.size());
 
-    /*
-    //get history info in range
-    for (int i = range.lowNote; i < range.highNote; i++)
-    {
-        fundamentalHistory[i] = SMABlocks(fundamentalHistory[i], fundamentalCertainty[i], blocks.midi);
-    }
-    */
+
 
     fundamental.prevIndex = fundamental.index;
     
-    //fundamental.index = maxArg(maxWeights);
+
     fundamental.index = maxArg(fundamentalCertainty);
-    //fundamental.index = maxArg(fundamentalHistory); //history gets really sloppy with transitions
+
+    //pitch bending updates
+    if(midiSwitch.state == MidiState::on && fundamental.lastActivated == 0)
+    {
+        fundamental.lastActivated = fundamental.prevIndex;
+    }
+    else if(midiSwitch.state != MidiState::on)
+    {
+        fundamental.lastActivated = 0;
+    }
+    
 
 }
 
@@ -116,10 +120,6 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
     amp.dB = int16ToDb(amp.val);
     amp.dB = (amp.dB < scribe.audio.mindB) || std::isnan(amp.dB) ? scribe.audio.mindB : amp.dB;
 
-    
-    
-    
-
     amp.retrig =  amp.half2/amp.val;
     
 
@@ -146,6 +146,90 @@ void Calculations::updateConsistency(const Scribe& scribe, const AudioParams& pa
     
     consistency.isConsistent =  consistency.history >= params.threshold.consistency? true : false;
     
+}
+
+
+void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& params)
+{
+    int index = scribe.fundamental.lastActivated;
+    float position = 0;
+
+    if(index > 0 && scribe.midiSwitch.state == MidiState::on)
+    {
+        int low = params.range.lowNote;
+        int high = params.range.highNote;
+
+        int bendSemitones = 1; //can make this a user param in the future
+
+        //get the indices surrounding the fundamental index;
+        low  = index - bendSemitones > low  ? index - bendSemitones : low;
+        high = index + bendSemitones < high ? index + bendSemitones : high;
+
+        //add semitones to each side of the current index
+        int weightRange = 2 * bendSemitones + 1;
+
+
+        fvec weights = fvec(weightRange,0);
+
+        for(int i = 0; i < high - low + 1; i++)
+        {
+            weights[i] = scribe.fundamentalCertainty[i + low];
+        }
+
+        absMaxNormalize(weights);
+
+        for(int i = 0; i < weights.size(); i++)
+        {
+            weights[i] *= bendSemitones;
+        }
+
+        int centerInd = bendSemitones; //+1 wasn't needed hear due to 0 indexing.
+        float centerVal = weights[centerInd];
+
+        float left = maxArg(weights,0, centerInd);
+        float right = maxArg(weights, centerInd + 1, weightRange);
+
+        float bendVal = centerVal;
+        float bendInd = centerInd;
+        
+        bendInd = weights[left] > weights[right] ? left : right;
+        bendVal = weights[bendInd];
+        
+        
+        if( bendVal > centerVal)
+        {
+            position = (bendVal - centerVal)/(bendInd - centerInd);
+            //adjust to make the modulation more sensitive;
+            //another potential user param
+            float pitchScaling = 5;
+
+            //scale the position based on frequency index--centered at index 45
+            // -1.06 determined from solving for height difference between two different octaves
+            position = pitchScaling * (position + -.00416 * ( index - 45 ));
+
+            //correct for excessive scaling;
+
+            position = position > 1 ? 1 : position;
+            position = position < -1 ? -1 : position;
+            position = std::isnan(position) ? 0 : position;
+
+            
+            
+            pitchWheelPosition = SMABlocks(pitchWheelPosition, position, blocks.dBLong);
+
+            //std::cout <<centerVal << ", " <<bendVal << " | "<< centerInd << ", " << bendInd << " | " << position<< ", " << pitchWheelPosition << "\n";
+        }
+        else
+        {
+            pitchWheelPosition = 0;
+        }
+
+        
+    }
+    else
+    {
+        pitchWheelPosition = 0;
+    }
 }
 
 MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
