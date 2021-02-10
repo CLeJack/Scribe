@@ -35,7 +35,8 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter(semitoneP = new juce::AudioParameterInt("semitoneP", "Semitone", -12, 12, params.shift.semitone));
 
     addParameter(noiseP = new juce::AudioParameterFloat("noiseP", "Noise (dB)", -60.0f, 0.0f, params.threshold.noise));
-
+    addParameter(bendOnP = new juce::AudioParameterBool("bendOnP", "Pitch Bend", true));
+    addParameter(bendThresholdP = new juce::AudioParameterFloat("bendThresholdP", "Bend Threshold", 0.0f, 1.0f, params.threshold.bend));
 
     maxdBP->addListener(this);
     maxVelP->addListener(this);
@@ -296,7 +297,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
 
     SwitchMessage message{};
 
-    MidiParams midiParams = getMidiParams(calcs, scribe);
+    MidiParams midiParams = getMidiParams(calcs, scribe, params);
 
     message = scribe.midiSwitch.update(midiParams);
     
@@ -312,7 +313,7 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         midiMessages.addEvent(note, 0);
     }
 
-    if (calcs.pitchWheelPosition != 0) 
+    if (calcs.pitchWheelPosition > 0.001 && params.bendOn == true) 
     {
         note = juce::MidiMessage::pitchWheel(1, 16383 * (0.5 * calcs.pitchWheelPosition + 0.5));
 
@@ -363,6 +364,8 @@ void ScribeAudioProcessor::updateParams()
     params.shift.octave     = *octaveP;
     params.shift.semitone   = *semitoneP;
     params.threshold.noise  = *noiseP;
+    params.bendOn           = *bendOnP;
+    params.threshold.bend = *bendThresholdP;
 }
 
 //Gui state processing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

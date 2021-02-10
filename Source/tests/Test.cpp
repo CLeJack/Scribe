@@ -32,6 +32,7 @@ int main()
     int loops = (signal0.size() / scribe.audio.blockSize);
     int start = 0;
     int end = 0;
+    params.bendOn = true;
 
     for(int i = 0; i < loops; i++)
     {
@@ -63,7 +64,7 @@ int main()
 
        SwitchMessage message{};
        
-       MidiParams midiParams = getMidiParams(calcs, scribe);
+       MidiParams midiParams = getMidiParams(calcs, scribe, params);
        
        message = scribe.midiSwitch.update(midiParams);
         
@@ -92,7 +93,8 @@ int main()
             calcs.consistency.current,
             calcs.consistency.history,
             999,
-            calcs.pitchWheelPosition
+            calcs.pitchWheelPosition,
+            calcs.frequencyDelta
             };
             
 

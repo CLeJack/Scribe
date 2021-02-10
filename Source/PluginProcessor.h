@@ -77,6 +77,8 @@ public:
     juce::AudioParameterInt* semitoneP;
 
     juce::AudioParameterFloat* noiseP;
+    juce::AudioParameterBool* bendOnP;
+    juce::AudioParameterFloat* bendThresholdP;
 
 
 private:

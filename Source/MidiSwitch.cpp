@@ -54,6 +54,9 @@ SwitchMessage MidiSwitch::update(const MidiParams& params)
         case MidiState::off :
             output = off(params);
             break;
+        case MidiState::bend :
+            output = bend(params);
+            break;
     }
     return output;
 }
@@ -86,11 +89,22 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         state = MidiState::off;
     }
-    //add bend state here and duplicate the default push behavior
-    //add param for pitch bendOn
-    else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum)
+    else if(notes.current != params.midiNum && params.isConsistent && params.bendOn
+        && params.frequencyDelta < params.bendThreshold)
+    {
+        //This state needs to come before retrigger
+        //string bending can cause fluctions of the retrigger value 
+        //so these two states overlap
+        //notes.push(params.midiNum);
+        //onSequence(params, output);
+        state = params.retrigVal < params.retrigSameStart? MidiState::retrigger : MidiState::bend;
+
+    }
+    else if ((params.retrigVal < params.retrigStart && notes.current != params.midiNum && !params.bendOn) 
         || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
     {
+        //retrigger activates much more quickly than bend detection
+        //it can't be allowed to activate with default parameters when the bend state exists
         state = MidiState::retrigger;
 
     }
@@ -98,8 +112,6 @@ SwitchMessage MidiSwitch::on (const MidiParams& params)
     {
         notes.push(params.midiNum);
         onSequence(params, output);
-        state = MidiState::bend;
-        //scribe was getting stuck in the bend state--I need to go back and implement this
 
     }
     
@@ -128,7 +140,6 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
         notes.push(params.midiNum);
         onSequence(params, output);
         state = MidiState::on;
-
     }
 
     return output;
@@ -138,22 +149,41 @@ SwitchMessage MidiSwitch::off (const MidiParams& params)
 SwitchMessage MidiSwitch::retrigger (const MidiParams& params)
 {
     SwitchMessage output = SwitchMessage();
-    //if(!notes.areZero() && params.retrigVal < params.retrigStop)
     if (!notes.areZero())
     {   
         //clear midiNum buffer if it hasn't been cleared out;
 
         offSequence(params, output);
         //order matters here.
-        //don't want to push a new midiNum before setting off midiNum to prev
+        //don't want to push a new midiNum before setting the noteOff midiNum
         notes.push(0);
         
     }
-    //else if(params.retrigVal >= params.retrigStop  || params.delaydB < params.releaseThresh)
     else 
     {
         state = MidiState::off;
     }
+    return output;
+}
+
+SwitchMessage MidiSwitch::bend(const MidiParams & params)
+{
+    SwitchMessage output = SwitchMessage();
+
+    if(params.delaydB < params.releaseThresh)
+    {
+        state = MidiState::off;
+    }
+    //else if ((params.retrigVal < params.retrigSameStart && notes.current != params.midiNum)
+    //    || (params.retrigVal < params.retrigSameStart && notes.current == params.midiNum))
+    else if(params.frequencyDelta > params.bendThreshold)
+    {
+        state = MidiState::retrigger;
+
+    }
+
+    output.send = false;
+
     return output;
 }
 
@@ -165,5 +195,5 @@ float MidiSwitch::smoothNote(const MidiParams& params)
         return notes.current;
     }
     
-    return SMABlocks(notes.current, params.midiNum, params.smoothFactor);;
+    return SMABlocks(notes.current, params.midiNum, params.smoothFactor);
 }

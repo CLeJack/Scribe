@@ -77,11 +77,11 @@ void Scribe::updateFundamental(const Range& range, const Blocks& blocks)
     fundamental.index = maxArg(fundamentalCertainty);
 
     //pitch bending updates
-    if(midiSwitch.state == MidiState::on && fundamental.lastActivated == 0)
+    if( midiSwitch.state == MidiState::on && fundamental.lastActivated == 0)
     {
         fundamental.lastActivated = fundamental.prevIndex;
     }
-    else if(midiSwitch.state != MidiState::on)
+    else if(!(midiSwitch.state == MidiState::bend || midiSwitch.state == MidiState::on))
     {
         fundamental.lastActivated = 0;
     }
@@ -132,6 +132,8 @@ void Calculations::updateSignal(const Scribe& scribe, const AudioParams& params)
 
     velocity.current = getVelocity(velocity, amp.dB, threshold.noise);
 
+    frequencyDelta = std::abs(scribe.fundamentalCertainty[scribe.fundamental.prevIndex] - scribe.fundamentalCertainty[scribe.fundamental.index]);
+
 }
 
 void Calculations::updateConsistency(const Scribe& scribe, const AudioParams& params)
@@ -153,8 +155,9 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
 {
     int index = scribe.fundamental.lastActivated;
     float position = 0;
+    pitchWheelPosition = 0;
 
-    if(index > 0 && scribe.midiSwitch.state == MidiState::on)
+    if(index > 0 && (scribe.midiSwitch.state == MidiState::on || scribe.midiSwitch.state == MidiState::bend))
     {
         int low = params.range.lowNote;
         int high = params.range.highNote;
@@ -168,14 +171,17 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
         //add semitones to each side of the current index
         int weightRange = 2 * bendSemitones + 1;
 
-
+        // holds a slice of the frequency spectrum centered around the last activated note
         fvec weights = fvec(weightRange,0);
 
         for(int i = 0; i < high - low + 1; i++)
         {
+            //fundamentalCertainty is a modification of the frequency spectrum to prevent octave errors
             weights[i] = scribe.fundamentalCertainty[i + low];
         }
 
+
+        //scale weights to [0,1]
         absMaxNormalize(weights);
 
         for(int i = 0; i < weights.size(); i++)
@@ -192,19 +198,26 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
         float bendVal = centerVal;
         float bendInd = centerInd;
         
+        
+        
         bendInd = weights[left] > weights[right] ? left : right;
         bendVal = weights[bendInd];
-        
-        
+
+        //once target bend frequency has a greater intensity than the center frequency
+        //treat the slope as an indicator of the pitch bend intensity
         if( bendVal > centerVal)
         {
             position = (bendVal - centerVal)/(bendInd - centerInd);
+            
             //adjust to make the modulation more sensitive;
             //another potential user param
-            float pitchScaling = 5;
+            
+            float pitchScaling = 5; //determined empirically
             float sign = position < 0 ? -1 : 1;
-            //scale the position based on frequency index--centered at index 45
-            // -1.06 determined from solving for height difference between two different octaves
+            
+            // these modifications were determined empirically
+            // shift the position based on frequency index centered at 45 (A3 220 hz). This is the first note I (arbitrarily) chose to test pitch bending
+            // -.00416 is the approximate factor needed to make bending at A3 and A4 equal. I'm assuming a linear relationship but need to verify
             position = pitchScaling * (position + sign * -.00416 * ( index - 45 ));
 
             //correct for excessive scaling;
@@ -214,7 +227,8 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
             position = std::isnan(position) ? 0 : position;
 
             
-            
+            // smooth out the pitchwheel position with a simple moving average
+            // a different block size might be needed
             pitchWheelPosition = SMABlocks(pitchWheelPosition, position, blocks.dBLong);
 
             //std::cout <<centerVal << ", " <<bendVal << " | "<< centerInd << ", " << bendInd << " | " << position<< ", " << pitchWheelPosition << "\n";
@@ -226,13 +240,9 @@ void Calculations::updatePitchWheel(const Scribe& scribe, const AudioParams& par
 
         
     }
-    else
-    {
-        pitchWheelPosition = 0;
-    }
 }
 
-MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
+MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe, const AudioParams& params)
 {
 
     auto output = MidiParams();
@@ -256,6 +266,9 @@ MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe)
 
     output.smoothFactor = calcs.blocks.midi;
     output.isConsistent = calcs.consistency.isConsistent;
+    output.bendOn = params.bendOn;
+    output.frequencyDelta = calcs.frequencyDelta;
+    output.bendThreshold = params.threshold.bend;
 
     return output;
 }

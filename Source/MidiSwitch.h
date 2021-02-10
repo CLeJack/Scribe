@@ -37,6 +37,9 @@ struct MidiParams
     
     float smoothFactor = 0;
     bool isConsistent = false;
+    bool bendOn = false;
+    float bendThreshold = .1;
+    float frequencyDelta = 0;
 };
 
 struct SwitchMessage
@@ -76,6 +79,7 @@ struct MidiSwitch
     SwitchMessage on  (const MidiParams& params);
     SwitchMessage off (const MidiParams& params);
     SwitchMessage retrigger (const MidiParams& params);
+    SwitchMessage bend (const MidiParams& params);
 
     void onSequence(const MidiParams& p, SwitchMessage& m);
     void offSequence(const MidiParams& p, SwitchMessage& m);

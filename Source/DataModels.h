@@ -38,6 +38,10 @@ struct Threshold
     float retrigStop  = 1.1f;
 
     float consistency = .95f;
+
+    // deactivation threshold; lowervalues make the pitch state turn off more easily
+    // going lower than .04 barely allows for pitcbending
+    float bend = .06; 
 };
 
 struct Scale
@@ -225,6 +229,7 @@ struct AudioParams
     SmoothTime smoothTime;
     Shift shift;
     Velocity velocity;
+    bool bendOn = false;
 };
 
 // 3. Calculations Data Model~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,6 +263,7 @@ struct Calculations
     Consistency consistency;
 
     float pitchWheelPosition = 0;
+    float frequencyDelta = 0; //for triggering the pitch wheel
 
 };
 
@@ -298,4 +304,4 @@ inline int getVelocity(const Velocity& vel, float dB, float dBFloor)
     return output;
 }
 
-MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe);
+MidiParams getMidiParams(const Calculations& calcs, Scribe& scribe, const AudioParams& params);
