@@ -48,6 +48,7 @@ public:
     GuiMainSlider octave;
     GuiMainSlider semitone;
     GuiMainSlider psensitivity;
+    GuiMainSlider pscale;
 
     juce::ToggleButton pbend;
 

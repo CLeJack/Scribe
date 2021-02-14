@@ -48,6 +48,7 @@ struct Scale
 {
     float noise  = -5;
     float weight = 0.5f;
+    float bend   = 1;
 };
 
 struct SmoothTime //corresponds with Calculation Delay 

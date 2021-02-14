@@ -50,6 +50,7 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     guiMainPanel.noise.slider.addListener(this);
 
     guiMainPanel.psensitivity.slider.addListener(this);
+    guiMainPanel.pscale.slider.addListener(this);
     guiMainPanel.pbend.addListener(this);
 
     guiMainPanel.panic.addListener(this);
@@ -136,6 +137,10 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     {
         *audioProcessor.bendThresholdP = slider->getValue();
     }
+    else if (slider == &panel.pscale.slider) 
+    {
+        *audioProcessor.bendScaleP = slider->getValue();
+    }
 
 
 }
@@ -163,6 +168,9 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMainPanel.semitone.slider.setValue(params.shift.semitone);
 
     guiMainPanel.noise.slider.setValue(params.threshold.noise);
+    
+    guiMainPanel.psensitivity.slider.setValue(params.threshold.bend);
+    guiMainPanel.pscale.slider.setValue(params.scale.bend);
     guiMainPanel.pbend.setToggleState(params.bendOn, juce::NotificationType::dontSendNotification);
 
 }
