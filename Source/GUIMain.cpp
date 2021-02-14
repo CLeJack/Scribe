@@ -78,7 +78,8 @@ GuiMainPanel::GuiMainPanel() :
     noise("Noise dB", true, -60, 0, 1),
     lowNote("Low Note", true, 12, 28, 1),
     octave("Octave", true, -8, 8, 1),
-    semitone("Semitone", true, -12, 12, 1)
+    semitone("Semitone", true, -12, 12, 1),
+    psensitivity("P. Sens", true,0, 1, .01f)
 {
  
 
@@ -86,6 +87,7 @@ GuiMainPanel::GuiMainPanel() :
     midiLabel.setJustificationType(juce::Justification::centred);
     midiLabel.setBorderSize(juce::BorderSize<int>(0));
 
+    pbend.setButtonText("P. Bend");
     panic.setButtonText("!");
 
     addAndMakeVisible(spectrumLabel);
@@ -101,6 +103,9 @@ GuiMainPanel::GuiMainPanel() :
     addAndMakeVisible(lowNote);
     addAndMakeVisible(octave);
     addAndMakeVisible(semitone);
+
+    addAndMakeVisible(psensitivity);
+    addAndMakeVisible(pbend);
 
     addAndMakeVisible(panic);
 
@@ -140,11 +145,16 @@ sl.setBounds (sliderArea.removeFromLeft (sliderArea.getWidth() * frac));\
     SET_AREA(octave, sliderArea, 0.5);
     SET_AREA(semitone, sliderArea, 1.0);
 
+    sliderArea = area.removeFromTop(sliderH);
+
+
+    SET_AREA(psensitivity, sliderArea, 0.333);
+    SET_AREA(pbend, sliderArea,  1.0);
+
     area.removeFromLeft(area.getWidth() * 0.333);
     area.removeFromRight(area.getWidth() * 0.5);
     
-    
-    area.removeFromTop(area.getHeight() * 0.5);
+    area.removeFromTop(area.getHeight() * 0.25);
 
 
     area.removeFromTop(area.getHeight() * 0.333);

@@ -49,6 +49,9 @@ ScribeAudioProcessorEditor::ScribeAudioProcessorEditor(ScribeAudioProcessor& p)
     
     guiMainPanel.noise.slider.addListener(this);
 
+    guiMainPanel.psensitivity.slider.addListener(this);
+    guiMainPanel.pbend.addListener(this);
+
     guiMainPanel.panic.addListener(this);
     
 
@@ -129,6 +132,11 @@ void ScribeAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
         *audioProcessor.lowNoteP = slider->getValue();
     }
 
+    else if (slider == &panel.psensitivity.slider)
+    {
+        *audioProcessor.bendThresholdP = slider->getValue();
+    }
+
 
 }
 
@@ -137,6 +145,10 @@ void ScribeAudioProcessorEditor::buttonClicked(juce::Button* button)
     if (button == &guiMainPanel.panic) 
     {
         scribe.sendAllNotesOff = true;
+    }
+    else if (button == &guiMainPanel.pbend)
+    {
+        *audioProcessor.bendOnP = button->getToggleState();
     }
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,6 +163,7 @@ void ScribeAudioProcessorEditor::setSliders()
     guiMainPanel.semitone.slider.setValue(params.shift.semitone);
 
     guiMainPanel.noise.slider.setValue(params.threshold.noise);
+    guiMainPanel.pbend.setToggleState(params.bendOn, juce::NotificationType::dontSendNotification);
 
 }
 

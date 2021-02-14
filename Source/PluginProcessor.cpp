@@ -35,7 +35,7 @@ ScribeAudioProcessor::ScribeAudioProcessor()
     addParameter(semitoneP = new juce::AudioParameterInt("semitoneP", "Semitone", -12, 12, params.shift.semitone));
 
     addParameter(noiseP = new juce::AudioParameterFloat("noiseP", "Noise (dB)", -60.0f, 0.0f, params.threshold.noise));
-    addParameter(bendOnP = new juce::AudioParameterBool("bendOnP", "Pitch Bend", true));
+    addParameter(bendOnP = new juce::AudioParameterBool("bendOnP", "Pitch Bend", false));
     addParameter(bendThresholdP = new juce::AudioParameterFloat("bendThresholdP", "Bend Threshold", 0.0f, 1.0f, params.threshold.bend));
 
     maxdBP->addListener(this);

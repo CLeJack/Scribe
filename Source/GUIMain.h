@@ -47,6 +47,9 @@ public:
     GuiMainSlider lowNote;
     GuiMainSlider octave;
     GuiMainSlider semitone;
+    GuiMainSlider psensitivity;
+
+    juce::ToggleButton pbend;
 
     juce::TextButton panic;
 };
