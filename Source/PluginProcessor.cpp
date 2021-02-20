@@ -310,13 +310,18 @@ void ScribeAudioProcessor::ready(juce::AudioBuffer<float>& buffer, juce::MidiBuf
         note = juce::MidiMessage::noteOff(1, message.off, (juce::uint8) message.offVel);
         midiMessages.addEvent(note, 0);
 
+        if (params.bendOn == true){
+            note = juce::MidiMessage::pitchWheel(1, 8192);
+            midiMessages.addEvent(note, 0);
+        }
+            
         note = juce::MidiMessage::noteOn(1, message.on, (juce::uint8)message.onVel);
         midiMessages.addEvent(note, 0);
     }
 
     if (calcs.pitchWheelPosition > 0.001 && params.bendOn == true) 
     {
-        int bendFinalValue = *bendScaleP * 16383 * (0.5 * calcs.pitchWheelPosition + 0.5);
+        int bendFinalValue =  16383 * (0.5 *( calcs.pitchWheelPosition * *bendScaleP ) + 0.5);
         bendFinalValue = bendFinalValue > 16383 ? 16383 : bendFinalValue;
         bendFinalValue = bendFinalValue < 0 ? 0 : bendFinalValue; //shouldn't happen but better safe than sorry.
 
